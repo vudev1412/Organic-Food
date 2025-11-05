@@ -41,19 +41,20 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts(spec, pageable));
     }
     @GetMapping("/products/{id}")
-    public ResponseEntity<Optional<Product>> getProductById(@PathVariable Long id){
+    public ResponseEntity<ResProductDTO> getProductById(@PathVariable Long id){
         return ResponseEntity.ok().body(this.productService.handleGetProductById(id));
     }
 
 
 
     @PutMapping("/products/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product){
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ReqProductDTO product){
         return ResponseEntity.ok().body(this.productService.handleUpdateProduct(id, product));
     }
 
     @DeleteMapping("/products/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable Long id){
-        return ResponseEntity.ok().body(this.productService.handleDeleteProduct(id));
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id){
+        this.productService.handleDeleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 }

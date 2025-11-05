@@ -14,6 +14,4 @@ public class RestResponse<T> {
 
     private Object message;
     private T data;
-
-
 }

@@ -1,0 +1,24 @@
+package com.example.backend.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "certificates")
+public class Certificate {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+    private String name;
+
+    private String image;
+
+    @OneToMany(mappedBy = "certificate", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<ProductCertificate> productCertificates = new HashSet<>();
+
+}

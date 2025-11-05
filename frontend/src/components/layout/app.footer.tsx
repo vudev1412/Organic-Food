@@ -1,11 +1,12 @@
 import "./index.scss";
 import logo from "../../assets/png/logo.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFacebook } from "@fortawesome/free-brands-svg-icons";
+import { faInstagram } from "@fortawesome/free-brands-svg-icons";
+import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 const AppFooter = () => {
   return (
     <footer className="bg-green-900 text-white py-10">
-      <div className="logo">
-        <img src={logo} alt="" />
-      </div>
       <div className="container-footer grid grid-cols-1 md:grid-cols-4 gap-8 px-6">
         <div>
           <h2 className="text-2xl font-bold mb-4">Organic Store</h2>
@@ -74,19 +75,19 @@ const AppFooter = () => {
 
           <div className="flex gap-4 mt-4">
             <a href="#" className="hover:text-yellow-400">
-              FB
+              <FontAwesomeIcon icon={faFacebook} style={{ fontSize: 30 }} />
             </a>
             <a href="#" className="hover:text-yellow-400">
-              IG
+              <FontAwesomeIcon icon={faInstagram} style={{ fontSize: 30 }} />
             </a>
             <a href="#" className="hover:text-yellow-400">
-              TW
+              <FontAwesomeIcon icon={faXTwitter} style={{ fontSize: 30 }} />
             </a>
           </div>
         </div>
       </div>
 
-      <div className="mt-10 pt-4 text-center text-sm text-gray-300">
+      <div className=" pt-4 text-center text-sm text-gray-300">
         © {new Date().getFullYear()} Organic Store. All rights reserved.
       </div>
     </footer>

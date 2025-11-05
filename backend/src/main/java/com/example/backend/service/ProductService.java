@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -30,8 +31,10 @@ public class ProductService {
 
 
 
-    public Optional<Product> handleGetProductById(Long id){
-        return this.productRepository.findById(id);
+    public ResProductDTO handleGetProductById(Long id) {
+        Product product = this.productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+        return this.productMapper.toResProductDto(product);
     }
 
     public ResProductDTO createProduct(ReqProductDTO dto) {
@@ -39,6 +42,7 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         Product product = productMapper.toEntity(dto);
+        product.setCategory(category);
         this.productRepository.save(product);
 
         return this.productMapper.toResProductDto(product);
@@ -78,25 +82,27 @@ public class ProductService {
     }
 
 
-    public Product handleUpdateProduct(Long id, Product product){
-        Optional<Product> myProduct = this.handleGetProductById(id);
-        if(myProduct.isPresent()){
-            Product productCurr = myProduct.get();
-            productCurr.setName(product.getName());
-            productCurr.setUnit(product.getUnit());
-            productCurr.setPrice(product.getPrice());
-            productCurr.setOrigin_address(product.getOrigin_address());
-            productCurr.setDescription(product.getDescription());
-            if(product.getCategory() != null){
-                Long categoryId = product.getCategory().getId();
-                Category category = this.categoryRepository.findById(categoryId)
-                                .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
-                productCurr.setCategory(category);
-            }
-            this.productRepository.save(productCurr);
-            return productCurr;
+    public Product handleUpdateProduct(Long id, ReqProductDTO updatedProduct) {
+
+        Product existingProduct = this.productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+
+        existingProduct.setName(updatedProduct.getName());
+        existingProduct.setUnit(updatedProduct.getUnit());
+        existingProduct.setPrice(updatedProduct.getPrice());
+        existingProduct.setOrigin_address(updatedProduct.getOrigin_address());
+        existingProduct.setDescription(updatedProduct.getDescription());
+        existingProduct.setUpdateAt(Instant.now());
+
+        if (updatedProduct.getCategoryId() != null) {
+            Category category = this.categoryRepository.findById(updatedProduct.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found with id: " + updatedProduct.getCategoryId()));
+            existingProduct.setCategory(category);
         }
-        return null;
+
+
+        return this.productRepository.save(existingProduct);
     }
     public String handleDeleteProduct(Long id){
         this.productRepository.deleteById(id);

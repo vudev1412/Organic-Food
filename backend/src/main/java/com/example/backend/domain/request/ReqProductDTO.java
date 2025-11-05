@@ -1,7 +1,5 @@
 package com.example.backend.domain.request;
 
-import com.example.backend.enums.StockStatus;
-import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.Setter;
 

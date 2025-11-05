@@ -1,5 +1,5 @@
 import logo from "../../assets/png/logo.png";
-import bg from "../../assets/jpg/background-header.jpg";
+// import bg from "../../assets/jpg/background-header.jpg";
 import { Link } from "react-router-dom";
 import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
 const AppHeader = () => {
@@ -12,8 +12,10 @@ const AppHeader = () => {
           </Link>
         </div>
         <div className="flex items-center gap-5">
-          <Link to={"/product"}>Product</Link>
-          <Link to={"/about-us"}>About us</Link>
+          <Link to={"/product"}>Sản phẩm</Link>
+          <Link to={"/about-us"}>Về chúng tôi</Link>
+          <Link to={"/chung-chi"}>Chứng chỉ</Link>
+          <Link to={"/lien-he"}>Liên hệ</Link>
         </div>
         <div className="flex items-center gap-5">
           <Link to={"/dang-nhap"}>

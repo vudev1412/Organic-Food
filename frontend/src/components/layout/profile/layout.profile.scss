@@ -1,0 +1,22 @@
+.admin-wrapper{
+    display: flex;
+}
+.side-bar{
+    width: 260px;
+    height: 100vh;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+.first-text{
+    padding: 30px;
+    display: flex;
+    
+}
+.ant-menu {
+  border-right: none !important;
+}
+
+.content{
+    background: #f9f9f9;
+    width: 100%;
+}
+
