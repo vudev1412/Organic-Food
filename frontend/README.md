@@ -1,69 +1,42 @@
-# React + TypeScript + Vite
+🛠️ Backend API Documentation
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+1. Authentication – Đăng nhập
 
-Currently, two official plugins are available:
+URL: http://localhost:8080/api/v1/auth/login
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Method: POST
 
-## Expanding the ESLint configuration
+Content-Type: application/json
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Request Body
+{
+"username": "lehienvu5527@gmail.com",
+"password": "123456"
+}
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Response Body
+{
+"statusCode": 200,
+"error": null,
+"message": "Login success",
+"data": {
+"userLogin": {
+"id": 1,
+"email": "lehienvu5527@gmail.com",
+"name": "Lê Hiền Vũ"
+},
+"access_token": "<ACCESS_TOKEN>"
+}
+}
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Lưu ý: Copy giá trị access_token để dùng cho các API khác.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. Sử dụng token để gọi API khác
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Mở Postman hoặc công cụ HTTP client.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Chọn tab Authorization → Type: Bearer Token.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Paste giá trị access_token vào input.
+
+Nhập URL và SEND
