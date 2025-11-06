@@ -19,6 +19,8 @@ public class ReqProductDTO {
 
     private String image;
 
+    private boolean active;
+
     private Instant mfgDate;
 
     private Instant expDate;

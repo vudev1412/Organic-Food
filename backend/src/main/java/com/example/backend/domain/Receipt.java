@@ -28,7 +28,7 @@ public class Receipt {
     private double totalAmount;
 
     @Enumerated(EnumType.STRING)
-    private StatusReceipt status;
+    private StatusReceipt status = StatusReceipt.PENDING;
 
     private Instant createdAt;
 

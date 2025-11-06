@@ -18,20 +18,22 @@ public class Voucher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(unique = true)
+    @Column(unique = true,nullable = false)
     private String code;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TypeVoucher typeVoucher;
 
+    @Column(nullable = false)
     private double value;
 
     private double maxDiscountAmount;
 
-    private double min_order_value;
+    private double minOrderValue;
 
     private Instant startDate;
 

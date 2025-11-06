@@ -23,7 +23,7 @@ public class Payment {
     private String provider;
 
     @Enumerated(EnumType.STRING)
-    private StatusPayment status;
+    private StatusPayment status = StatusPayment.PENDING;
 
     private double amount;
 

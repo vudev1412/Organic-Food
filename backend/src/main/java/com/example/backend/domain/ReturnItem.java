@@ -15,6 +15,7 @@ public class ReturnItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
      private int quantity;
 
      private double amountRefund;

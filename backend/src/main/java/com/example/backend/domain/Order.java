@@ -18,13 +18,15 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private Instant orderAt;
 
     private String note;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.PENDING;
 
+    @Column(nullable = false)
     private String shipAddress;
 
     private Instant estimatedDate;

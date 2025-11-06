@@ -25,7 +25,7 @@ public class Invoice {
     private double subtotal;
 
     @Enumerated(EnumType.STRING)
-    private StatusInvoice status;
+    private StatusInvoice status = StatusInvoice.UNPAID;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id",unique = true)

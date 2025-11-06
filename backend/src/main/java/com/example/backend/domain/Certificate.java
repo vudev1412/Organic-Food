@@ -13,6 +13,7 @@ public class Certificate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private String name;
 
     private String image;

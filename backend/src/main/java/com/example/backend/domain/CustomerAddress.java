@@ -27,6 +27,7 @@ public class CustomerAddress {
 
     private String note;
 
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean isDefault;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -22,9 +22,11 @@ public class Return {
 
     private String reason;
 
-    private StatusReturn status;
+    @Enumerated(EnumType.STRING)
+    private StatusReturn status = StatusReturn.PENDING;
 
-    private TypeReturn returnType;
+    @Enumerated(EnumType.STRING)
+    private TypeReturn returnType = TypeReturn.REFUND;
 
     private Instant createdAt;
 

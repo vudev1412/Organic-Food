@@ -16,6 +16,7 @@ public class Supplier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private String name;
 
     @Column(unique = true)
