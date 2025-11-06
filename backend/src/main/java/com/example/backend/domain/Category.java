@@ -16,8 +16,10 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(unique = true,nullable = false)
     private String slug;
 
     @ManyToOne(fetch = FetchType.LAZY)

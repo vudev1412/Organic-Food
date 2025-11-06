@@ -20,6 +20,8 @@ public class ResProductDTO {
 
     private String image;
 
+    private boolean active;
+
     private Instant mfgDate;
 
     private Instant expDate;

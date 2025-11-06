@@ -14,8 +14,10 @@ public class OrderDetail {
     @EmbeddedId
     private OrderDetailKey id;
 
+    @Column(nullable = false)
     private int quantity;
 
+    @Column(nullable = false)
     private double price;
 
     @ManyToOne

@@ -18,11 +18,14 @@ public class Promotion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private String name;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TypePromotion type;
 
+    @Column(nullable = false)
     private double value;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")

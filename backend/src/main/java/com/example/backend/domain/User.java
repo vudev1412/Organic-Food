@@ -21,14 +21,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(unique = true,nullable = false)
     @NotBlank(message = "Email không được để trống")
     private String email;
 
     @Column(unique = true)
     private String phone;
 
+    @Column(nullable = false)
     @NotBlank(message = "Password không được để trống")
     private String password;
 

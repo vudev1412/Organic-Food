@@ -93,6 +93,7 @@ public class ProductService {
         existingProduct.setPrice(updatedProduct.getPrice());
         existingProduct.setOrigin_address(updatedProduct.getOrigin_address());
         existingProduct.setDescription(updatedProduct.getDescription());
+        existingProduct.setActive(updatedProduct.isActive());
         existingProduct.setUpdateAt(Instant.now());
 
         if (updatedProduct.getCategoryId() != null) {

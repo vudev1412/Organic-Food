@@ -15,6 +15,7 @@ public class ReturnImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private String imageUrl;
 
     private Instant uploadedAt;

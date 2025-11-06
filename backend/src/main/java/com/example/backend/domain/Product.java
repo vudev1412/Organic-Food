@@ -2,6 +2,7 @@ package com.example.backend.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -21,11 +22,13 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     @NotBlank(message = "name không được để trống")
     private String name;
 
     private String unit;
 
+    @Column(nullable = false)
     private double price;
 
     private String origin_address;
@@ -33,12 +36,15 @@ public class Product {
     @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
 
+    @Column(columnDefinition = "DOUBLE DEFAULT 0")
     private double rating_avg;
 
     private int quantity;
 
+    @Column(unique = true)
     private String slug;
 
+    @Column(nullable = false)
     private String image;
 
     private Instant mfgDate;
@@ -48,6 +54,8 @@ public class Product {
     private Instant createAt;
 
     private Instant updateAt;
+
+    private boolean active;
 
     private String createBy;
 

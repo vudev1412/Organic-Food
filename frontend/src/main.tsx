@@ -30,6 +30,7 @@ import Products from "./pages/admin/products";
 import Suppliers from "./pages/admin/suppliers";
 import CustomerOrders from "./pages/admin/orders";
 import ReturnRequests from "./pages/admin/complaints";
+import { App } from "antd";
 
 const router = createBrowserRouter([
   {
@@ -117,6 +118,8 @@ const router = createBrowserRouter([
 ]);
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <App>
+      <RouterProvider router={router} />
+    </App>
   </StrictMode>
 );

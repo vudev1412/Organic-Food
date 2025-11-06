@@ -1,11 +1,38 @@
-import { Button, Divider, Form, Input } from "antd";
-import { Link } from "react-router-dom";
+import { App, Button, Divider, Form, Input, type FormProps } from "antd";
+import { Link, useNavigate } from "react-router-dom";
 import bg from "../assets/png/bg-auth.png";
 import fb from "../../assets/png/facebook.png";
 import gg from "../../assets/png/google.png";
+import { useState } from "react";
+import { loginAPI } from "../../service/api";
+interface FieldType {
+  username: string;
+  password: string;
+}
 const SingIn = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
-
+  const [isSubmit, setIsSubmit] = useState(false);
+  const {message, notification} = App.useApp();
+  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
+    const { username, password } = values;
+    setIsSubmit(true);
+    const res = await loginAPI(username, password);
+    console.log(res);
+    setIsSubmit(false);
+    if (res?.data) {
+      localStorage.setItem("access_token", res.data.access_token);
+      message.success("Đăng nhập tài khoản thành công");
+      navigate("/");
+    } else {
+      notification.error({
+        message: "Xảy ra lỗi",
+        description:
+          res.message && Array.isArray(res.message) ? res.message[0] : res.message,
+          duration: 5
+      });
+    }
+  };
   return (
     <div className="flex h-screen justify-center">
       <div className=" flex justify-center items-center">
@@ -18,20 +45,35 @@ const SingIn = () => {
             <Form
               layout={"vertical"}
               form={form}
-              // initialValues={{ layout: ve }}
-              // onValuesChange={onFormLayoutChange}
-              // style={{ maxWidth: formLayout === "inline" ? "none" : 600 }}
+              initialValues={{ remember: true }}
+              onFinish={onFinish}
+              autoComplete="off"
             >
-              <Form.Item label="Email">
+              <Form.Item
+                label="Email"
+                name="username"
+                rules={[
+                  { required: true, message: "Email không được để trống" },
+                  { type: "email", message: "Email không đúng định dạng!" },
+                ]}
+              >
                 <Input placeholder="Nhập email" />
               </Form.Item>
-              <Form.Item label="Mật khẩu">
+              <Form.Item
+                label="Mật khẩu"
+                name="password"
+                rules={[
+                  { required: true, message: "Mật khẩu không được để trống" },
+                ]}
+              >
                 <Input placeholder="Nhập mật khẩu" />
               </Form.Item>
               <Form.Item>
                 <Button
                   type="default"
                   className="w-full !bg-[#3A5B22] text-white"
+                  htmlType="submit"
+                  loading={isSubmit}
                 >
                   Đăng nhập
                 </Button>
@@ -65,11 +107,6 @@ const SingIn = () => {
           </div>
         </div>
       </div>
-      {/* <div className="w-1/2 h-screen">
-        <div className="w-full h-full">
-          <img src={bg} alt="" className="w-full h-full " />
-        </div>
-      </div> */}
     </div>
   );
 };
