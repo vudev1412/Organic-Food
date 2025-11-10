@@ -29,7 +29,7 @@ public class Promotion {
     private double value;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
-    private boolean is_active;
+    private boolean active;
 
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL)
     @JsonIgnore

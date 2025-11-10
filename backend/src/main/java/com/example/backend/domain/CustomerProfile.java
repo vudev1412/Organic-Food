@@ -14,7 +14,7 @@ public class CustomerProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private boolean isMember;
+    private boolean member;
 
     @OneToOne
     @JoinColumn(name = "user_id")

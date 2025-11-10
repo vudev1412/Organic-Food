@@ -43,7 +43,7 @@ public class Voucher {
 
     private int usedCount;
 
-    private boolean isActive;
+    private boolean active;
 
     @OneToMany(mappedBy = "voucher",cascade = CascadeType.ALL)
     @JsonIgnore

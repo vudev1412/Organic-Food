@@ -2,11 +2,15 @@ package com.example.backend.domain;
 
 import com.example.backend.domain.key.PromotionDetailKey;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "promotion_detail")
+@Getter
+@Setter
 public class PromotionDetail {
 
     @EmbeddedId

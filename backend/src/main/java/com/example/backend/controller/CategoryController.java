@@ -1,13 +1,12 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.Category;
-import com.example.backend.service.CategoryService;
+import com.example.backend.service.impl.CategoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1")

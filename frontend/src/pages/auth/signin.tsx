@@ -18,10 +18,10 @@ const SingIn = () => {
     const { username, password } = values;
     setIsSubmit(true);
     const res = await loginAPI(username, password);
-    console.log(res);
+    console.log(res.data);
     setIsSubmit(false);
     if (res?.data) {
-      localStorage.setItem("access_token", res.data.access_token);
+      localStorage.setItem("access_token", res.data?.data?.access_token);
       message.success("Đăng nhập tài khoản thành công");
       navigate("/");
     } else {
@@ -66,7 +66,7 @@ const SingIn = () => {
                   { required: true, message: "Mật khẩu không được để trống" },
                 ]}
               >
-                <Input placeholder="Nhập mật khẩu" />
+                <Input.Password placeholder="Nhập mật khẩu" />
               </Form.Item>
               <Form.Item>
                 <Button

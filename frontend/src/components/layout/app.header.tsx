@@ -2,7 +2,19 @@ import logo from "../../assets/png/logo.png";
 // import bg from "../../assets/jpg/background-header.jpg";
 import { Link } from "react-router-dom";
 import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
+import { useEffect, useState } from "react";
 const AppHeader = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("access_token"));
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem("access_token"));
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
   return (
     <>
       <header className=" flex justify-between px-[50px]  shadow-md">
@@ -18,9 +30,9 @@ const AppHeader = () => {
           <Link to={"/lien-he"}>Liên hệ</Link>
         </div>
         <div className="flex items-center gap-5">
-          <Link to={"/dang-nhap"}>
-            <UserOutlined />
-          </Link>
+          <Link to={isLoggedIn ? "/account" : "/dang-nhap"}>
+          <UserOutlined />
+        </Link>
           <Link to={"/gio-hang"}>
             <ShoppingCartOutlined />
           </Link>
