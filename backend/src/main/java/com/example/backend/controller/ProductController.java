@@ -4,7 +4,7 @@ import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqProductDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
-import com.example.backend.service.ProductService;
+import com.example.backend.service.impl.ProductService;
 import com.example.backend.util.annotation.ApiMessage;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
@@ -13,8 +13,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 
 @RestController

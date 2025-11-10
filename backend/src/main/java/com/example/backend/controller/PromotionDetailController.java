@@ -1,0 +1,46 @@
+package com.example.backend.controller;
+
+import com.example.backend.domain.request.ReqPromotionDetailDTO;
+import com.example.backend.domain.response.ResPromotionDetailDTO;
+import com.example.backend.service.PromotionDetailService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/promotion-details")
+@RequiredArgsConstructor
+public class PromotionDetailController {
+
+    private final PromotionDetailService promotionDetailService;
+
+    @GetMapping
+    public ResponseEntity<List<ResPromotionDetailDTO>> getAll() {
+        return ResponseEntity.ok(promotionDetailService.getAll());
+    }
+
+    @PostMapping
+    public ResponseEntity<ResPromotionDetailDTO> create(@RequestBody ReqPromotionDetailDTO dto) {
+        return ResponseEntity.ok(promotionDetailService.create(dto));
+    }
+
+    @PutMapping("/{promotionId}/{productId}")
+    public ResponseEntity<ResPromotionDetailDTO> update(
+            @PathVariable long promotionId,
+            @PathVariable long productId,
+            @RequestBody ReqPromotionDetailDTO dto
+    ) {
+        return ResponseEntity.ok(promotionDetailService.update(promotionId, productId, dto));
+    }
+
+    @DeleteMapping("/{promotionId}/{productId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable long promotionId,
+            @PathVariable long productId
+    ) {
+        promotionDetailService.delete(promotionId, productId);
+        return ResponseEntity.noContent().build();
+    }
+}

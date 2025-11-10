@@ -35,8 +35,6 @@ public class User {
     @NotBlank(message = "Password không được để trống")
     private String password;
 
-    private String address;
-
     private String image;
 
     private Instant createAt;
@@ -44,7 +42,7 @@ public class User {
     private Instant updateAt;
 
     @Enumerated(EnumType.STRING)
-    private Role userRole;
+    private Role userRole = Role.CUSTOMER;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;

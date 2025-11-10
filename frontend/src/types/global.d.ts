@@ -23,11 +23,13 @@ declare global{
     }
 
     interface ILogin{
-        access_token:string;
+        data:{
+            access_token:string;
         userLogin:{
             id: number,
             email: string,
             name: string
+        }
         }
     }
 }

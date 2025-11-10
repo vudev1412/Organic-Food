@@ -1,0 +1,8 @@
+package com.example.backend.repository;
+
+import com.example.backend.domain.ProductCertificate;
+import com.example.backend.domain.key.ProductCertificateKey;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ProductCertificateRepository extends JpaRepository<ProductCertificate, ProductCertificateKey> {
+}

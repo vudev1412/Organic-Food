@@ -1,6 +1,6 @@
 package com.example.backend.domain;
 
-import com.example.backend.enums.Status;
+import com.example.backend.enums.StatusOrder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class Order {
     private String note;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.PENDING;
+    private StatusOrder statusOrder = StatusOrder.PENDING;
 
     @Column(nullable = false)
     private String shipAddress;
