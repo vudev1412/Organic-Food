@@ -12,4 +12,5 @@ public interface ProductImageService {
     ResProductImage getProductImageById(Long id);
     ResProductImage updateProductImage(Long id, ProductImage productImage);
     void deleteProductImage(Long id);
+    List<ResProductImage> getImagesProductById(Long productId);
 }

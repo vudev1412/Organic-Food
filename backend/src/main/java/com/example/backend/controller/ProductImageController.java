@@ -45,4 +45,9 @@ public class ProductImageController {
         productImageService.deleteProductImage(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/product-images/product/{productId}")
+    public ResponseEntity<List<ResProductImage>> getImagesByProduct(@PathVariable Long productId) {
+        return ResponseEntity.ok(productImageService.getImagesProductById(productId));
+    }
 }

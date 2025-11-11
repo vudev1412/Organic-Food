@@ -63,4 +63,11 @@ public class ProductImageServiceImpl implements ProductImageService {
     public void deleteProductImage(Long id) {
         productImageRepository.deleteById(id);
     }
+
+    @Override
+    public List<ResProductImage> getImagesProductById(Long productId) {
+        return this.productImageRepository.findByProduct_Id(productId)
+                .stream()
+                .map(this.productImageMapper::toResProductImage).toList();
+    }
 }

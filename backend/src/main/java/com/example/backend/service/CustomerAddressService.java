@@ -14,4 +14,6 @@ public interface CustomerAddressService {
     public ResCustomerAddress handleUpdateCustomerAddress(Long id, ReqCustomerAddress customerAddress);
 
     public List<ResCustomerAddress> handleGetAllCustomerAddress();
+
+    public List<ResCustomerAddress> handleGetAllCustomerAddressByUserId(Long id);
 }

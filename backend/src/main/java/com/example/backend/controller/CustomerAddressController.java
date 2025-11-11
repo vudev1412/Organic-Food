@@ -40,5 +40,9 @@ public class CustomerAddressController {
     public ResponseEntity<ResCustomerAddress> updateCustomerAddress(@PathVariable Long id,@RequestBody ReqCustomerAddress customerAddress){
         return ResponseEntity.ok().body(this.customerAddressService.handleUpdateCustomerAddress(id,customerAddress));
     }
+    @GetMapping("/address/user/{id}")
+    public ResponseEntity<List<ResCustomerAddress>> getAddressByUserId(@PathVariable Long id){
+        return ResponseEntity.ok().body(this.customerAddressService.handleGetAllCustomerAddressByUserId(id));
+    }
 
 }

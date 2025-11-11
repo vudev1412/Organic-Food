@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1")
@@ -54,5 +56,10 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id){
         this.productService.handleDeleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/product/category/{id}")
+    public ResponseEntity<List<ResProductDTO>> getProductByCategoryId(@PathVariable Long id){
+        return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id));
     }
 }
