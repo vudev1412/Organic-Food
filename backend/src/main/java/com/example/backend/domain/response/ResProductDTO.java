@@ -34,5 +34,5 @@ public class ResProductDTO {
 
     private String updateBy;
     private Long categoryId;
-    private String categoryName;
+
 }

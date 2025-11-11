@@ -49,4 +49,12 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
     public List<ResCustomerAddress> handleGetAllCustomerAddress(){
         return this.customerAddressRepository.findAll().stream().map(customerAddressMapper::toResCustomerAddress).toList();
     }
+
+    @Override
+    public List<ResCustomerAddress> handleGetAllCustomerAddressByUserId(Long id) {
+        return this.customerAddressRepository.getCustomerAddressByUser_Id(id)
+                .stream()
+                .map(this.customerAddressMapper::toResCustomerAddress)
+                .toList();
+    }
 }

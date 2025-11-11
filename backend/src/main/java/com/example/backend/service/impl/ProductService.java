@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class ProductService {
@@ -76,7 +77,6 @@ public class ProductService {
         dto.setDescription(product.getDescription());
 
         dto.setCategoryId(product.getCategory().getId());
-        dto.setCategoryName(product.getCategory().getName());
         return dto;
     }
 
@@ -107,5 +107,11 @@ public class ProductService {
     public String handleDeleteProduct(Long id){
         this.productRepository.deleteById(id);
         return "Delete success";
+    }
+
+    public List<ResProductDTO> handleGetProductByCategoryId(Long categoryId){
+        return this.productRepository.getProductByCategory_Id(categoryId)
+                .stream().map(productMapper::toResProductDto)
+                .toList();
     }
 }
