@@ -28,8 +28,22 @@ declare global{
         userLogin:{
             id: number,
             email: string,
-            name: string
+            name: string,
+            role:string
         }
+        }
+    }
+    interface IUser{
+        
+            id: number,
+            email: string,
+            name: string,
+            role:string
+        
+    }
+    interface IFetchAccount{
+        data:{
+            user:IUser
         }
     }
 }

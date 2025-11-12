@@ -31,6 +31,10 @@ import Suppliers from "./pages/admin/suppliers";
 import CustomerOrders from "./pages/admin/orders";
 import ReturnRequests from "./pages/admin/complaints";
 import { App } from "antd";
+import { AppProvider } from "./components/context/app.context";
+import ProtectedRouter from "./components/auth/admin";
+
+
 
 const router = createBrowserRouter([
   {
@@ -51,20 +55,17 @@ const router = createBrowserRouter([
       },
       {
         path: "/gio-hang",
-        element: <Cart />,
+        element: (
+          <ProtectedRouter>
+            <Cart />
+          </ProtectedRouter>
+        ),
       },
       {
         path: "/chi-tiet",
         element: <ProductDetail />,
       },
-      {
-        path: "/dang-ky",
-        element: <SingUp />,
-      },
-      {
-        path: "/dang-nhap",
-        element: <SingIn />,
-      },
+
       {
         path: "/lien-he",
         element: <Contact />,
@@ -98,10 +99,20 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: "/dang-ky",
+    element: <SingUp />,
+  },
+  {
+    path: "/dang-nhap",
+    element: <SingIn />,
+  },
+  {
     path: "/admin",
-    element: <AdminLayout />, // Dùng <AdminLayout> (có Sidebar, AdminHeader)
-    // TODO: Bạn sẽ cần bọc component này bằng một
-    // <PrivateRoute> để kiểm tra đăng nhập và phân quyền
+    element: (
+      <ProtectedRouter>
+        <AdminLayout />
+      </ProtectedRouter>
+    ),
     children: [
       { index: true, element: <Dashboard /> }, // Trang /admin
       { path: "customers", element: <Customers /> }, // Trang /admin
@@ -119,7 +130,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App>
-      <RouterProvider router={router} />
+      <AppProvider>
+        <RouterProvider router={router} />
+      </AppProvider>
     </App>
   </StrictMode>
 );

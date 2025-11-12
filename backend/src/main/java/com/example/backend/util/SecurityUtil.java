@@ -1,7 +1,10 @@
 package com.example.backend.util;
 
+import com.example.backend.domain.User;
 import com.example.backend.domain.response.RestLoginDTO;
+import com.example.backend.service.UserService;
 import com.nimbusds.jose.util.Base64;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -20,12 +23,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SecurityUtil {
     private final JwtEncoder jwtEncoder;
-
-    public SecurityUtil(JwtEncoder jwtEncoder){
-        this.jwtEncoder = jwtEncoder;
-    }
+    private final UserService userService;
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
     @Value("${lhv.jwt.base64-secret}")
     private String jwtKey;
@@ -35,18 +36,18 @@ public class SecurityUtil {
 
     @Value("${lhv.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
+
     public String createAccessToken(String email, RestLoginDTO.UserLogin restLoginDTO){
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
-        List<String> listAuthority = new ArrayList<String>();
-        listAuthority.add("ROLE_USER_CREATE");
-        listAuthority.add("ROLE_USER_UPDATE");
+        User user = this.userService.handleGetUserByUsername(email);
+        List<String> listAuthority = List.of("ROLE_" + user.getUserRole().name());
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
+                .claim("roles", listAuthority)
                 .claim("user",restLoginDTO)
-                .claim("permission",listAuthority)
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader,claims)).getTokenValue();

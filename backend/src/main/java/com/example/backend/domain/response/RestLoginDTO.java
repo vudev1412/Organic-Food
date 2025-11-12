@@ -1,5 +1,6 @@
 package com.example.backend.domain.response;
 
+import com.example.backend.enums.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,7 @@ public class RestLoginDTO {
         private long id;
         private String email;
         private String name;
+        private String role;
     }
 
     @Getter
