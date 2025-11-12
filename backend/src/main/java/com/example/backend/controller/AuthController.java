@@ -49,7 +49,7 @@ public class AuthController {
         RestLoginDTO res = new RestLoginDTO();
         User userCurr = this.userService.handleGetUserByUsername(loginDTO.getUsername());
         if(userCurr != null){
-            RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(userCurr.getId(),userCurr.getEmail(),userCurr.getName());
+            RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(userCurr.getId(),userCurr.getEmail(),userCurr.getName(),userCurr.getUserRole().name());
             res.setUserLogin(userLogin);
         }
         String accessToken = this.securityUtil.createAccessToken(authentication.getName(),res.getUserLogin());
@@ -66,6 +66,7 @@ public class AuthController {
                 .from("refresh_token", refresh_token)
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();
@@ -77,21 +78,31 @@ public class AuthController {
 
     @GetMapping("/auth/account")
     @ApiMessage("fetch account")
-    public ResponseEntity<RestLoginDTO.UserGetAccount> getAccount(){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ?
-                SecurityUtil.getCurrentUserLogin().get() : "";
+    public ResponseEntity<RestLoginDTO.UserGetAccount> getAccount(
+            @RequestHeader(value = "delay", required = false, defaultValue = "0") long delay
+    ) throws InterruptedException {
 
+        if (delay > 0) {
+            Thread.sleep(delay);
+        }
+
+        String email = SecurityUtil.getCurrentUserLogin().orElse("");
         User userCurr = this.userService.handleGetUserByUsername(email);
+
         RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin();
         RestLoginDTO.UserGetAccount userGetAccount = new RestLoginDTO.UserGetAccount();
-        if(userCurr != null){
+
+        if (userCurr != null) {
             userLogin.setId(userCurr.getId());
-            userLogin.setName(userCurr.getEmail());
-            userLogin.setEmail(userCurr.getName());
+            userLogin.setName(userCurr.getName());
+            userLogin.setEmail(userCurr.getEmail());
+            userLogin.setRole(userCurr.getUserRole().name());
             userGetAccount.setUser(userLogin);
         }
+
         return ResponseEntity.ok().body(userGetAccount);
     }
+
 
     @GetMapping("/auth/refresh")
     @ApiMessage("Get User by refresh token")
@@ -116,7 +127,7 @@ public class AuthController {
         RestLoginDTO res = new RestLoginDTO();
         User userCurr = this.userService.handleGetUserByUsername(email);
         if(userCurr != null){
-            RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(userCurr.getId(),userCurr.getEmail(),userCurr.getName());
+            RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(userCurr.getId(),userCurr.getEmail(),userCurr.getName(),userCurr.getUserRole().name());
             res.setUserLogin(userLogin);
         }
         String accessToken = this.securityUtil.createAccessToken(email,res.getUserLogin());

@@ -17,7 +17,7 @@ public class ResProductDTO {
     private String description;
     private double rating_avg;
     private int quantity;
-
+    private String slug;
     private String image;
 
     private boolean active;

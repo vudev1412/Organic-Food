@@ -1,7 +1,36 @@
 import React from "react";
 import { Bell, ChevronDown } from "lucide-react";
+import { Dropdown, Space, type MenuProps } from "antd";
+import { UserOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
+import { logoutAPI } from "../../service/api";
+import { useCurrentApp } from "../context/app.context";
 
 const AdminHeader: React.FC = () => {
+  const { user, isAuthenticated,setUser, setIsAuthenticated } = useCurrentApp();
+  const handleLogout = async() => {
+      const res = await logoutAPI();
+      if(res.data){
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem("access_token");
+      }
+    }
+   const items: MenuProps["items"] = [
+    {
+      key: "1",
+      label: <Link to="/account/profile">Hồ sơ</Link>,
+    },
+    {
+      key: "2",
+      label: <Link to="/">Trang chủ</Link>,
+    },
+    {
+      key: "4",
+      danger: true,
+      label: <label onClick={() => handleLogout()}>Đăng xuất</label>,
+    },
+  ];
   return (
     <header className="bg-white shadow-sm sticky top-0 z-10">
       <div className="flex items-center justify-end h-16 px-6">
@@ -15,14 +44,15 @@ const AdminHeader: React.FC = () => {
           </button>
 
           <div className="flex items-center space-x-2 cursor-pointer">
-            <img
-              className="w-9 h-9 rounded-full object-cover"
-              src="https://placehold.co/100x100/E2E8F0/4A5568?text=A"
-              alt="Admin Avatar"
-            />
-            <span className="hidden md:block font-medium text-gray-700">
-              Admin
-            </span>
+           
+            <Dropdown menu={{ items }} placement="bottomRight" arrow>
+              <a onClick={(e) => e.preventDefault()}>
+                <Space>
+                  <UserOutlined style={{ fontSize: 20 }} />
+                  {user?.name}
+                </Space>
+              </a>
+            </Dropdown>
             <ChevronDown size={18} className="text-gray-500" />
           </div>
         </div>

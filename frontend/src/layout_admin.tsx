@@ -6,7 +6,7 @@ import Sidebar from "./components/section/dashboard/sidebar";
 const AdminLayout = () => {
   return (
     <>
-      <div className=" flex">
+      <div className="flex">
         <Sidebar />
         <div className="flex-1">
           <AdminHeader />
@@ -15,7 +15,6 @@ const AdminLayout = () => {
           </div>
         </div>
       </div>
-
       <AdminFooter />
     </>
   );
