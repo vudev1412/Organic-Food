@@ -1,3 +1,10 @@
 a {
-        text-decoration: none !important;
+  color: #000; /* màu chữ cố định */
+  text-decoration: none !important; 
+  transition: none;
+  cursor: pointer;
+}
+
+a:hover {
+  color: #000; /* màu khi hover */
 }

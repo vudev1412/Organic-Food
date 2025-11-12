@@ -34,8 +34,6 @@ import { App } from "antd";
 import { AppProvider } from "./components/context/app.context";
 import ProtectedRouter from "./components/auth/admin";
 
-
-
 const router = createBrowserRouter([
   {
     path: "/",
@@ -46,11 +44,11 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "/product",
+        path: "/san-pham",
         element: <ProductPage />,
       },
       {
-        path: "/about-us",
+        path: "/gioi-thieu",
         element: <AboutPage />,
       },
       {
@@ -71,7 +69,7 @@ const router = createBrowserRouter([
         element: <Contact />,
       },
       {
-        path: "/account",
+        path: "/tai-khoan",
         element: <ProfileHeader />,
         children: [
           {
@@ -79,15 +77,15 @@ const router = createBrowserRouter([
             element: <Profile />,
           },
           {
-            path: "profile",
+            path: "thong-tin",
             element: <Profile />,
           },
           {
-            path: "address",
+            path: "dia-chi",
             element: <Address />,
           },
           {
-            path: "password",
+            path: "mat-khau",
             element: <ChangePassword />,
           },
         ],
