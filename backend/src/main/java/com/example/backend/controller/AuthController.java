@@ -36,32 +36,52 @@ public class AuthController {
     }
     @PostMapping("/auth/login")
     @ApiMessage("Login success")
-    public ResponseEntity<RestLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO){
-        //nạp input gồm username/ password vào security
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginDTO.getUsername(),loginDTO.getPassword());
+    public ResponseEntity<RestLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) throws IdInvalidException {
+        // Nạp input gồm username/password vào security
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword());
 
-        //xác thực người dùng => viết hàm loadUserByUserName
+        // Xác thực người dùng
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        //set thông tin người dùng đăng nhập vào context
+        // Set thông tin người dùng đăng nhập vào context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        RestLoginDTO res = new RestLoginDTO();
-        User userCurr = this.userService.handleGetUserByUsername(loginDTO.getUsername());
-        if(userCurr != null){
-            RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(userCurr.getId(),userCurr.getEmail(),userCurr.getName(),userCurr.getUserRole().name());
-            res.setUserLogin(userLogin);
+        // LẤY THÔNG TIN USER - FIX: Lấy theo đúng loại input
+        User userCurr;
+        String usernameInput = loginDTO.getUsername();
+
+        if (usernameInput.contains("@")) {
+            userCurr = this.userService.handleGetUserByUsername(usernameInput);
+        } else {
+            userCurr = this.userService.handleGetUserByPhone(usernameInput);
         }
-        String accessToken = this.securityUtil.createAccessToken(authentication.getName(),res.getUserLogin());
+
+        if (userCurr == null) {
+            throw new IdInvalidException("Không tìm thấy thông tin người dùng");
+        }
+
+        // Tạo response
+        RestLoginDTO res = new RestLoginDTO();
+        RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(
+                userCurr.getId(),
+                userCurr.getEmail(),
+                userCurr.getName(),
+                userCurr.getUserRole().name()
+        );
+        res.setUserLogin(userLogin);
+
+        // Tạo access token - QUAN TRỌNG: Dùng EMAIL làm subject
+        String accessToken = this.securityUtil.createAccessToken(userCurr.getEmail(), res.getUserLogin());
         res.setAccessToken(accessToken);
 
-        //create a refresh token
-        String refresh_token = this.securityUtil.createRefreshToken(loginDTO.getUsername(), res);
+        // Tạo refresh token - QUAN TRỌNG: Dùng EMAIL
+        String refresh_token = this.securityUtil.createRefreshToken(userCurr.getEmail(), res);
 
-        //update user
-        this.userService.updateUserToken(refresh_token, loginDTO.getUsername());
+        // Update user - QUAN TRỌNG: Dùng EMAIL
+        this.userService.updateUserToken(refresh_token, userCurr.getEmail());
 
-        //set cookie
+        // Set cookie
         ResponseCookie responseCookie = ResponseCookie
                 .from("refresh_token", refresh_token)
                 .httpOnly(true)

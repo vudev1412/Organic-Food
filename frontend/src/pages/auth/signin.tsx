@@ -54,11 +54,11 @@ const SingIn = () => {
               autoComplete="off"
             >
               <Form.Item
-                label="Email"
+                label="Tài khoản"
                 name="username"
                 rules={[
-                  { required: true, message: "Email không được để trống" },
-                  { type: "email", message: "Email không đúng định dạng!" },
+                  { required: true, message: "Tài khoản không được để trống" },
+                  
                 ]}
               >
                 <Input placeholder="Nhập email" />

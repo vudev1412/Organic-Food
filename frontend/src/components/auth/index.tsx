@@ -8,8 +8,7 @@ interface IProps {
   children: React.ReactNode;
 }
 const ProtectedRoute = (props: IProps) => {
-  const { isAuthenticated, setUser, setIsAuthenticated, setIsAppLoading } =
-    useCurrentApp();
+  const { isAuthenticated, setUser, setIsAuthenticated, setIsAppLoading } = useCurrentApp();
   useEffect(() => {
     console.log("AdminLayout mounted");
     const fetchAccount = async () => {

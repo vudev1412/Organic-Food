@@ -27,7 +27,7 @@ public interface UserService {
     String handleDeleteUser(Long id);
     User handleGetUserByUsername(String email);
 
-
+    User handleGetUserByPhone(String phone);
     void updateUserToken(String token, String email);
 
     User getUserByRefreshTokenAndEmail(String token, String email);
