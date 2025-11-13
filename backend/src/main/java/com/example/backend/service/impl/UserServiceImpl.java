@@ -90,6 +90,11 @@ public class UserServiceImpl implements UserService {
         return this.userRepository.findByEmail(email);
     }
 
+    @Override
+    public User handleGetUserByPhone(String phone) {
+        return this.userRepository.findByPhone(phone);
+    }
+
 
     public void updateUserToken(String token, String email){
         User currentUser = this.handleGetUserByUsername(email);
