@@ -30,9 +30,12 @@ import Products from "./pages/admin/products";
 import Suppliers from "./pages/admin/suppliers";
 import CustomerOrders from "./pages/admin/orders";
 import ReturnRequests from "./pages/admin/complaints";
-import { App } from "antd";
+import { App, ConfigProvider } from "antd";
 import { AppProvider } from "./components/context/app.context";
 import ProtectedRouter from "./components/auth/admin";
+
+import ProtectedRoute from "./components/auth";
+import viVN from "antd/locale/vi_VN";
 
 const router = createBrowserRouter([
   {
@@ -54,9 +57,9 @@ const router = createBrowserRouter([
       {
         path: "/gio-hang",
         element: (
-          <ProtectedRouter>
+          <ProtectedRoute>
             <Cart />
-          </ProtectedRouter>
+          </ProtectedRoute>
         ),
       },
       {
@@ -129,7 +132,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App>
       <AppProvider>
-        <RouterProvider router={router} />
+        <ConfigProvider locale={viVN}>
+          <RouterProvider router={router} />
+        </ConfigProvider>
       </AppProvider>
     </App>
   </StrictMode>

@@ -13,13 +13,16 @@ declare global{
         data?: T;
     }
     interface IModelPaginate<T>{
-        meta:{
-            current:number;
-            pageSize: number;
+        data:{
+meta:{
+            page:number;
+            size: number;
             pages: number;
             total: number;
         },
-        results: T[]
+        result: T[]
+        }
+        
     }
 
     interface ILogin{
@@ -45,5 +48,12 @@ declare global{
         data:{
             user:IUser
         }
+    }
+
+    interface ICustomerTable{
+        id:number,
+        email:string,
+        name:string,
+        phone:string
     }
 }
