@@ -4,15 +4,15 @@ import "./layout.profile.scss";
 type MenuItem = Required<MenuProps>["items"][number];
 const items: MenuItem[] = [
   {
-    key: "/account/profile",
+    key: "/tai-khoan/thong-tin",
     label: "Hồ sơ",
   },
   {
-    key: "/account/address",
+    key: "/tai-khoan/dia-chi",
     label: "Địa chỉ",
   },
   {
-    key: "/account/password",
+    key: "/tai-khoan/mat-khau",
     label: "Đổi mật khẩu",
   },
 ];

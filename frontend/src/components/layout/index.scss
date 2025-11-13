@@ -1,13 +1,153 @@
-a {
-    color: #909896 !important;
-}
-.container-footer{
-    margin: 0 40px;
-    padding: 10px 0;
 
-    border-bottom:1px solid #235A43 ;
+.container-footer {
+  margin: 0 40px;
+  padding: 10px 0;
+  border-bottom: 1px solid #235a43;
+  a {
+    color: #909896;
+  }
 }
-.logo{
-    width: 160px;
-    
+
+.logo {
+  width: 160px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 40px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  position: relative; // Giữ lại position: relative ở đây
+  z-index: 50;
+  font-size: large;
+
+  .logo {
+    img {
+      width: 70px;
+    }
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+
+    .menu-item {
+      // ***ĐÃ SỬA: Bỏ 'position: relative'***
+      // Thêm 'position: static' để nó không làm mốc định vị cho mega-menu
+      position: static;
+      font-weight: 500;
+      cursor: pointer;
+
+      a {
+        text-decoration: none;
+        color: #000;
+        padding: 5px 10px;
+        display: inline-block;
+        transition: color 0.3s ease, transform 0.2s ease;
+
+        &:hover {
+          color: #22c55e;
+          transform: translateY(-2px);
+        }
+      }
+
+      // Mega menu
+      .mega-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+
+        margin-top: 0;
+        display: flex;
+        gap: 15px;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        transform: translateY(10px);
+        z-index: 50;
+        visibility: hidden;
+        flex-wrap: wrap;
+
+        transition: opacity 0.3s ease-in-out 0.2s,
+          transform 0.3s ease-in-out 0.2s, visibility 0.1s ease-in-out 0.1s;
+
+        .category {
+          display: flex;
+          flex-direction: column;
+          min-width: 200px;
+
+          .parent {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #000;
+            transition: color 0.3s ease;
+
+            &:hover {
+              color: #22c55e;
+            }
+          }
+
+          .child {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 4px;
+            transition: color 0.3s ease;
+
+            &:hover {
+              color: #22c55e;
+            }
+          }
+        }
+      }
+
+      // Logic hover vẫn hoạt động bình thường
+      &:hover .mega-menu,
+      &:focus-within .mega-menu {
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+
+        // Transition khi "vào hover"
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out,
+          visibility 0s linear 0s;
+      }
+    }
+
+    // Các link bình thường ngoài mega menu
+    .nav-link {
+      font-weight: 500;
+      color: #000;
+      text-decoration: none;
+      padding: 5px 10px;
+      transition: color 0.3s ease, transform 0.2s ease;
+
+      &:hover {
+        color: #22c55e;
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    a {
+      color: #000;
+      font-size: 20px;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: #22c55e;
+      }
+    }
+  }
 }

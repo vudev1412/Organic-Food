@@ -1,0 +1,109 @@
+.product {
+  position: relative;
+  max-width: 300px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  transition: transform 0.2s ease;
+
+  // Thêm style cho thẻ <a> được render bởi Link
+  color: inherit; // Kế thừa màu chữ
+  text-decoration: none; // Bỏ gạch chân
+
+  &:hover {
+    transform: translateY(-5px);
+    color: #000;
+  }
+
+  .image-box {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    .discount-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #e60000;
+      color: white;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 4px 6px;
+      border-radius: 6px;
+      z-index: 10;
+    }
+    .discount-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #e60000;
+      color: white;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 4px 6px;
+      border-radius: 6px;
+      z-index: 10;
+    }
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    // Hover phóng ảnh
+    .product:hover & img {
+      transform: scale(1.05);
+    }
+
+    .add-to-cart {
+      position: absolute;
+      top: 50%; // giữa ảnh
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #08740e;
+      color: white;
+      padding: 10px 10px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+      font-weight: 500;
+    }
+
+    // Hiện nút khi hover card
+    .product:hover & .add-to-cart {
+      opacity: 1;
+    }
+  }
+
+  .info {
+    padding: 10px 15px;
+    text-align: center;
+
+    .product-name {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      align-items: baseline;
+
+      .discounted {
+        color: #e60000;
+        font-weight: 700;
+      }
+
+      .original {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
