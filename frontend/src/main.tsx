@@ -31,11 +31,13 @@ import Suppliers from "./pages/admin/suppliers";
 import CustomerOrders from "./pages/admin/orders";
 import ReturnRequests from "./pages/admin/complaints";
 import { App, ConfigProvider } from "antd";
-import { AppProvider } from "./components/context/app.context";
+
 import ProtectedRouter from "./components/auth/admin";
 
 import ProtectedRoute from "./components/auth";
 import viVN from "antd/locale/vi_VN";
+import { AppProvider } from "./components/context/app.provider";
+import { ToastProvider } from "./components/context/toast.provider";
 
 const router = createBrowserRouter([
   {
@@ -131,11 +133,13 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App>
-      <AppProvider>
-        <ConfigProvider locale={viVN}>
-          <RouterProvider router={router} />
-        </ConfigProvider>
-      </AppProvider>
+      <ToastProvider>
+        <AppProvider>
+          <ConfigProvider locale={viVN}>
+            <RouterProvider router={router} />
+          </ConfigProvider>
+        </AppProvider>
+      </ToastProvider>
     </App>
   </StrictMode>
 );

@@ -70,10 +70,17 @@
       opacity: 0;
       transition: opacity 0.3s ease-in-out;
       font-weight: 500;
+      font-size: 13px;
+      &.sold-out {
+        opacity: 1; // Luôn luôn hiện
+        background-color: #999; // Màu xám
+        cursor: not-allowed;
+        font-weight: 600;
+      }
     }
 
     // Hiện nút khi hover card
-    .product:hover & .add-to-cart {
+    .product:hover & .add-to-cart:not(.sold-out) {
       opacity: 1;
     }
   }
@@ -86,6 +93,9 @@
       font-size: 1rem;
       font-weight: 500;
       margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .price {

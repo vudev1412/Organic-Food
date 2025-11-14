@@ -1,127 +1,42 @@
 import React from "react"; // Đã thêm React
 import { Link } from "react-router-dom";
-import logo from "../../assets/png/logo.png"; 
+import logo from "../../assets/png/logo.png";
 import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
-import { useCurrentApp } from "../context/app.context"; 
+import { useCurrentApp } from "../context/app.context";
 import { Dropdown, Space, type MenuProps } from "antd";
-import { logoutAPI } from "../../service/api"; 
-import "./index.scss"; 
-
-
-
-// Danh mục sản phẩm mẫu
-const productCategories = [
-  {
-    name: "Quà Tặng Trái cây",
-    url: "/collections/hop-qua-trai-cay",
-    sub_items: [],
-  },
-  {
-    name: "Trái Cây Theo Mùa",
-    url: "/collections/trai-cay-theo-mua",
-    sub_items: [
-      { name: "Trái Cây Việt", url: "/collections/trai-cay-viet" },
-      { name: "Trái Cây Nhập Khẩu", url: "/collections/trai-cay-nhap-khau" },
-      {
-        name: "Trái Cây Sấy - Đông Lạnh",
-        url: "/collections/trai-cay-say-dong-lanh",
-      },
-      {
-        name: "Nước Ép Trái Cây Tươi",
-        url: "/collections/nuoc-ep-trai-cay-tuoi",
-      },
-    ],
-  },
-  {
-    name: "Bếp O - Ready To Eat",
-    url: "/collections/bep-org-ready-to-eat",
-    sub_items: [],
-  },
-  {
-    name: "Rau Củ Quả",
-    url: "/collections/rau-cu-qua",
-    sub_items: [
-      { name: "Rau lá hữu cơ", url: "/collections/rau-la-huu-co" },
-      { name: "Củ Quả hữu cơ", url: "/collections/cu-qua-huu-co" },
-      { name: "Nấm", url: "/collections/nam" },
-    ],
-  },
-  {
-    name: "Tươi Sống",
-    url: "/collections/tuoi-song",
-    sub_items: [
-      { name: "Thịt Heo Hữu Cơ", url: "/collections/thit-heo-huu-co" },
-      { name: "Thịt Gia Cầm - Trứng", url: "/collections/thit-gia-cam-trung" },
-      { name: "Khô & Một Nắng", url: "/collections/kho-mot-nang" },
-    ],
-  },
-  {
-    name: "Bếp O - Ready To Cook",
-    url: "/collections/ready-to-cook",
-    sub_items: [],
-  },
-  {
-    name: "Thực Phẩm Khô",
-    url: "/collections/thuc-pham-kho",
-    sub_items: [
-      { name: "Các Loại Hạt Hữu Cơ", url: "/collections/cac-loai-hat-huu-co" },
-      { name: "Ngũ Cốc Hữu Cơ", url: "/collections/hat-ngu-coc-huu-co" },
-      { name: "Gạo Hữu Cơ", url: "/collections/gao-huu-co" },
-      { name: "Mì & Nui Hữu Cơ", url: "/collections/mi-nui-huu-co" },
-      { name: "Bánh Kẹo & Socola", url: "/collections/banh-keo-socola" },
-      { name: "Đồ Khô Khác", url: "/collections/do-kho-khac" },
-      {
-        name: "Nguyên Liệu Làm Bánh",
-        url: "/collections/nguyen-lieu-lam-banh",
-      },
-      { name: "Snack Organic", url: "/collections/snack-organic" },
-    ],
-  },
-  {
-    name: "Gia Vị & Phụ Liệu",
-    url: "/collections/gia-vi-phu-lieu",
-    sub_items: [
-      { name: "Gia Vị", url: "/collections/gia-vi" },
-      { name: "Nguyên - Phụ Liệu", url: "/collections/nguyen-phu-lieu" },
-      { name: "Mật Ong", url: "/collections/mat-ong-1" },
-    ],
-  },
-  {
-    name: "Đồ Uống Tốt Sức Khỏe",
-    url: "/collections/do-uong-huu-co",
-    sub_items: [
-      { name: "Trà Hữu Cơ", url: "/collections/tra-huu-co" },
-      { name: "Cà Phê Hữu Cơ", url: "/collections/caffee-huu-co" },
-      { name: "Nước Ép Hữu Cơ", url: "/collections/nuoc-ep-huu-co" },
-      { name: "Đồ Uống Có Cồn", url: "/collections/nuoc-uong-co-con" },
-    ],
-  },
-  {
-    name: "Bơ - Sữa",
-    url: "/collections/bo-sua",
-    sub_items: [
-      { name: "Sữa Hạt", url: "/collections/sua-hat" },
-      { name: "Sữa Tươi", url: "/collections/sua-tuoi" },
-      { name: "Sữa Chua", url: "/collections/sua-chua" },
-      { name: "Bơ & Phomai", url: "/collections/bo-phomai" },
-      { name: "Sữa Đặc", url: "/collections/sua-dac" },
-    ],
-  },
-  {
-    name: "Mẹ & Bé",
-    url: "/collections/nhom-me-va-be",
-    sub_items: [
-      { name: "Thực Phẩm Cho Mẹ", url: "/collections/thuc-pham-cho-me" },
-      { name: "Thực Phẩm Cho Bé", url: "/collections/thuc-pham-cho-be" },
-      { name: "Sức Khoẻ Cho Bé", url: "/collections/suc-khoe-cho-be" },
-      { name: "Đồ Dùng Cho Bé", url: "/collections/do-dung-cho-be" },
-    ],
-  },
-];
+import { logoutAPI, getAllCategoriesAPI } from "../../service/api";
+import "./index.scss";
+import { useEffect, useState } from "react";
 
 const AppHeader = () => {
   const { user, isAuthenticated, setUser, setIsAuthenticated } =
     useCurrentApp();
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [allCategories, setAllCategories] = useState<ICategory[]>([]);
+
+  // Lấy danh mục từ API khi component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getAllCategoriesAPI();
+        if (response && response.data && "data" in response.data) {
+          const allCats = (response.data as unknown as IBackendRes<ICategory[]>)
+            .data as ICategory[];
+          if (allCats && Array.isArray(allCats)) {
+            setAllCategories(allCats);
+            // Lọc chỉ danh mục cha (parentCategory === null)
+            const parentCategories = allCats.filter(
+              (cat: ICategory) => cat.parentCategory === null
+            );
+            setCategories(parentCategories);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleLogout = async () => {
     const res = await logoutAPI();
@@ -157,7 +72,7 @@ const AppHeader = () => {
     <header className="header">
       <div className="logo">
         <Link to="/">
-          <img src={logo} alt="Logo" /> 
+          <img src={logo} alt="Logo" />
         </Link>
       </div>
 
@@ -170,18 +85,29 @@ const AppHeader = () => {
 
           {/* ĐÃ THÊM: onClick cho container của mega-menu */}
           <div className="mega-menu" onClick={handleMenuClick}>
-            {productCategories.map((cat) => (
-              <div key={cat.name} className="category">
-                <Link to={cat.url} className="parent">
-                  {cat.name}
-                </Link>
-                {cat.sub_items.map((sub) => (
-                  <Link key={sub.url} to={sub.url} className="child">
-                    {sub.name}
+            {categories.map((cat) => {
+              // Lấy tất cả danh mục con của danh mục cha này
+              const subCategories =
+                allCategories.filter(
+                  (c: ICategory) => c.parentCategory?.id === cat.id
+                ) || [];
+              return (
+                <div key={cat.name} className="category">
+                  <Link to={`/danh-muc/${cat.slug}`} className="parent">
+                    {cat.name}
                   </Link>
-                ))}
-              </div>
-            ))}
+                  {subCategories.map((sub: ICategory) => (
+                    <Link
+                      key={sub.slug}
+                      to={`/danh-muc/${sub.slug}`}
+                      className="child"
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
 
