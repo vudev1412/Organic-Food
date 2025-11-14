@@ -43,4 +43,9 @@ public class PromotionDetailController {
         promotionDetailService.delete(promotionId, productId);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/{promotionId}/{productId}")
+    public ResponseEntity<ResPromotionDetailDTO> getById(@PathVariable long promotionId,
+                                                         @PathVariable long productId){
+        return ResponseEntity.ok().body(this.promotionDetailService.getById(promotionId,productId));
+    }
 }

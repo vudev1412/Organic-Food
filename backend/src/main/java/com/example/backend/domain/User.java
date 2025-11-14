@@ -42,7 +42,7 @@ public class User {
     private Instant updateAt;
 
     @Enumerated(EnumType.STRING)
-    private Role userRole = Role.CUSTOMER;
+    private Role userRole;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;

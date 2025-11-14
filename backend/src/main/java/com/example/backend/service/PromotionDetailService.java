@@ -10,4 +10,5 @@ public interface PromotionDetailService {
     ResPromotionDetailDTO create(ReqPromotionDetailDTO dto);
     ResPromotionDetailDTO update(long promotionId, long productId, ReqPromotionDetailDTO dto);
     void delete(long promotionId, long productId);
+    ResPromotionDetailDTO getById(long promotionId, long productId);
 }
