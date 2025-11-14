@@ -69,4 +69,14 @@ public class PromotionDetailServiceImpl implements PromotionDetailService {
         PromotionDetailKey key = new PromotionDetailKey(promotionId, productId);
         promotionDetailRepository.deleteById(key);
     }
+
+    @Override
+    public ResPromotionDetailDTO getById(long promotionId, long productId) {
+        PromotionDetailKey key = new PromotionDetailKey(promotionId, productId);
+        PromotionDetail existing = promotionDetailRepository.findById(key)
+                .orElseThrow(() -> new RuntimeException("PromotionDetail not found"));
+        return this.mapper.toResPromotionDetailDTO(existing);
+    }
+
+
 }

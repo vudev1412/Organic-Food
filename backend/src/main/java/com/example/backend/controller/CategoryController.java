@@ -1,7 +1,13 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.Category;
+import com.example.backend.domain.Product;
+import com.example.backend.domain.request.ReqCategoryDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.impl.CategoryService;
+import com.turkraft.springfilter.boot.Filter;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +23,9 @@ public class CategoryController {
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<List<Category>> getAllCategory(){
-        return ResponseEntity.ok().body(this.categoryService.handleGetAllCategory());
+    public ResponseEntity<ResultPaginationDTO> getAllCategory( @Filter Specification<Category> spec,
+                                                               Pageable pageable){
+        return ResponseEntity.ok().body(this.categoryService.getAllCategories(spec, pageable));
     }
 
     @GetMapping("/categories/{id}")
@@ -27,7 +34,7 @@ public class CategoryController {
     }
 
     @PostMapping("/categories")
-    public ResponseEntity<Category> createCategory(@RequestBody Category category){
+    public ResponseEntity<Category> createCategory(@RequestBody ReqCategoryDTO category){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.categoryService.handleCreateCategory(category));
     }
     @PutMapping("/categories/{id}")

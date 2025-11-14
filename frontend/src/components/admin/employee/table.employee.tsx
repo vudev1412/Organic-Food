@@ -1,12 +1,13 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { deleteUserAPI, getCustomersAPI } from "../../../service/api";
+import { deleteUserAPI, getCustomersAPI, getEmployeesAPI } from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
 import { App, Button, Popconfirm } from "antd";
-import DetailUser from "./user.detail";
-import CreateUser from "./create.customer";
-import UpdateUser from "./update.customer";
+import DetailEmployee from "./employee.detail";
+import CreateEmployee from "./create.employee";
+import UpdateEmployee from "./update.employee";
+
 
 // Định nghĩa các cột
 
@@ -16,7 +17,7 @@ type TSearch = {
   phone: string;
 };
 // Component
-const MyTable = () => {
+const TableEmployee = () => {
   const actionRef = useRef<ActionType>(null);
   const [meta, setMeta] = useState({
     page: 1,
@@ -156,7 +157,7 @@ const MyTable = () => {
               query += `&sort=${sortField},${order}`;
             }
           }
-          const res = await getCustomersAPI(query);
+          const res = await getEmployeesAPI(query);
           if (res.data) {
             setMeta(res.data.data.meta);
           }
@@ -181,7 +182,7 @@ const MyTable = () => {
             );
           },
         }}
-        headerTitle="Table user"
+        headerTitle="Employee"
         toolBarRender={() => [
           <Button
             key="button"
@@ -196,18 +197,18 @@ const MyTable = () => {
         ]}
       />
 
-      <DetailUser
+      <DetailEmployee
         openViewDetail={openViewDetail}
         setOpenViewDetail={setOpenViewDetail}
         dataViewDetail={dataViewDetail}
         setDataViewDetail={setDataViewDetail}
       />
-      <CreateUser
+      <CreateEmployee
         openModelCreate={openModelCreate}
         setOpenModalCreate={setOpenModalCreate}
         refreshTable={refreshTable}
       />
-      <UpdateUser
+      <UpdateEmployee
         openModelUpdate={openModalUpdate}
         setOpenModelUpdate={setOpenModalUpdate}
         refreshTable={refreshTable}
@@ -218,4 +219,4 @@ const MyTable = () => {
   );
 };
 
-export default MyTable;
+export default TableEmployee;

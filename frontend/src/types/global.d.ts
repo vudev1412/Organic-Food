@@ -47,6 +47,70 @@ declare global {
     };
   }
 
+
+    interface ICustomerTable{
+        id:number,
+        email:string,
+        name:string,
+        phone:string
+    }
+    interface IRegister{
+        name:string;
+        email:string;
+        password:string;
+        phone:string;
+        role:string;
+    }
+    interface IProduct {
+     id: number;
+  name: string;
+  unit: string;
+  price: number;
+  quantity: number;
+  origin_address: string;
+  description: string;
+  rating_avg: number;
+  slug: string | null;
+  image?: string;
+  active: boolean;
+  mfgDate: Date;
+  expDate: Date;
+  createAt: string;
+  updateAt: string | null;
+  createBy: string;
+  updateBy: string | null;
+  categoryId: number;
+}
+interface ICategory {
+  id: number;
+  name: string;
+  slug: string;
+  parent_category_id?: number;
+}
+interface ICreateCategoryDTO {
+  name: string;
+  slug: string;
+  parent_category_id?: number;
+}
+export interface ISupplier {
+  id: number;
+  name: string;
+  code?: string;
+  taxNo?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+export interface ICreateSupplierDTO {
+  name: string;
+  code?: string;
+  taxNo?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+}
+
   interface ICustomerTable {
     id: number;
     email: string;
@@ -63,3 +127,4 @@ declare global {
     active: boolean;
   }
 }
+
