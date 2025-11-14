@@ -19,7 +19,7 @@ const AdminHeader: React.FC = () => {
    const items: MenuProps["items"] = [
     {
       key: "1",
-      label: <Link to="/account/profile">Hồ sơ</Link>,
+      label: <Link to="/tai-khoan/thong-tin">Hồ sơ</Link>,
     },
     {
       key: "2",

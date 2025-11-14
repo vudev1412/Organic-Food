@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PageCard from '../../components/section/dashboard/page.card';
 import FilterBar from '../../components/section/dashboard/filter.bar';
@@ -37,12 +38,24 @@ interface IProduct {
   categoryName?: string;
 }
 
+import ProductTable from "../../components/admin/product/table.product";
+
+
 const Products = () => {
   return (
     <>
+
       <TableProduct/>
     </>
   )
 }
 
 export default Products;
+
+      <ProductTable />
+    </>
+  );
+};
+
+export default Products;
+
