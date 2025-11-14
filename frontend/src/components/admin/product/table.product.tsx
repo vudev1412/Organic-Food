@@ -3,9 +3,8 @@ import type { ProColumns } from "@ant-design/pro-components";
 
 import { getProductsAPI } from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
-import { Button, Image, Tag } from "antd"; 
-import { useState } from "react"; 
-
+import { Button, Image, Tag } from "antd";
+import { useState } from "react";
 
 // Định nghĩa các cột cho Product
 const columns: ProColumns<IProductTable>[] = [
@@ -73,7 +72,7 @@ const columns: ProColumns<IProductTable>[] = [
     hideInSearch: true,
     // <<< SỬA 2: Thêm gạch dưới ( _ ) cho các biến không dùng
     // Khi bạn dùng (ví dụ: _entity), hãy xóa gạch dưới
-    render(_dom, _entity, _index, _action, _schema) {
+    render() {
       return (
         <>
           <EditTwoTone
@@ -105,7 +104,7 @@ const ProductTable = () => {
     <ProTable<IProductTable>
       columns={columns}
       // <<< SỬA 3: Thêm gạch dưới ( _ ) cho các biến không dùng
-      request={async (params, _sort, _filter) => {
+      request={async (params) => {
         // !!! THAY ĐỔI: Gọi API để lấy dữ liệu sản phẩm
         const res = await getProductsAPI(
           params?.current ?? 1,
