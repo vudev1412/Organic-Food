@@ -1,11 +1,16 @@
 package com.example.backend.service.impl;
 
 import com.example.backend.domain.User;
+import com.example.backend.domain.request.ReqCreateUserDTO;
+import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.domain.response.ResUserDTO;
+import com.example.backend.enums.Role;
+import com.example.backend.mapper.UserMapper;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,18 +22,31 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    public UserServiceImpl(UserRepository userRepository){
-        this.userRepository = userRepository;
-    }
+    private final UserMapper mapper;
     public boolean isEmailExist(String email){
         return this.userRepository.existsByEmail(email);
     }
-    public User handleCreateUser(User user){
 
-        return userRepository.save(user);
+    @Override
+    public User handleCreateUser(ReqCreateUserDTO user) {
+        User entity = mapper.toUser(user);
+
+        // Nếu role là enum, đảm bảo convert
+        if (entity.getUserRole() == null && user.getRole() != null) {
+            entity.setUserRole(Role.valueOf(user.getRole()));
+        }
+
+        // Save entity
+        User saved = userRepository.save(entity);
+
+        // Nếu muốn trả về DTO
+        // return userMapper.toResUserDTO(saved);
+        return saved;
     }
+
 
     public ResultPaginationDTO handleGetAllUser(Specification<User> spec, Pageable pageable) {
         Page<User> pageUser = this.userRepository.findAll(spec,pageable);
@@ -60,14 +78,20 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id);
     }
 
-    public User handleUpdateUser(Long id, User user){
+    public User handleUpdateUser(Long id, ReqUserDTO user){
         Optional<User> myUser = this.handleGetUserById(id);
         if(myUser.isPresent()){
             User userCurr = myUser.get();
-            userCurr.setName(user.getName());
-            userCurr.setEmail(user.getEmail());
-            userCurr.setPhone(user.getPhone());
-            userCurr.setPassword(user.getPassword());
+            if(userCurr.getName() != null){
+                userCurr.setName(user.getName());
+            }
+            if(userCurr.getEmail() != null){
+                userCurr.setEmail(user.getEmail());
+            }
+            if(userCurr.getPhone() != null){
+                userCurr.setPhone(user.getPhone());
+            }
+
             this.userRepository.save(userCurr);
             return userCurr;
         }
@@ -107,4 +131,57 @@ public class UserServiceImpl implements UserService {
     public User getUserByRefreshTokenAndEmail(String token, String email){
         return this.userRepository.findByRefreshTokenAndEmail(token,email);
     }
+
+    @Override
+    public ResultPaginationDTO getAllUserByRole(Specification<User> spec, Pageable pageable) {
+        Specification<User> finalSpec = spec == null
+                ? (root, query, cb) -> cb.equal(root.get("userRole"), Role.CUSTOMER)
+                : spec.and((root, query, cb) -> cb.equal(root.get("userRole"),  Role.CUSTOMER));
+        Page<User> page = userRepository.findAll(finalSpec, pageable);
+        List<ResUserDTO> userDTOs = page.getContent()
+                .stream()
+                .map(mapper::toResUserDTO)
+                .toList();
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(page.getTotalPages());
+        meta.setTotal(page.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(page.getContent());
+
+        rs.setResult(userDTOs);
+        return rs;
+    }
+
+    public ResultPaginationDTO getAllUserByEmployee(Specification<User> spec, Pageable pageable) {
+        Specification<User> finalSpec = spec == null
+                ? (root, query, cb) -> cb.equal(root.get("userRole"), Role.EMPLOYEE)
+                : spec.and((root, query, cb) -> cb.equal(root.get("userRole"),  Role.EMPLOYEE));
+        Page<User> page = userRepository.findAll(finalSpec, pageable);
+        List<ResUserDTO> userDTOs = page.getContent()
+                .stream()
+                .map(mapper::toResUserDTO)
+                .toList();
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(page.getTotalPages());
+        meta.setTotal(page.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(page.getContent());
+
+        rs.setResult(userDTOs);
+        return rs;
+    }
+
+
 }

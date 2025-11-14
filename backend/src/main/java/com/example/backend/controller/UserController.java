@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.User;
+import com.example.backend.domain.request.ReqCreateUserDTO;
+import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.service.UserService;
@@ -33,10 +35,17 @@ public class UserController {
     public ResponseEntity<ResultPaginationDTO> getAllUser(@Filter Specification<User> spec, Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.handleGetAllUser(spec, pageable));
     }
-
+    @GetMapping("/users-customer")
+    public ResponseEntity<ResultPaginationDTO> getAllCustomer(@Filter Specification<User> spec, Pageable pageable){
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.getAllUserByRole(spec, pageable));
+    }
+    @GetMapping("/users-employee")
+    public ResponseEntity<ResultPaginationDTO> getAllEmployee(@Filter Specification<User> spec, Pageable pageable){
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.getAllUserByEmployee(spec, pageable));
+    }
     @PostMapping("/users")
     @ApiMessage("Created a user")
-    public ResponseEntity<ResCreateUserDTO> createUser(@Valid @RequestBody User user) throws IdInvalidException{
+    public ResponseEntity<ResCreateUserDTO> createUser(@Valid @RequestBody ReqCreateUserDTO user) throws IdInvalidException{
         boolean isEmailExist = this.userService.isEmailExist(user.getEmail());
         if (isEmailExist){
             throw new IdInvalidException(
@@ -53,8 +62,8 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body( this.userService.handleGetUserById(id));
     }
 
-    @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user){
+    @PatchMapping("/users/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody ReqUserDTO user){
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.handleUpdateUser(id,user));
     }
 
