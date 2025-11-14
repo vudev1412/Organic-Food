@@ -1,0 +1,35 @@
+.product-left {
+  a {
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+  }
+
+  button {
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Link danh mục cha không có con */
+  .category-parent-link {
+    color: #4b5563;
+    &:hover {
+      background-color: #16a34a !important;
+      color: white !important;
+    }
+  }
+
+  /* Child category links */
+  .category-child {
+    display: block;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    color: #4b5563;
+    font-size: 0.875rem;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #dcfce7;
+      color: #15803d;
+    }
+  }
+}

@@ -47,6 +47,19 @@ declare global {
     };
   }
 
+  interface IDiscount {
+    id: number;
+    type: string;
+    value: number;
+  }
+  interface IProductCard {
+    id: number;
+    name: string;
+    slug: string;
+    image: string;
+    price: number;
+    quantity: number;
+  }
   interface ICustomerTable {
     id: number;
     email: string;
@@ -61,5 +74,46 @@ declare global {
     price: number;
     quantity: number;
     active: boolean;
+  }
+  interface ICategory {
+    id: number;
+    name: string;
+    slug: string;
+    parentCategory: ICategory | null;
+  }
+
+  interface ICartItem {
+    id: number;
+    name: string;
+    slug: string;
+    image: string;
+    price: number;
+    originalPrice?: number;
+    discount?: number;
+    quantity: number;
+  }
+  /**
+   * Interface cho chi tiết sản phẩm,
+   * tương ứng với trường 'data' trong API response.
+   */
+  interface IProductDetail {
+    id: number;
+    name: string;
+    unit: string;
+    price: number;
+    origin_address: string;
+    description: string;
+    rating_avg: number;
+    quantity: number;
+    slug: string;
+    image: string; // Tên file ảnh
+    active: boolean;
+    mfgDate: string; // Ngày sản xuất (ISO date string, ví dụ: "2025-10-08T00:00:00Z")
+    expDate: string; // Hạn sử dụng (ISO date string)
+    createAt: string | null;
+    updateAt: string | null;
+    createBy: string | null;
+    updateBy: string | null;
+    categoryId: number;
   }
 }

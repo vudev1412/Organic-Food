@@ -41,3 +41,27 @@ export const getProductsAPI = (page: number, size: number) => {
   const urlBackend = `/api/v1/products?page=${page}&size=${size}`;
   return axios.get<IBackendRes<IModelPaginate<IProductTable>>>(urlBackend);
 };
+
+export const getAllCategoriesAPI = () => {
+  const urlBackend = "/api/v1/categories";
+  return axios.get<IBackendRes<ICategory[]>>(urlBackend);
+};
+
+export const getProductCardListAPI = (
+  page: number,
+  size: number,
+  sort?: string
+) => {
+  let urlBackend = `/api/v1/products?page=${page}&size=${size}`;
+
+  // Thêm sort param nếu có
+  if (sort) {
+    urlBackend += `&sort=${sort}`;
+  }
+
+  return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+};
+export const getProductDetailById = (id:number)=>{
+  const urlBackend = `/api/v1/products/${id}`;
+  return axios.get<IBackendRes<IProductDetail>>(urlBackend)
+}

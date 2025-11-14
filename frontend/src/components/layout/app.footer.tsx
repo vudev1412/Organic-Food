@@ -6,7 +6,7 @@ import { faInstagram } from "@fortawesome/free-brands-svg-icons";
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 const AppFooter = () => {
   return (
-    <footer className="bg-green-900 text-white py-10">
+    <footer className="bg-green-900 text-white py-10 mt-10">
       <div className="container-footer grid grid-cols-1 md:grid-cols-4 gap-8 px-6">
         <div>
           <h2 className="text-2xl font-bold mb-4">Organic Store</h2>
