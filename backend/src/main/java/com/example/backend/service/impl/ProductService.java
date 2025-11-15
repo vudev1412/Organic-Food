@@ -83,7 +83,7 @@ public class ProductService {
     }
 
 
-    public Product handleUpdateProduct(Long id, ReqProductDTO updatedProduct) {
+    public ResProductDTO handleUpdateProduct(Long id, ReqProductDTO updatedProduct) {
 
         Product existingProduct = this.productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
@@ -104,7 +104,7 @@ public class ProductService {
         }
 
 
-        return this.productRepository.save(existingProduct);
+        return this.productMapper.toResProductDto(this.productRepository.save(existingProduct));
     }
     public String handleDeleteProduct(Long id){
         this.productRepository.deleteById(id);
