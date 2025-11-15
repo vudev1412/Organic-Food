@@ -52,10 +52,5 @@ const Products = () => {
 
 export default Products;
 
-      <ProductTable />
-    </>
-  );
-};
 
-export default Products;
 
