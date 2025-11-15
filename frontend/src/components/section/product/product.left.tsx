@@ -33,15 +33,25 @@ const ProductLeft = () => {
     const fetchCategories = async () => {
       try {
         const response = await getAllCategoriesAPI();
-        if (response && response.data && "data" in response.data) {
-          const allCats = (response.data as unknown as IBackendRes<ICategory[]>)
-            .data as ICategory[];
-          if (allCats && Array.isArray(allCats)) {
+
+        // Giả sử response.data.data chính là cấu trúc JSON bạn vừa gửi
+        if (
+          response &&
+          response.data &&
+          response.data.data &&
+          response.data.data.result
+        ) {
+          // SỬA LỖI: Truy cập vào .result để lấy mảng
+          const allCats: ICategory[] = response.data.data.result as ICategory[];
+
+          if (Array.isArray(allCats)) {
             setAllCategories(allCats);
+
             // Lọc chỉ danh mục cha (parentCategory === null)
             const parentCategories = allCats.filter(
               (cat: ICategory) => cat.parentCategory === null
             );
+
             setCategories(parentCategories);
           }
         }

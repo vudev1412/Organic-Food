@@ -147,7 +147,7 @@ export const deleteSupplierAPI = (id: number) => {
 
 
 export const getAllCategoriesAPI = () => {
-  const urlBackend = "/api/v1/categories";
+  const urlBackend = "/api/v1/categories?size=1000";
   return axios.get<IBackendRes<ICategory[]>>(urlBackend);
 };
 
