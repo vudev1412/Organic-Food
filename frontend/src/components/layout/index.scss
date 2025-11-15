@@ -1,4 +1,3 @@
-
 .container-footer {
   margin: 0 40px;
   padding: 10px 0;
@@ -18,9 +17,10 @@
   align-items: center;
   padding: 10px 40px;
   background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  position: relative; // Giữ lại position: relative ở đây
-  z-index: 50;
+  box-shadow: 0 2px 6px #0000001a;
+  position: sticky;
+  top: 0;          
+  z-index: 1000;
   font-size: large;
 
   .logo {
