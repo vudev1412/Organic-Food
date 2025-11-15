@@ -59,7 +59,12 @@ public class ProductController {
     }
 
     @GetMapping("/product/category/{id}")
-    public ResponseEntity<List<ResProductDTO>> getProductByCategoryId(@PathVariable Long id){
-        return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id));
+    @ApiMessage("fetch all product by category id with pagination")
+    public ResponseEntity<ResultPaginationDTO> getProductByCategoryId(
+            @PathVariable Long id,
+            @Filter Specification<Product> spec,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id, spec, pageable));
     }
 }

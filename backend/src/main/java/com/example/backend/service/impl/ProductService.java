@@ -14,7 +14,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -109,9 +111,62 @@ public class ProductService {
         return "Delete success";
     }
 
-    public List<ResProductDTO> handleGetProductByCategoryId(Long categoryId){
-        return this.productRepository.getProductByCategory_Id(categoryId)
-                .stream().map(productMapper::toResProductDto)
-                .toList();
+
+
+    public ResultPaginationDTO handleGetProductByCategoryId(Long categoryId, Specification<Product> spec, Pageable pageable) {
+
+
+        final List<Long> categoryIdsToSearch;
+
+        List<Category> childrenCategories = this.categoryRepository.findAllByParentCategoryId(categoryId);
+
+        if (childrenCategories.isEmpty()) {
+            // Gán lần đầu tiên (và duy nhất)
+            // Dùng List.of() để tạo nhanh một list chỉ chứa 1 phần tử (ID cha)
+            categoryIdsToSearch = List.of(categoryId);
+        } else {
+            // Gán lần đầu tiên (và duy nhất)
+            categoryIdsToSearch = childrenCategories.stream()
+                    .map(Category::getId)
+                    .collect(Collectors.toList());
+
+
+        }
+
+
+        // 2. Tạo Specification cho category (Giữ nguyên)
+        Specification<Product> categorySpec = (root, query, cb) -> {
+            return root.get("category").get("id").in(categoryIdsToSearch);
+        };
+
+
+        // 3. Kết hợp 2 Specification
+        // Bắt đầu với categorySpec (luôn luôn tồn tại)
+        Specification<Product> finalSpec = categorySpec;
+
+        // Chỉ kết hợp 'spec' (từ filter) nếu nó không null
+        if (spec != null) {
+            finalSpec = finalSpec.and(spec);
+        }
+
+        // 4. Gọi hàm findAll() với spec cuối cùng
+        Page<ResProductDTO> pageProduct = this.productRepository
+                .findAll(finalSpec, pageable) // Dùng 'finalSpec' đã kết hợp
+                .map(productMapper::toResProductDto);
+
+        // 5. Logic tạo Meta/ResultPaginationDTO (Giữ nguyên)
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(pageProduct.getTotalPages());
+        meta.setTotal(pageProduct.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(pageProduct.getContent());
+
+        return rs;
     }
 }
