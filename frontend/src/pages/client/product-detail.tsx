@@ -1,68 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams, useLocation } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faStar as faStarSolid,
-  faTimes,
-  faShoppingCart,
-  faBolt,
-  faCheck,
-  faShieldAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import { getProductDetailById } from "../../service/api";
-import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
-import { parseDescription } from "../../components/common/parseDescription";
-// Giả lập import ảnh sản phẩm
-import cachua from "../../assets/jpg/ca-chua-beef-huu-co.jpg";
-import cachua1 from "../../assets/jpg/cachua1.jpg";
-import cachua2 from "../../assets/jpg/cachua2.jpg";
-import cachua3 from "../../assets/jpg/cachua3.jpg";
+import { useLocation } from "react-router-dom";
+import { getProductDetailById, getSubImgByProductId } from "../../service/api";
 
-// Giả lập import logo chứng chỉ
+// Giả lập import logo chứng chỉ (Mock data)
 import vietgapLogo from "../../../../upload/images/certs/vietgap.png";
 import usdaLogo from "../../../../upload/images/certs/usda_organic.png";
+import ProductImageGallery from "../../components/section/product-detail/ProductImageGallery";
+import ProductInfo from "../../components/section/product-detail/ProductInfo";
+import ProductTabs from "../../components/section/product-detail/ProductTabs";
+import RelatedProducts from "../../components/common/RelatedProducts";
+import CertificationModal from "../../components/section/product-detail/CertificationModal";
 
-// --- START: Thêm Type (bạn đã bỏ lỡ) ---
-interface IProductDetail {
-  id: number;
-  name: string;
-  unit: string;
-  price: number;
-  origin_address: string;
-  description: string;
-  rating_avg: number;
-  quantity: number;
-  slug: string;
-  image: string;
-  active: boolean;
-  mfgDate: string;
-  expDate: string;
-  createAt: string | null;
-  updateAt: string | null;
-  createBy: string | null;
-  updateBy: string | null;
-  categoryId: number;
-}
-// --- END: Thêm Type ---
-
-// Interface cho Chứng chỉ
-interface ICertification {
-  id: number;
-  name: string;
-  logo: string;
-  imageUrl: string;
-  description: string;
-}
-
-// Interface cho Bình luận
-interface IComment {
-  user: string;
-  rating: number;
-  content: string;
-  date?: string;
-}
-
-// Dữ liệu cho chứng chỉ (Giữ lại vì API không trả về)
+// Dữ liệu cho chứng chỉ (Mock data)
 const certifications: ICertification[] = [
   {
     id: 1,
@@ -82,7 +31,7 @@ const certifications: ICertification[] = [
   },
 ];
 
-// Dữ liệu bình luận (Giữ lại làm mock)
+// Dữ liệu bình luận (Mock data)
 const initialComments: IComment[] = [
   {
     user: "Nguyễn Văn A",
@@ -98,109 +47,67 @@ const initialComments: IComment[] = [
   },
 ];
 
-// Dữ liệu ảnh mock (Giữ lại cho thumbnail vì API chỉ trả 1 ảnh)
-const mockImages: string[] = [cachua, cachua1, cachua2, cachua3];
-
-// Interface cho props của StarRating
-interface StarRatingProps {
-  rating: number;
-  setRating?: (rating: number) => void;
-  interactive?: boolean;
-  size?: "sm" | "md" | "lg";
-}
-
-// Component StarRating (Giữ nguyên)
-const StarRating: React.FC<StarRatingProps> = ({
-  rating,
-  setRating,
-  interactive = false,
-  size = "md",
-}) => {
-  const [hoverRating, setHoverRating] = useState<number>(0);
-
-  const sizeClasses = {
-    sm: "text-sm",
-    md: "text-base",
-    lg: "text-xl",
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <FontAwesomeIcon
-          key={star}
-          icon={
-            (interactive ? hoverRating || rating : rating) >= star
-              ? faStarSolid
-              : faStarRegular
-          }
-          className={`text-yellow-400 ${sizeClasses[size]} ${
-            interactive
-              ? "cursor-pointer hover:scale-110 transition-transform"
-              : ""
-          }`}
-          onClick={() => interactive && setRating && setRating(star)}
-          onMouseEnter={() => interactive && setHoverRating(star)}
-          onMouseLeave={() => interactive && setHoverRating(0)}
-        />
-      ))}
-    </div>
-  );
-};
-
-// ... (Phần import, interface, component StarRating giữ nguyên)
-
 const ProductDetail: React.FC = () => {
-  // --- START: Sửa đổi State ---
-  const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const productId = location.state?.productId;
 
-  // Thêm state cho product và loading
+  // State quản lý dữ liệu
   const [product, setProduct] = useState<IProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [comments, setComments] = useState<IComment[]>([]);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
-  // Sửa state, khởi tạo rỗng
   const [selectedImage, setSelectedImage] = useState<string>("");
+
+  // State cho tương tác UI
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<"desc" | "info" | "reviews">(
-    "desc"
-  );
-  const [comments, setComments] = useState<IComment[]>([]); // Khởi tạo rỗng
+  const [selectedCert, setSelectedCert] = useState<ICertification | null>(null);
+
+  // State cho form review
   const [newComment, setNewComment] = useState<string>("");
   const [newRating, setNewRating] = useState<number>(5);
-  const [selectedCert, setSelectedCert] = useState<ICertification | null>(null);
-  // --- END: Sửa đổi State ---
 
-  const handleIncrease = () => setQuantity((prev) => prev + 1);
-  const handleDecrease = () => {
-    if (quantity > 1) setQuantity((prev) => prev - 1);
-  };
-
-  // --- SỬA TRONG useEffect ---
+  // --- Data Fetching ---
   useEffect(() => {
     const fetchProductData = async () => {
       if (productId) {
         setIsLoading(true);
+        const baseUrl = "http://localhost:8080/storage/images/products/";
         try {
           const response = await getProductDetailById(productId);
-
-          // SỬA DÒNG NÀY:
           if (response.data.data) {
-            // Phải là response.data.data
-            // VÀ SỬA DÒNG NÀY:
-            const productData = response.data.data; // Lấy data bên trong
+            const productData = response.data.data;
             setProduct(productData);
 
-            // Set ảnh chính từ API
-            if (productData.image) {
-              const imageUrl = `http://localhost:8080/storage/images/products/${productData.image}`;
-              setSelectedImage(imageUrl);
-            } else {
-              setSelectedImage(mockImages[0]); // Fallback (Dùng mockImages)
+            const mainImageUrl = `${baseUrl}${productData.image}`;
+            setSelectedImage(mainImageUrl);
+
+            try {
+              const imgRes = await getSubImgByProductId(productId);
+
+              if (
+                imgRes.data.data &&
+                Array.isArray(imgRes.data.data) &&
+                imgRes.data.data.length > 0
+              ) {
+                // Map mảng ảnh phụ
+                const subImageUrls = imgRes.data.data.map(
+                  (img: IProductImage) => `${baseUrl}${img.imgUrl}`
+                );
+
+                // Set gallery = ảnh chính + ảnh phụ
+                setGalleryImages([mainImageUrl, ...subImageUrls]);
+              } else {
+                // Không có ảnh phụ, set gallery chỉ có ảnh chính
+                setGalleryImages([mainImageUrl]);
+              }
+            } catch (imgError) {
+              console.error("Lỗi khi tải ảnh phụ:", imgError);
+              // Nếu lỗi, vẫn set gallery với ảnh chính
+              setGalleryImages([mainImageUrl]);
             }
 
-            // Tạm dùng mock comment, sau này bạn sẽ fetch theo productId
+            // TODO: Fetch comment theo productId
             setComments(initialComments);
           }
         } catch (error) {
@@ -216,7 +123,15 @@ const ProductDetail: React.FC = () => {
 
     fetchProductData();
   }, [productId]);
-  // --- KẾT THÚC SỬA useEffect ---
+
+  // --- Handlers ---
+  const handleIncrease = () => setQuantity((prev) => prev + 1);
+  const handleDecrease = () => {
+    if (quantity > 1) setQuantity((prev) => prev - 1);
+  };
+  const handleQuantityChange = (newQty: number) => {
+    setQuantity(newQty);
+  };
 
   const handleReviewSubmit = () => {
     if (newComment.trim()) {
@@ -234,14 +149,13 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  // --- START: Sửa đổi averageRating ---
+  // --- Computed Values ---
   const averageRating =
     comments.length > 0
       ? comments.reduce((acc, c) => acc + c.rating, 0) / comments.length
-      : product?.rating_avg || 0; // Lấy từ product state
-  // --- END: Sửa đổi averageRating ---
+      : product?.rating_avg || 0;
 
-  // --- START: Thêm Loading/Error Guards ---
+  // --- Loading / Error Guards ---
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -260,431 +174,56 @@ const ProductDetail: React.FC = () => {
       </div>
     );
   }
-  // --- END: Thêm Loading/Error Guards ---
 
+  // --- Render ---
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         {/* Main Product Section */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-10">
-            {/* Cột trái: Hình ảnh sản phẩm */}
-            <div className="flex flex-col gap-4">
-              <div className="relative w-full h-[400px] lg:h-[500px] overflow-hidden rounded-2xl bg-gray-100 group">
-                {/* --- SỬA: Dùng ảnh và alt động --- */}
-                <img
-                  src={selectedImage}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                  -20%
-                </div>
-              </div>
-              <div className="flex justify-center gap-3 flex-wrap">
-                {/* --- SỬA: Dùng mockImages (vì API chỉ có 1 ảnh) --- */}
-                {mockImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`Thumbnail ${index}`}
-                    onClick={() => setSelectedImage(img)}
-                    className={`w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-lg cursor-pointer border-2 transition-all duration-300 ${
-                      selectedImage === img
-                        ? "border-green-600 ring-2 ring-green-200 scale-105"
-                        : "border-gray-200 hover:border-green-300"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
+            <ProductImageGallery
+              productName={product.name}
+              selectedImage={selectedImage}
+              images={galleryImages} // Dùng mock cho thumbnail
+              onSelectImage={setSelectedImage}
+            />
 
-            {/* Cột phải: Thông tin sản phẩm */}
-            <div className="flex flex-col gap-3">
-              <div>
-                {/* --- SỬA: Dùng tên động --- */}
-                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                  {product.name}
-                </h1>
-                <div className="flex items-center gap-3 mb-4">
-                  <StarRating rating={averageRating} size="lg" />
-                  <span className="text-gray-600">
-                    {averageRating.toFixed(1)} ({comments.length} đánh giá)
-                  </span>
-                </div>
-              </div>
-
-              {/* --- SỬA: Dùng giá/đơn vị động --- */}
-              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                <div className="flex items-baseline gap-3 mb-1">
-                  <span className="text-3xl font-bold text-green-700">
-                    {product.price.toLocaleString()}₫ / {product.unit}
-                  </span>
-                  {/* API không có giá gốc, nên ẩn đi
-                  <span className="text-lg text-gray-400 line-through">
-                    50.000₫
-                  </span>
-                  */}
-                </div>
-                {/* <p className="text-sm text-green-700">Tiết kiệm 10.000₫</p> */}
-              </div>
-
-              {/* Giữ nguyên chứng chỉ mock vì API không có */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 ">
-                <h4 className="font-semibold mb-2 flex items-center gap-2 ">
-                  <FontAwesomeIcon
-                    icon={faShieldAlt}
-                    className="text-green-600"
-                  />
-                  Chứng nhận chất lượng
-                </h4>
-                <div className="flex gap-3">
-                  {certifications.map((cert) => (
-                    <div
-                      key={cert.id}
-                      className="p-2 border border-transparent hover:!border-green-300p-2 rounded-full cursor-pointer transition-all duration-300 
-            ring-1 ring-transparent hover:ring-green-300 
-            hover:shadow-lg hover:scale-105"
-                      onClick={() => setSelectedCert(cert)}
-                    >
-                      <img
-                        src={cert.logo}
-                        alt={cert.name}
-                        className="w-20 h-20 object-contain"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quantity */}
-              <div>
-                {/* --- SỬA: Dùng đơn vị động --- */}
-                <h3 className="font-semibold text-lg mb-3">
-                  Số lượng ({product.unit}):
-                </h3>
-                <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden w-fit">
-                  <button
-                    onClick={handleDecrease}
-                    className="w-12 h-12 flex items-center justify-center text-xl hover:bg-gray-200 transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 12H4"
-                      />
-                    </svg>
-                  </button>
-                  <div className="w-16 text-center text-lg font-semibold select-none">
-                    {quantity}
-                  </div>
-                  <button
-                    onClick={handleIncrease}
-                    className="w-12 h-12 flex items-center justify-center text-xl hover:bg-gray-200 transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Buttons (Giữ nguyên) */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <button className="flex-1 bg-green-600 text-white py-4 px-6 rounded-xl text-lg font-semibold hover:bg-green-700 transition-all hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                  <FontAwesomeIcon icon={faShoppingCart} />
-                  Thêm vào giỏ
-                </button>
-                <button className="flex-1 bg-orange-500 text-white py-4 px-6 rounded-xl text-lg font-semibold hover:bg-orange-600 transition-all hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                  <FontAwesomeIcon icon={faBolt} />
-                  Mua ngay
-                </button>
-              </div>
-            </div>
+            <ProductInfo
+              product={product}
+              averageRating={averageRating}
+              commentCount={comments.length}
+              certifications={certifications}
+              onCertClick={setSelectedCert}
+              quantity={quantity}
+              onDecrease={handleDecrease}
+              onIncrease={handleIncrease}
+              onQuantityChange={handleQuantityChange}
+            />
           </div>
         </div>
 
         {/* Phần Tab */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Tab Headers (Giữ nguyên) */}
-          <div className="flex bg-gray-50 border-b border-gray-200">
-            <button
-              className={`flex-1 py-4 px-4 font-semibold transition-colors text-base md:text-lg ${
-                activeTab === "desc"
-                  ? "bg-white text-green-600 border-b-2 border-green-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-              onClick={() => setActiveTab("desc")}
-            >
-              Mô tả sản phẩm
-            </button>
-            <button
-              className={`flex-1 py-4 px-4 font-semibold transition-colors text-base md:text-lg ${
-                activeTab === "info"
-                  ? "bg-white text-green-600 border-b-2 border-green-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-              onClick={() => setActiveTab("info")}
-            >
-              Thông tin sản phẩm
-            </button>
-            <button
-              className={`flex-1 py-4 px-4 font-semibold transition-colors text-base md:text-lg ${
-                activeTab === "reviews"
-                  ? "bg-white text-green-600 border-b-2 border-green-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-              onClick={() => setActiveTab("reviews")}
-            >
-              Đánh giá ({comments.length})
-            </button>
-          </div>
+        <ProductTabs
+          product={product}
+          comments={comments}
+          averageRating={averageRating}
+          newComment={newComment}
+          setNewComment={setNewComment}
+          newRating={newRating}
+          setNewRating={setNewRating}
+          onReviewSubmit={handleReviewSubmit}
+        />
 
-          {/* Tab Content */}
-          <div className="p-6 lg:p-10">
-            {/* Tab: Mô tả */}
-            {/* --- SỬA: Dùng mô tả động --- */}
-            {activeTab === "desc" && (
-              <div
-                className="prose max-w-none text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: parseDescription(product.description),
-                }}
-              />
-            )}
-
-            {/* Tab: Thông tin sản phẩm */}
-            {/* --- SỬA: Dùng thông tin động --- */}
-            {activeTab === "info" && (
-              <ul className="space-y-2 text-gray-700">
-                <li className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    className="text-green-600 mt-1"
-                  />
-                  <span>
-                    <strong>Đơn vị:</strong> {product.unit}
-                  </span>
-                </li>
-                <li className="flex items-start gap-2 p-2 rounded">
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    className="text-green-600 mt-1"
-                  />
-                  <span>
-                    <strong>Xuất xứ:</strong> {product.origin_address}
-                  </span>
-                </li>
-                <li className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    className="text-green-600 mt-1"
-                  />
-                  <span>
-                    <strong>Ngày sản xuất:</strong>{" "}
-                    {new Date(product.mfgDate).toLocaleDateString("vi-VN")}
-                  </span>
-                </li>
-                <li className="flex items-start gap-2 p-2 rounded">
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    className="text-green-600 mt-1"
-                  />
-                  <span>
-                    <strong>Hạn sử dụng:</strong>{" "}
-                    {new Date(product.expDate).toLocaleDateString("vi-VN")}
-                  </span>
-                </li>
-              </ul>
-            )}
-
-            {/* Tab: Đánh giá */}
-            {activeTab === "reviews" && (
-              <div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-                  {/* Rating Summary */}
-                  <div className="lg:col-span-1 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 flex flex-col items-center justify-center border border-green-200">
-                    <div className="text-6xl font-bold text-green-700 mb-2">
-                      {averageRating.toFixed(1)}
-                    </div>
-                    <StarRating rating={averageRating} size="lg" />
-                    <p className="text-gray-600 mt-3 text-center">
-                      {comments.length} đánh giá
-                    </p>
-                  </div>
-
-                  {/* Write Review Form (Giữ nguyên) */}
-                  <div className="lg:col-span-2 bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                    <h3 className="text-xl font-semibold mb-4">
-                      Viết đánh giá của bạn
-                    </h3>
-                    <div className="mb-4">
-                      <label className="font-medium mb-2 block">
-                        Xếp hạng của bạn:
-                      </label>
-                      <StarRating
-                        rating={newRating}
-                        setRating={setNewRating}
-                        interactive={true}
-                        size="lg"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="font-medium mb-2 block">
-                        Nhận xét:
-                      </label>
-                      <textarea
-                        value={newComment}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                          setNewComment(e.target.value)
-                        }
-                        placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                        className="border border-gray-300 rounded-xl p-4 w-full h-32 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                      />
-                    </div>
-                    <button
-                      onClick={handleReviewSubmit}
-                      className="bg-green-600 text-white px-8 py-3 rounded-xl hover:bg-green-700 font-semibold text-lg transition-all hover:shadow-lg"
-                    >
-                      Gửi đánh giá
-                    </button>
-                  </div>
-                </div>
-
-                {/* Reviews List (Giữ nguyên, đã dùng state 'comments') */}
-                <div>
-                  <h3 className="text-2xl font-semibold mb-6">
-                    Tất cả đánh giá ({comments.length})
-                  </h3>
-                  <div className="space-y-4">
-                    {comments.map((c, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-gray-50 p-5 rounded-xl border border-gray-200 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg">
-                            {c.user.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="font-semibold text-lg">{c.user}</p>
-                              {c.date && (
-                                <span className="text-sm text-gray-500">
-                                  {c.date}
-                                </span>
-                              )}
-                            </div>
-                            <StarRating rating={c.rating} size="sm" />
-                            <p className="text-gray-700 mt-3 leading-relaxed">
-                              {c.content}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Sản phẩm liên quan (Giữ nguyên, nên làm động sau) */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-10 mt-8">
-          <h2 className="text-3xl font-bold mb-8">Sản phẩm tương tự</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden relative group transition-all duration-300 hover:shadow-xl hover:border-green-300"
-              >
-                <div className="relative w-full h-48 sm:h-56 overflow-hidden">
-                  <img
-                    src={cachua}
-                    alt={`Sản phẩm ${item}`}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-green-600 bg-opacity-0 group-hover:bg-opacity-90 flex items-center justify-center transition-all duration-300">
-                    <Link
-                      to={"/chi-tiet"} // Tạm thời vẫn giữ
-                      className="opacity-0 group-hover:opacity-100 bg-white text-green-600 px-4 py-2 rounded-lg font-semibold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
-                    >
-                      Xem chi tiết
-                    </Link>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <Link
-                    to={"/chi-tiet"} // Tạm thời vẫn giữ
-                    className="hover:text-green-700 transition-colors"
-                  >
-                    <h3 className="font-semibold mb-2 line-clamp-2">
-                      Cà chua beef hữu cơ
-                    </h3>
-                  </Link>
-                  <div className="flex items-center justify-between">
-                    <span className="text-green-600 font-bold text-lg">
-                      40.000₫
-                    </span>
-                    <StarRating rating={4} size="sm" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Sản phẩm liên quan */}
+        <RelatedProducts />
       </div>
 
-      {/* Modal Chứng chỉ (Giữ nguyên) */}
-      {selectedCert && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedCert(null)}
-        >
-          <div
-            className="bg-white rounded-2xl p-8 max-w-2xl w-full relative transform transition-all"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedCert(null)}
-              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <FontAwesomeIcon icon={faTimes} size="lg" />
-            </button>
-            <h3 className="text-3xl font-bold mb-6 pr-10">
-              {selectedCert.name}
-            </h3>
-            <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <img
-                src={selectedCert.imageUrl}
-                alt={selectedCert.name}
-                className="w-full h-64 object-contain"
-              />
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              {selectedCert.description}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Modal Chứng chỉ */}
+      <CertificationModal
+        certification={selectedCert}
+        onClose={() => setSelectedCert(null)}
+      />
     </div>
   );
 };
