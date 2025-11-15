@@ -7,6 +7,7 @@ import { Dropdown, Space, type MenuProps } from "antd";
 import { logoutAPI, getAllCategoriesAPI } from "../../service/api";
 import "./index.scss";
 import { useEffect, useState } from "react";
+import ProductSearch from "../section/product/search.bar";
 
 const AppHeader = () => {
   const { user, isAuthenticated, setUser, setIsAuthenticated } =
@@ -67,6 +68,11 @@ const AppHeader = () => {
   const handleMenuClick = () => {
     (document.activeElement as HTMLElement)?.blur();
   };
+  const handleSearch = (searchTerm: string) => {
+    console.log("Đang tìm kiếm với từ khóa:", searchTerm);
+    // TODO: Implement logic tìm kiếm (ví dụ: gọi API, điều hướng,
+    // hoặc cập nhật state/context ở component cha)
+  };
 
   return (
     <header className="header">
@@ -121,7 +127,7 @@ const AppHeader = () => {
           Liên hệ
         </Link>
       </nav>
-
+      <ProductSearch onSearch={handleSearch} />
       <div className="actions">
         <Link to="/gio-hang">
           <ShoppingCartOutlined />

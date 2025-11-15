@@ -169,3 +169,4 @@ export const getProductDetailById = (id:number)=>{
   const urlBackend = `/api/v1/products/${id}`;
   return axios.get<IBackendRes<IProductDetail>>(urlBackend)
 }
+

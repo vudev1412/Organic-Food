@@ -65,7 +65,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/chi-tiet",
+        path: "/san-pham/:slug",
         element: <ProductDetail />,
       },
 

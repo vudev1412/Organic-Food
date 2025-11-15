@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { getProductDetailById } from "../../service/api";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
+import { parseDescription } from "../../components/common/parseDescription";
 // Giả lập import ảnh sản phẩm
 import cachua from "../../assets/jpg/ca-chua-beef-huu-co.jpg";
 import cachua1 from "../../assets/jpg/cachua1.jpg";
@@ -20,6 +21,29 @@ import cachua3 from "../../assets/jpg/cachua3.jpg";
 // Giả lập import logo chứng chỉ
 import vietgapLogo from "../../../../upload/images/certs/vietgap.png";
 import usdaLogo from "../../../../upload/images/certs/usda_organic.png";
+
+// --- START: Thêm Type (bạn đã bỏ lỡ) ---
+interface IProductDetail {
+  id: number;
+  name: string;
+  unit: string;
+  price: number;
+  origin_address: string;
+  description: string;
+  rating_avg: number;
+  quantity: number;
+  slug: string;
+  image: string;
+  active: boolean;
+  mfgDate: string;
+  expDate: string;
+  createAt: string | null;
+  updateAt: string | null;
+  createBy: string | null;
+  updateBy: string | null;
+  categoryId: number;
+}
+// --- END: Thêm Type ---
 
 // Interface cho Chứng chỉ
 interface ICertification {
@@ -38,7 +62,7 @@ interface IComment {
   date?: string;
 }
 
-// Dữ liệu cho chứng chỉ
+// Dữ liệu cho chứng chỉ (Giữ lại vì API không trả về)
 const certifications: ICertification[] = [
   {
     id: 1,
@@ -58,7 +82,7 @@ const certifications: ICertification[] = [
   },
 ];
 
-// Dữ liệu bình luận
+// Dữ liệu bình luận (Giữ lại làm mock)
 const initialComments: IComment[] = [
   {
     user: "Nguyễn Văn A",
@@ -74,6 +98,9 @@ const initialComments: IComment[] = [
   },
 ];
 
+// Dữ liệu ảnh mock (Giữ lại cho thumbnail vì API chỉ trả 1 ảnh)
+const mockImages: string[] = [cachua, cachua1, cachua2, cachua3];
+
 // Interface cho props của StarRating
 interface StarRatingProps {
   rating: number;
@@ -82,6 +109,7 @@ interface StarRatingProps {
   size?: "sm" | "md" | "lg";
 }
 
+// Component StarRating (Giữ nguyên)
 const StarRating: React.FC<StarRatingProps> = ({
   rating,
   setRating,
@@ -119,29 +147,76 @@ const StarRating: React.FC<StarRatingProps> = ({
     </div>
   );
 };
+
 // ... (Phần import, interface, component StarRating giữ nguyên)
 
 const ProductDetail: React.FC = () => {
-  const images: string[] = [cachua, cachua1, cachua2, cachua3];
+  // --- START: Sửa đổi State ---
+  const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const productId = location.state?.productId;
-  const [selectedImage, setSelectedImage] = useState<string>(images[0]);
+
+  // Thêm state cho product và loading
+  const [product, setProduct] = useState<IProductDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Sửa state, khởi tạo rỗng
+  const [selectedImage, setSelectedImage] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
-  const [productRating, setProductRating] = useState<number>(4);
   const [activeTab, setActiveTab] = useState<"desc" | "info" | "reviews">(
     "desc"
   );
-
-  const [comments, setComments] = useState<IComment[]>(initialComments);
+  const [comments, setComments] = useState<IComment[]>([]); // Khởi tạo rỗng
   const [newComment, setNewComment] = useState<string>("");
   const [newRating, setNewRating] = useState<number>(5);
-
   const [selectedCert, setSelectedCert] = useState<ICertification | null>(null);
+  // --- END: Sửa đổi State ---
 
   const handleIncrease = () => setQuantity((prev) => prev + 1);
   const handleDecrease = () => {
     if (quantity > 1) setQuantity((prev) => prev - 1);
   };
+
+  // --- SỬA TRONG useEffect ---
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (productId) {
+        setIsLoading(true);
+        try {
+          const response = await getProductDetailById(productId);
+
+          // SỬA DÒNG NÀY:
+          if (response.data.data) {
+            // Phải là response.data.data
+            // VÀ SỬA DÒNG NÀY:
+            const productData = response.data.data; // Lấy data bên trong
+            setProduct(productData);
+
+            // Set ảnh chính từ API
+            if (productData.image) {
+              const imageUrl = `http://localhost:8080/storage/images/products/${productData.image}`;
+              setSelectedImage(imageUrl);
+            } else {
+              setSelectedImage(mockImages[0]); // Fallback (Dùng mockImages)
+            }
+
+            // Tạm dùng mock comment, sau này bạn sẽ fetch theo productId
+            setComments(initialComments);
+          }
+        } catch (error) {
+          console.error("Lỗi khi tải chi tiết sản phẩm:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        console.error("Không tìm thấy ID sản phẩm (Có thể do F5).");
+        setIsLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [productId]);
+  // --- KẾT THÚC SỬA useEffect ---
 
   const handleReviewSubmit = () => {
     if (newComment.trim()) {
@@ -159,10 +234,33 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  // --- START: Sửa đổi averageRating ---
   const averageRating =
     comments.length > 0
       ? comments.reduce((acc, c) => acc + c.rating, 0) / comments.length
-      : productRating;
+      : product?.rating_avg || 0; // Lấy từ product state
+  // --- END: Sửa đổi averageRating ---
+
+  // --- START: Thêm Loading/Error Guards ---
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-2xl">Đang tải chi tiết sản phẩm...</p>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen gap-2">
+        <p className="text-2xl text-red-600">Không tìm thấy sản phẩm.</p>
+        <p className="text-gray-600">
+          (Nếu bạn vừa F5, hãy thử quay lại trang trước và bấm vào sản phẩm)
+        </p>
+      </div>
+    );
+  }
+  // --- END: Thêm Loading/Error Guards ---
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -173,9 +271,10 @@ const ProductDetail: React.FC = () => {
             {/* Cột trái: Hình ảnh sản phẩm */}
             <div className="flex flex-col gap-4">
               <div className="relative w-full h-[400px] lg:h-[500px] overflow-hidden rounded-2xl bg-gray-100 group">
+                {/* --- SỬA: Dùng ảnh và alt động --- */}
                 <img
                   src={selectedImage}
-                  alt="Main"
+                  alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
@@ -183,7 +282,8 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-center gap-3 flex-wrap">
-                {images.map((img, index) => (
+                {/* --- SỬA: Dùng mockImages (vì API chỉ có 1 ảnh) --- */}
+                {mockImages.map((img, index) => (
                   <img
                     key={index}
                     src={img}
@@ -202,8 +302,9 @@ const ProductDetail: React.FC = () => {
             {/* Cột phải: Thông tin sản phẩm */}
             <div className="flex flex-col gap-3">
               <div>
+                {/* --- SỬA: Dùng tên động --- */}
                 <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                  Cà chua beef hữu cơ
+                  {product.name}
                 </h1>
                 <div className="flex items-center gap-3 mb-4">
                   <StarRating rating={averageRating} size="lg" />
@@ -213,19 +314,22 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* [THAY ĐỔI] Giá nhỏ lại */}
+              {/* --- SỬA: Dùng giá/đơn vị động --- */}
               <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                 <div className="flex items-baseline gap-3 mb-1">
                   <span className="text-3xl font-bold text-green-700">
-                    40.000₫
+                    {product.price.toLocaleString()}₫ / {product.unit}
                   </span>
+                  {/* API không có giá gốc, nên ẩn đi
                   <span className="text-lg text-gray-400 line-through">
                     50.000₫
                   </span>
+                  */}
                 </div>
-                <p className="text-sm text-green-700">Tiết kiệm 10.000₫</p>
+                {/* <p className="text-sm text-green-700">Tiết kiệm 10.000₫</p> */}
               </div>
 
+              {/* Giữ nguyên chứng chỉ mock vì API không có */}
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 ">
                 <h4 className="font-semibold mb-2 flex items-center gap-2 ">
                   <FontAwesomeIcon
@@ -238,7 +342,9 @@ const ProductDetail: React.FC = () => {
                   {certifications.map((cert) => (
                     <div
                       key={cert.id}
-                      className="p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:border-green-300"
+                      className="p-2 border border-transparent hover:!border-green-300p-2 rounded-full cursor-pointer transition-all duration-300 
+            ring-1 ring-transparent hover:ring-green-300 
+            hover:shadow-lg hover:scale-105"
                       onClick={() => setSelectedCert(cert)}
                     >
                       <img
@@ -253,7 +359,10 @@ const ProductDetail: React.FC = () => {
 
               {/* Quantity */}
               <div>
-                <h3 className="font-semibold text-lg mb-3">Số lượng (kg):</h3>
+                {/* --- SỬA: Dùng đơn vị động --- */}
+                <h3 className="font-semibold text-lg mb-3">
+                  Số lượng ({product.unit}):
+                </h3>
                 <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden w-fit">
                   <button
                     onClick={handleDecrease}
@@ -297,7 +406,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* Buttons */}
+              {/* Buttons (Giữ nguyên) */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button className="flex-1 bg-green-600 text-white py-4 px-6 rounded-xl text-lg font-semibold hover:bg-green-700 transition-all hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
                   <FontAwesomeIcon icon={faShoppingCart} />
@@ -314,7 +423,7 @@ const ProductDetail: React.FC = () => {
 
         {/* Phần Tab */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Tab Headers */}
+          {/* Tab Headers (Giữ nguyên) */}
           <div className="flex bg-gray-50 border-b border-gray-200">
             <button
               className={`flex-1 py-4 px-4 font-semibold transition-colors text-base md:text-lg ${
@@ -351,27 +460,18 @@ const ProductDetail: React.FC = () => {
           {/* Tab Content */}
           <div className="p-6 lg:p-10">
             {/* Tab: Mô tả */}
+            {/* --- SỬA: Dùng mô tả động --- */}
             {activeTab === "desc" && (
-              <div className="prose max-w-none text-gray-700 leading-relaxed">
-                <p>
-                  Cà chua beef hữu cơ là giống cao cấp, quả to, chắc, ít hạt,
-                  cơm dày, vị ngọt thanh và hương thơm đặc trưng.
-                </p>
-                <p>
-                  Được trồng theo phương pháp hữu cơ không sử dụng hóa chất, đảm
-                  bảo an toàn cho sức khỏe. Sản phẩm đạt chứng nhận VietGAP và
-                  USDA Organic, cam kết mang đến bữa ăn sạch và dinh dưỡng cho
-                  gia đình bạn.
-                </p>
-                <ul className="list-disc pl-5">
-                  <li>Giàu Vitamin A, C, và K.</li>
-                  <li>Chứa Lycopene, một chất chống oxy hóa mạnh.</li>
-                  <li>Tốt cho da, mắt và hệ tiêu hóa.</li>
-                </ul>
-              </div>
+              <div
+                className="prose max-w-none text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: parseDescription(product.description),
+                }}
+              />
             )}
 
             {/* Tab: Thông tin sản phẩm */}
+            {/* --- SỬA: Dùng thông tin động --- */}
             {activeTab === "info" && (
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-2 p-2 bg-gray-50 rounded">
@@ -380,8 +480,7 @@ const ProductDetail: React.FC = () => {
                     className="text-green-600 mt-1"
                   />
                   <span>
-                    <strong>Chứng chỉ:</strong> Hữu cơ OCOP 3 sao, VietGAP, USDA
-                    Organic
+                    <strong>Đơn vị:</strong> {product.unit}
                   </span>
                 </li>
                 <li className="flex items-start gap-2 p-2 rounded">
@@ -390,7 +489,7 @@ const ProductDetail: React.FC = () => {
                     className="text-green-600 mt-1"
                   />
                   <span>
-                    <strong>Nguồn gốc:</strong> Trang trại organicfood.vn
+                    <strong>Xuất xứ:</strong> {product.origin_address}
                   </span>
                 </li>
                 <li className="flex items-start gap-2 p-2 bg-gray-50 rounded">
@@ -399,7 +498,8 @@ const ProductDetail: React.FC = () => {
                     className="text-green-600 mt-1"
                   />
                   <span>
-                    <strong>Ngày thu hoạch:</strong> 10/11/2025
+                    <strong>Ngày sản xuất:</strong>{" "}
+                    {new Date(product.mfgDate).toLocaleDateString("vi-VN")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2 p-2 rounded">
@@ -408,7 +508,8 @@ const ProductDetail: React.FC = () => {
                     className="text-green-600 mt-1"
                   />
                   <span>
-                    <strong>Hạn sử dụng:</strong> 20/12/2025
+                    <strong>Hạn sử dụng:</strong>{" "}
+                    {new Date(product.expDate).toLocaleDateString("vi-VN")}
                   </span>
                 </li>
               </ul>
@@ -429,7 +530,7 @@ const ProductDetail: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Write Review Form */}
+                  {/* Write Review Form (Giữ nguyên) */}
                   <div className="lg:col-span-2 bg-gray-50 rounded-2xl p-6 border border-gray-200">
                     <h3 className="text-xl font-semibold mb-4">
                       Viết đánh giá của bạn
@@ -467,7 +568,7 @@ const ProductDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Reviews List */}
+                {/* Reviews List (Giữ nguyên, đã dùng state 'comments') */}
                 <div>
                   <h3 className="text-2xl font-semibold mb-6">
                     Tất cả đánh giá ({comments.length})
@@ -506,7 +607,7 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Sản phẩm liên quan */}
+        {/* Sản phẩm liên quan (Giữ nguyên, nên làm động sau) */}
         <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-10 mt-8">
           <h2 className="text-3xl font-bold mb-8">Sản phẩm tương tự</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -523,7 +624,7 @@ const ProductDetail: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-green-600 bg-opacity-0 group-hover:bg-opacity-90 flex items-center justify-center transition-all duration-300">
                     <Link
-                      to={"/chi-tiet"}
+                      to={"/chi-tiet"} // Tạm thời vẫn giữ
                       className="opacity-0 group-hover:opacity-100 bg-white text-green-600 px-4 py-2 rounded-lg font-semibold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
                     >
                       Xem chi tiết
@@ -532,7 +633,7 @@ const ProductDetail: React.FC = () => {
                 </div>
                 <div className="p-4">
                   <Link
-                    to={"/chi-tiet"}
+                    to={"/chi-tiet"} // Tạm thời vẫn giữ
                     className="hover:text-green-700 transition-colors"
                   >
                     <h3 className="font-semibold mb-2 line-clamp-2">
@@ -552,7 +653,7 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal Chứng chỉ */}
+      {/* Modal Chứng chỉ (Giữ nguyên) */}
       {selectedCert && (
         <div
           className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
