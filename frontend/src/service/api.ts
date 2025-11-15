@@ -145,15 +145,6 @@ export const deleteSupplierAPI = (id: number) => {
   return axios.delete(`/api/v1/suppliers/${id}`);
 };
 
-export const getCustomersAPI = (page: number, size: number) => {
-  const urlBackend = `/api/v1/users?page=${page}&size=${size}`;
-  return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
-};
-
-export const getProductsAPI = (page: number, size: number) => {
-  const urlBackend = `/api/v1/products?page=${page}&size=${size}`;
-  return axios.get<IBackendRes<IModelPaginate<IProductTable>>>(urlBackend);
-};
 
 export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories";
