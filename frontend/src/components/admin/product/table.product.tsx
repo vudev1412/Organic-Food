@@ -89,21 +89,21 @@ const TableProduct = () => {
         </a>
       ),
     },
-    { title: "Name", dataIndex: "name", key: "name", sorter: true },
-    { title: "Unit", dataIndex: "unit", key: "unit" },
-    { title: "Price", dataIndex: "price", key: "price" },
-    { title: "Quantity", dataIndex: "quantity", key: "quantity" },
+    { title: "Tên", dataIndex: "name", key: "name", sorter: true },
+    { title: "Đơn vị tính", dataIndex: "unit", key: "unit" },
+    { title: "Giá", dataIndex: "price", key: "price" },
+    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
     {
-      title: "Active",
+      title: "Trạng thái",
       dataIndex: "active",
       key: "active",
       hideInSearch: true,
       render: (active: boolean) => (
-        <Tag color={active ? "green" : "red"}>{active ? "Active" : "Inactive"}</Tag>
+        <Tag color={active ? "green" : "red"}>{active ? "Đang bán" : "Tạm ngưng"}</Tag>
       ),
     },
     {
-      title: "Action",
+      title: "Thao tác",
       hideInSearch: true,
       render: (_, entity) => (
         <>

@@ -160,28 +160,36 @@ public class UserServiceImpl implements UserService {
 
     public ResultPaginationDTO getAllUserByEmployee(Specification<User> spec, Pageable pageable) {
         Specification<User> finalSpec = spec == null
-                ? (root, query, cb) -> cb.equal(root.get("userRole"), Role.EMPLOYEE)
-                : spec.and((root, query, cb) -> cb.equal(root.get("userRole"),  Role.EMPLOYEE));
+                ? (root, query, cb) -> cb.or(
+                cb.equal(root.get("userRole"), Role.EMPLOYEE),
+                cb.equal(root.get("userRole"), Role.ADMIN)
+        )
+                : spec.and((root, query, cb) -> cb.or(
+                cb.equal(root.get("userRole"), Role.EMPLOYEE),
+                cb.equal(root.get("userRole"), Role.ADMIN)
+        ));
+
         Page<User> page = userRepository.findAll(finalSpec, pageable);
+
         List<ResUserDTO> userDTOs = page.getContent()
                 .stream()
                 .map(mapper::toResUserDTO)
                 .toList();
+
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
 
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
-
         meta.setPages(page.getTotalPages());
         meta.setTotal(page.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(page.getContent());
+        rs.setResult(userDTOs); // chỉ cần set DTO, không cần set entity gốc
 
-        rs.setResult(userDTOs);
         return rs;
     }
+
 
 
 }

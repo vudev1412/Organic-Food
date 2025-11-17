@@ -34,7 +34,7 @@ export const logoutAPI = () => {
 
 
 export const getCustomersAPI = (query:string) =>{
-    const urlBackend = `/api/v1/users-customer?${query}`;
+    const urlBackend = `/api/v1/customer/profile?${query}`;
     return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
 }
 export const getEmployeesAPI = (query:string) =>{
@@ -43,18 +43,16 @@ export const getEmployeesAPI = (query:string) =>{
 }
 
 export const createUserAPI = (name:string, email:string, password:string, phone:string, role:string) =>{
-    const urlBackend = `/api/v1/users`;
+    const urlBackend = `/users`;
     return axios.post<IBackendRes<IRegister>>(urlBackend,
         {name, email, password, phone, role}
     );
 }
 
-export const updateUserAPI = (id:number,email:string, name:string, phone:string) =>{
-    const urlBackend = `/api/v1/users/${id}`;
-    return axios.patch<IBackendRes<IRegister>>(urlBackend,
-        {email,name, phone}
-    );
-}
+export const updateUserAPI = (id: number, payload: ICustomerTable) => {
+  const urlBackend = `/api/v1/customer/profile/${id}`;
+  return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
+};
 
 export const deleteUserAPI = (id:number) =>{
     const urlBackend = `/api/v1/users/${id}`;
@@ -148,7 +146,7 @@ export const deleteSupplierAPI = (id: number) => {
 
 export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories?size=1000";
-  return axios.get<IBackendRes<ICategory[]>>(urlBackend);
+  return axios.get<IBackendRes<IModelPaginate<ICategory>>>(urlBackend);
 };
 
 export const getProductCardListAPI = (
@@ -169,4 +167,6 @@ export const getProductDetailById = (id:number)=>{
   const urlBackend = `/api/v1/products/${id}`;
   return axios.get<IBackendRes<IProductDetail>>(urlBackend)
 }
+
+
 

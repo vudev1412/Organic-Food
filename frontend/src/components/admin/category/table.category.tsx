@@ -38,7 +38,7 @@ const TableCategory = () => {
     { title: "ID", dataIndex: "id", key: "id", hideInSearch: true },
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Slug", dataIndex: "slug", key: "slug" },
-    { title: "Parent ID", dataIndex: "parent_category_id", key: "parent_category_id" },
+    { title: "Parent ID", dataIndex: "parentCategoryId", key: "parentCategoryId" },
     {
       title: "Action",
       hideInSearch: true,
@@ -75,6 +75,7 @@ const TableCategory = () => {
         request={async (params) => {
           const query = `page=${params.current}&size=${params.pageSize}`;
           const res = await getCategoriesAPI(query);
+          console.log(res)
           if (res.data) setMeta(res.data.data.meta);
           return {
             data: res.data?.data.result,

@@ -42,25 +42,30 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
         String[] whiteList = {
-                "/","/api/v1/auth/login",
-                "/api/v1/auth/refresh","/storage/**",
+                "/", "/api/v1/auth/login",
+                "/api/v1/auth/refresh", "/storage/**",
                 "/api/v1/users/**"
         };
+
         http
+
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        // Allow preflight OPTIONS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(whiteList).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/product-images/**").permitAll()
                         .anyRequest().authenticated()
-
                 )
-                .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults())
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
-                .exceptionHandling(
-                        exceptions -> exceptions
-                                .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())// 401
-                                .accessDeniedHandler(new BearerTokenAccessDeniedHandler())// 403
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                        .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
                 )
                 .formLogin(f -> f.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

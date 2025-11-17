@@ -60,12 +60,18 @@ declare global {
     price: number;
     quantity: number;
   }
-
+  interface ICustomer {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    image?: string | null;
+    
+  }
   interface ICustomerTable {
     id: number;
-    email: string;
-    name: string;
-    phone: string;
+    member:boolean;
+    user:ICustomer;
   }
   interface IRegister {
     name: string;
@@ -95,10 +101,12 @@ declare global {
     categoryId: number;
   }
   interface ICategory {
-    id: number;
-    name: string;
-    slug: string;
-    parent_category_id?: number;
+    data: {
+      id: number;
+      name: string;
+      slug: string;
+      parentCategoryId?: number;
+    };
   }
   interface ICreateCategoryDTO {
     name: string;
@@ -178,5 +186,22 @@ declare global {
     createBy: string | null;
     updateBy: string | null;
     categoryId: number;
+  }
+  interface IEmployeeProfile {
+    data: {
+      id: number;
+      employeeCode: string;
+      address: string;
+      hireDate: string;
+      salary: number;
+      userId: id;
+    };
+  }
+  interface ICustomerProfile {
+    data: {
+      id: number;
+      member: boolean;
+      userId: number;
+    };
   }
 }

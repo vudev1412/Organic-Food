@@ -57,4 +57,12 @@ public class EmployeeProfileServiceImpl implements EmployeeProfileService {
 
         return this.employeeProfileMapper.toResEmployeeProfile(currentEmp);
     }
+
+    @Override
+    public ResEmployeeProfile handleFindByUserId(Long id) {
+        EmployeeProfile employeeProfile = this.employeeProfileRepository.findByUserId(id);
+
+        return this.employeeProfileMapper.toResEmployeeProfile(employeeProfile);
+
+    }
 }

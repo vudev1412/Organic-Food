@@ -1,4 +1,4 @@
-import { App, Divider, Form, Input, Modal, type FormProps } from "antd";
+import { App, Divider, Form, Input, Modal, Switch, type FormProps } from "antd";
 import { useEffect, useState } from "react";
 import { updateUserAPI } from "../../../service/api";
 
@@ -14,6 +14,7 @@ type FieldType = {
   name: string;
   email: string;
   phone: string;
+  member: boolean;
 };
 const UpdateUser = (props: IProps) => {
   const {
@@ -32,16 +33,33 @@ const UpdateUser = (props: IProps) => {
     if (dataUpdate) {
       form.setFieldsValue({
         id: dataUpdate.id,
-        name: dataUpdate.name,
-        email: dataUpdate.email,
-        phone: dataUpdate.phone,
+        name: dataUpdate.user.name,
+        email: dataUpdate.user.email,
+        phone: dataUpdate.user.phone,
+        member: dataUpdate.member,
       });
     }
   }, [dataUpdate]);
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    const { id, name, email, phone } = values;
     setIsSubmit(true);
-    const res = await updateUserAPI(id, email, name, phone);
+
+    if (!dataUpdate) return;
+
+    // Tạo payload đúng định dạng backend cần
+    const payload = {
+      id: dataUpdate!.id,
+      member: values.member,
+      user: {
+        id: dataUpdate!.user.id,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        image: dataUpdate!.user.image ?? null,
+      },
+    } as ICustomerTable;
+
+    const res = await updateUserAPI(dataUpdate.id, payload);
+
     if (res && res.data) {
       message.success("Cập nhật user thành công");
       form.resetFields();
@@ -58,8 +76,10 @@ const UpdateUser = (props: IProps) => {
         duration: 5,
       });
     }
+
     setIsSubmit(false);
   };
+
   return (
     <>
       <Modal
@@ -119,6 +139,13 @@ const UpdateUser = (props: IProps) => {
             ]}
           >
             <Input />
+          </Form.Item>
+          <Form.Item<FieldType>
+            label="Thành viên"
+            name="member"
+            valuePropName="checked"
+          >
+            <Switch />
           </Form.Item>
         </Form>
       </Modal>

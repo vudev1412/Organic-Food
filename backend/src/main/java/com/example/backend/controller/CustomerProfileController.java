@@ -2,9 +2,15 @@ package com.example.backend.controller;
 
 
 import com.example.backend.domain.CustomerProfile;
+import com.example.backend.domain.Supplier;
+import com.example.backend.domain.request.ReqUpdateCustomerProfile;
 import com.example.backend.domain.response.ResCustomerProfile;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.CustomerProfileService;
+import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,17 +29,18 @@ public class CustomerProfileController {
     }
 
     @GetMapping("/customer/profile")
-    public ResponseEntity<List<ResCustomerProfile>> getAllCustomerProfile(){
-        return ResponseEntity.ok().body(this.customerProfileService.handleGetAllCustomerProfile());
+    public ResponseEntity<ResultPaginationDTO> getAllCustomerProfile(@Filter Specification<CustomerProfile> spec,
+                                                                     Pageable pageable){
+        return ResponseEntity.ok().body(this.customerProfileService.handleGetAllCustomerProfile(spec,pageable));
     }
 
     @GetMapping("/customer/profile/{id}")
-    public ResponseEntity<ResCustomerProfile> getCustomerProfileById(@PathVariable Long id){
+    public ResponseEntity<CustomerProfile> getCustomerProfileById(@PathVariable Long id){
         return ResponseEntity.ok().body(this.customerProfileService.handleGetCustomerProfileById(id));
     }
 
-    @PatchMapping("/customer/profile/{id}")
-    public ResponseEntity<ResCustomerProfile> updateCustomerProfile(@PathVariable Long id, CustomerProfile customerProfile){
+    @PutMapping("/customer/profile/{id}")
+    public ResponseEntity<ResCustomerProfile> updateCustomerProfile(@PathVariable Long id,@RequestBody ReqUpdateCustomerProfile customerProfile){
         return ResponseEntity.ok().body(this.customerProfileService.handleUpdateCustomerProfile(id, customerProfile));
     }
     @DeleteMapping("/customer/profile/{id}")
@@ -41,4 +48,5 @@ public class CustomerProfileController {
         this.customerProfileService.handleDeleteCustomerProfile(id);
         return ResponseEntity.noContent().build();
     }
+
 }
