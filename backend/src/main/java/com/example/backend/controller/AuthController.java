@@ -17,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,7 @@ public class AuthController {
     }
     @PostMapping("/auth/login")
     @ApiMessage("Login success")
-    public ResponseEntity<RestLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) throws IdInvalidException {
+    public ResponseEntity<RestLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) throws UsernameNotFoundException {
         // Nạp input gồm username/password vào security
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword());
@@ -58,7 +59,7 @@ public class AuthController {
         }
 
         if (userCurr == null) {
-            throw new IdInvalidException("Không tìm thấy thông tin người dùng");
+            throw new UsernameNotFoundException("Không tìm thấy thông tin người dùng");
         }
 
         // Tạo response

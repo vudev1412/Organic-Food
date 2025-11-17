@@ -1,13 +1,16 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { deleteUserAPI, getCustomersAPI, getEmployeesAPI } from "../../../service/api";
+import {
+  deleteUserAPI,
+  getCustomersAPI,
+
+} from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
 import { App, Button, Popconfirm } from "antd";
 import DetailEmployee from "./employee.detail";
 import CreateEmployee from "./create.employee";
 import UpdateEmployee from "./update.employee";
-
 
 // Định nghĩa các cột
 
@@ -35,14 +38,14 @@ const TableEmployee = () => {
   const [isDeleteUser, setIsDeleteUser] = useState<boolean>(false);
   const { message, notification } = App.useApp();
 
-    const handleDeleteUser = async(id:number) => {
-      setIsDeleteUser(true);
-      const res = await deleteUserAPI(id);
-      if(res && res.data){
-         message.success("Xóa user thành công");
-         refreshTable();
-      }else{
-         notification.error({
+  const handleDeleteUser = async (id: number) => {
+    setIsDeleteUser(true);
+    const res = await deleteUserAPI(id);
+    if (res && res.data) {
+      message.success("Xóa user thành công");
+      refreshTable();
+    } else {
+      notification.error({
         message: "Xảy ra lỗi",
         description:
           res.message && Array.isArray(res.message)
@@ -50,14 +53,14 @@ const TableEmployee = () => {
             : res.message,
         duration: 5,
       });
-      }
-      setIsDeleteUser(false);
     }
+    setIsDeleteUser(false);
+  };
   const columns: ProColumns<ICustomerTable>[] = [
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "userId",
+      key: "userId",
       hideInSearch: true,
       render(dom, entity, index, action, schema) {
         return (
@@ -91,6 +94,30 @@ const TableEmployee = () => {
       key: "phone",
     },
     {
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+    },
+    {
+      title: "Employee code",
+      dataIndex: "employeeCode",
+      key: "employeeCode",
+    },
+    {
+      title: "Ngày làm",
+      dataIndex: "hireDate",
+      key: "hireDate",
+      render: (text:string) => {
+        const date = new Date(text);
+        return date.toLocaleDateString("vi-VN"); // vd: 01/01/2022
+      },
+    },
+    {
+      title: "Lương",
+      dataIndex: "salary",
+      key: "salary",
+    },
+    {
       title: "Action",
       hideInSearch: true,
       render(dom, entity, index, action, schema) {
@@ -109,7 +136,6 @@ const TableEmployee = () => {
               title="Xác nhận xóa user"
               description="Bạn có chắc muốn xóa user này?"
               onConfirm={() => handleDeleteUser(entity.id)}
-             
               okText="Xác nhận"
               cancelText="Hủy"
               okButtonProps={{ loading: isDeleteUser }}
@@ -135,20 +161,13 @@ const TableEmployee = () => {
         cardBordered
         actionRef={actionRef}
         request={async (params, sort, filter) => {
-          // Gọi API để lấy dữ liệu
-          let query = "";
-          if (params) {
-            query += `page=${params.current}&size=${params.pageSize}`;
-            if (params.email) {
-              query += `&filter=email ~ '${params.email}'`;
-            }
-            if (params.name) {
-              query += `&filter=name ~ '${params.name}'`;
-            }
-            if (params.phone) {
-              query += `&filter=phone ~ '${params.phone}'`;
-            }
-          }
+          
+          let query = `page=${params.current}&size=${params.pageSize}`;
+          if (params.email) query += `&filter=email ~ '${params.email}'`;
+          if (params.name) query += `&filter=name ~ '${params.name}'`;
+          if (params.phone) query += `&filter=phone ~ '${params.phone}'`;
+
+          // 2. Sort
           if (sort) {
             const sortField = Object.keys(sort)[0];
             const sortOrder = sort[sortField];
@@ -157,15 +176,24 @@ const TableEmployee = () => {
               query += `&sort=${sortField},${order}`;
             }
           }
-          const res = await getEmployeesAPI(query);
-          if (res.data) {
-            setMeta(res.data.data.meta);
-          }
+
+          // 3. Gọi API employee để lấy danh sách cơ bản
+          const resEmployees = await getCustomersAPI(query);
+          const employees = resEmployees.data?.data.result || [];
+          const metaData = resEmployees.data?.data.meta || {
+            page: 1,
+            size: 5,
+            total: employees.length,
+            pages: 1,
+          };
+          setMeta(metaData);
+
+          
+          // 5. Trả về dữ liệu cho ProTable
           return {
-            data: res.data?.data.result,
             success: true,
-            page: res.data?.data.meta.page,
-            total: res.data?.data.meta.total,
+            page: metaData.page,
+            total: metaData.total,
           };
         }}
         rowKey="id"

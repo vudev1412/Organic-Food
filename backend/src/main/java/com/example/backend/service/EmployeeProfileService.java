@@ -14,4 +14,5 @@ public interface EmployeeProfileService {
     public List<ResEmployeeProfile> handleGetAllEmployeeProfile();
     public ResEmployeeProfile handleGetEmployeeProfileById(Long id);
     public ResEmployeeProfile handleUpdateEmployeeProfile(Long id, EmployeeProfile employeeProfile);
+    public ResEmployeeProfile handleFindByUserId(Long id);
 }

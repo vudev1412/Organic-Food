@@ -1,4 +1,4 @@
-import React from "react"; // Đã thêm React
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/png/logo.png";
 import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
@@ -6,7 +6,6 @@ import { useCurrentApp } from "../context/app.context";
 import { Dropdown, Space, type MenuProps } from "antd";
 import { logoutAPI, getAllCategoriesAPI } from "../../service/api";
 import "./index.scss";
-import { useEffect, useState } from "react";
 import ProductSearch from "../section/product/search.bar";
 
 const AppHeader = () => {
@@ -15,37 +14,26 @@ const AppHeader = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
 
-  // Lấy danh mục từ API khi component mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await getAllCategoriesAPI();
+        const results = response?.data?.data?.result;
 
-        // Giả sử response.data.data chính là cấu trúc JSON bạn vừa gửi
-        if (
-          response &&
-          response.data &&
-          response.data.data &&
-          response.data.data.result
-        ) {
-          // SỬA LỖI: Truy cập vào .result để lấy mảng
-          const allCats: ICategory[] = response.data.data.result as ICategory[];
+        if (Array.isArray(results)) {
+          setAllCategories(results);
 
-          if (Array.isArray(allCats)) {
-            setAllCategories(allCats);
-
-            // Lọc chỉ danh mục cha (parentCategory === null)
-            const parentCategories = allCats.filter(
-              (cat: ICategory) => cat.parentCategory === null
-            );
-
-            setCategories(parentCategories);
-          }
+          // Parent categories: parentCategoryId === null
+          const parentCategories = results.filter(
+            (cat: ICategory) => cat.parentCategoryId === null
+          );
+          setCategories(parentCategories);
         }
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
     };
+
     fetchCategories();
   }, []);
 
@@ -64,24 +52,15 @@ const AppHeader = () => {
     ...(user?.role === "ADMIN"
       ? [{ key: "3", label: <Link to="/admin">Trang quản trị</Link> }]
       : []),
-    {
-      key: "4",
-      danger: true,
-      label: <label onClick={handleLogout}>Đăng xuất</label>,
-    },
+    { key: "4", danger: true, label: <label onClick={handleLogout}>Đăng xuất</label> },
   ];
 
-  /**
-   * ĐÃ THÊM: Hàm này sẽ loại bỏ focus khỏi phần tử vừa được nhấp
-   * giúp tắt :focus-within và đóng mega menu khi điều hướng.
-   */
   const handleMenuClick = () => {
     (document.activeElement as HTMLElement)?.blur();
   };
+
   const handleSearch = (searchTerm: string) => {
-    console.log("Đang tìm kiếm với từ khóa:", searchTerm);
-    // TODO: Implement logic tìm kiếm (ví dụ: gọi API, điều hướng,
-    // hoặc cập nhật state/context ở component cha)
+    console.log("Searching:", searchTerm);
   };
 
   return (
@@ -98,27 +77,25 @@ const AppHeader = () => {
 
       <nav className="nav">
         <div className="menu-item">
-          {/* ĐÃ THÊM: onClick cho link chính */}
           <Link to="/san-pham" onClick={handleMenuClick}>
             Sản phẩm
           </Link>
 
-          {/* ĐÃ THÊM: onClick cho container của mega-menu */}
           <div className="mega-menu" onClick={handleMenuClick}>
             {categories.map((cat) => {
-              // Lấy tất cả danh mục con của danh mục cha này
-              const subCategories =
-                allCategories.filter(
-                  (c: ICategory) => c.parentCategory?.id === cat.id
-                ) || [];
+              // Subcategories: parentCategoryId === parent.id
+              const subCategories = allCategories.filter(
+                (c: ICategory) => c.parentCategoryId === cat.id
+              );
+
               return (
-                <div key={cat.name} className="category">
+                <div key={cat.id} className="category">
                   <Link to={`/danh-muc/${cat.slug}`} className="parent">
                     {cat.name}
                   </Link>
                   {subCategories.map((sub: ICategory) => (
                     <Link
-                      key={sub.slug}
+                      key={sub.id}
                       to={`/danh-muc/${sub.slug}`}
                       className="child"
                     >
@@ -131,21 +108,18 @@ const AppHeader = () => {
           </div>
         </div>
 
-        <Link to="/gioi-thieu" className="nav-link">
-          Về chúng tôi
-        </Link>
-        <Link to="/chung-chi" className="nav-link">
-          Chứng chỉ
-        </Link>
-        <Link to="/lien-he" className="nav-link">
-          Liên hệ
-        </Link>
+        <Link to="/gioi-thieu" className="nav-link">Về chúng tôi</Link>
+        <Link to="/chung-chi" className="nav-link">Chứng chỉ</Link>
+        <Link to="/lien-he" className="nav-link">Liên hệ</Link>
       </nav>
+
       <ProductSearch onSearch={handleSearch} />
+
       <div className="actions">
         <Link to="/gio-hang">
           <ShoppingCartOutlined />
         </Link>
+
         {isAuthenticated ? (
           <Dropdown menu={{ items }} placement="bottomRight" arrow>
             <a onClick={(e) => e.preventDefault()}>

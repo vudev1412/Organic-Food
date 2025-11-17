@@ -41,6 +41,27 @@ export const getEmployeesAPI = (query: string) => {
   return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
 };
 
+
+export const getCustomersAPI = (query:string) =>{
+    const urlBackend = `/api/v1/customer/profile?${query}`;
+    return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
+}
+export const getEmployeesAPI = (query:string) =>{
+    const urlBackend = `/api/v1/users-employee?${query}`;
+    return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
+}
+
+export const createUserAPI = (name:string, email:string, password:string, phone:string, role:string) =>{
+    const urlBackend = `/users`;
+    return axios.post<IBackendRes<IRegister>>(urlBackend,
+        {name, email, password, phone, role}
+    );
+}
+
+export const updateUserAPI = (id: number, payload: ICustomerTable) => {
+  const urlBackend = `/api/v1/customer/profile/${id}`;
+  return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
+
 export const createUserAPI = (
   name: string,
   email: string,
@@ -70,6 +91,7 @@ export const updateUserAPI = (
     name,
     phone,
   });
+
 };
 
 export const deleteUserAPI = (id: number) => {
@@ -159,7 +181,7 @@ export const deleteSupplierAPI = (id: number) => {
 
 export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories?size=1000";
-  return axios.get<IBackendRes<ICategory[]>>(urlBackend);
+  return axios.get<IBackendRes<IModelPaginate<ICategory>>>(urlBackend);
 };
 
 export const getProductCardListAPI = (
@@ -181,7 +203,9 @@ export const getProductDetailById = (id: number) => {
   return axios.get<IBackendRes<IProductDetail>>(urlBackend);
 };
 
+
 export const getSubImgByProductId = (id: number) => {
   const urlBackend = `/api/v1/product-images/product/${id}`;
   return axios.get<IBackendRes<IProductImage[]>>(urlBackend);
 };
+

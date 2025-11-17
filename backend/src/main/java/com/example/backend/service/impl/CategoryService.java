@@ -2,8 +2,11 @@ package com.example.backend.service.impl;
 
 import com.example.backend.domain.Category;
 import com.example.backend.domain.request.ReqCategoryDTO;
+import com.example.backend.domain.response.ResCategoryDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
+import com.example.backend.mapper.CategoryMapper;
 import com.example.backend.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,18 +15,16 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
     private final CategoryRepository categoryRepository;
-    public CategoryService(CategoryRepository categoryRepository){
-        this.categoryRepository = categoryRepository;
-    }
-
+    private final CategoryMapper categoryMapper;
     public ResultPaginationDTO getAllCategories(Specification<Category> spec, Pageable pageable) {
-        // Sử dụng repository với Specification + Pageable
+
         Page<Category> pageCategory = categoryRepository.findAll(spec, pageable);
 
-        // Nếu cần map sang DTO, bạn có thể tạo mapper tương tự Product
-        // Ví dụ: Page<ResCategoryDTO> pageCategoryDto = pageCategory.map(categoryMapper::toResCategoryDto);
+        // Map sang DTO
+        Page<ResCategoryDTO> pageCategoryDto = pageCategory.map(categoryMapper::toResCategoryDTO);
 
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
@@ -33,12 +34,12 @@ public class CategoryService {
         meta.setPages(pageCategory.getTotalPages());
         meta.setTotal(pageCategory.getTotalElements());
 
-        // rs.setResult(pageCategoryDto.getContent()); // nếu dùng DTO
-        rs.setResult(pageCategory.getContent()); // nếu trả về entity trực tiếp
-
         rs.setMeta(meta);
+        rs.setResult(pageCategoryDto.getContent());
+
         return rs;
     }
+
 
     public Category handleGetCategoryById(Long id){
         return this.categoryRepository.findById(id)

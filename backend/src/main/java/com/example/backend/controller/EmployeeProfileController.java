@@ -21,10 +21,10 @@ public class EmployeeProfileController {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.employeeProfileService.handleCreateEmployeeProfile(employeeProfile));
     }
 
-    @GetMapping("/employee/profile/{id}")
-    public ResponseEntity<ResEmployeeProfile> getEmployeeProfileById(@PathVariable Long id){
-        return ResponseEntity.ok().body(this.employeeProfileService.handleGetEmployeeProfileById(id));
-    }
+//    @GetMapping("/employee/profile/{id}")
+//    public ResponseEntity<ResEmployeeProfile> getEmployeeProfileById(@PathVariable Long id){
+//        return ResponseEntity.ok().body(this.employeeProfileService.handleGetEmployeeProfileById(id));
+//    }
 
     @GetMapping("/employee/profile")
     public ResponseEntity<List<ResEmployeeProfile>> getAllEmployeeProfile(){
@@ -34,5 +34,8 @@ public class EmployeeProfileController {
     public ResponseEntity<ResEmployeeProfile> updateEmployeeProfile(@PathVariable Long id,@RequestBody EmployeeProfile employeeProfile){
         return ResponseEntity.ok().body(this.employeeProfileService.handleUpdateEmployeeProfile(id,employeeProfile));
     }
-
+    @GetMapping("/employee/profile/{userId}")
+    public ResponseEntity<ResEmployeeProfile> getEmployeeProfileByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok().body(this.employeeProfileService.handleFindByUserId(userId));
+    }
 }

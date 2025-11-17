@@ -30,37 +30,27 @@ const ProductLeft = () => {
 
   // Lấy danh mục từ API khi component mount
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await getAllCategoriesAPI();
-
-        // Giả sử response.data.data chính là cấu trúc JSON bạn vừa gửi
-        if (
-          response &&
-          response.data &&
-          response.data.data &&
-          response.data.data.result
-        ) {
-          // SỬA LỖI: Truy cập vào .result để lấy mảng
-          const allCats: ICategory[] = response.data.data.result as ICategory[];
-
-          if (Array.isArray(allCats)) {
-            setAllCategories(allCats);
-
-            // Lọc chỉ danh mục cha (parentCategory === null)
-            const parentCategories = allCats.filter(
-              (cat: ICategory) => cat.parentCategory === null
+      const fetchCategories = async () => {
+        try {
+          const response = await getAllCategoriesAPI();
+          const results = response?.data?.data?.result;
+  
+          if (Array.isArray(results)) {
+            setAllCategories(results);
+  
+            // Parent categories: parentCategoryId === null
+            const parentCategories = results.filter(
+              (cat: ICategory) => cat.parentCategoryId === null
             );
-
             setCategories(parentCategories);
           }
+        } catch (error) {
+          console.error("Failed to fetch categories:", error);
         }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
+      };
+  
+      fetchCategories();
+    }, []);
 
   return (
     <div className="product-left w-full max-w-xs space-y-8">

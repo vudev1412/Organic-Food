@@ -27,35 +27,37 @@ const DetailProduct = (props: IProps) => {
         <Descriptions.Item label="ID" span={2}>
           {dataViewDetail?.id}
         </Descriptions.Item>
-        <Descriptions.Item label="Name" span={2}>
+        <Descriptions.Item label="Tên" span={2}>
           {dataViewDetail?.name}
         </Descriptions.Item>
-        <Descriptions.Item label="Unit" span={2}>
+        <Descriptions.Item label="Đơn vị tính" span={2}>
           {dataViewDetail?.unit}
         </Descriptions.Item>
-        <Descriptions.Item label="Price" span={2}>
+        <Descriptions.Item label="Giá" span={2}>
           {dataViewDetail?.price}
         </Descriptions.Item>
-        <Descriptions.Item label="Quantity" span={2}>
+        <Descriptions.Item label="Số lượng" span={2}>
           {dataViewDetail?.quantity}
         </Descriptions.Item>
-        <Descriptions.Item label="Image" span={2}>
+        {/* Nếu muốn hiển thị thêm các trường khác */}
+        <Descriptions.Item label="Trạng thái" span={2}>
+          {dataViewDetail?.active ? "Đang bán" : "Tạm ngưng"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Ngày sản xuất" span={2}>
+          {dataViewDetail?.mfgDate ? new Date(dataViewDetail.mfgDate).toLocaleDateString() : "-"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Hạn sử dụng" span={2}>
+          {dataViewDetail?.expDate ? new Date(dataViewDetail.expDate).toLocaleDateString() : "-"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Ảnh" span={2}>
+          
           {dataViewDetail?.image ? (
-            <Avatar src={dataViewDetail.image} />
+            <Avatar src={import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL + dataViewDetail?.image} />
           ) : (
             <Avatar icon={<AppstoreOutlined />} />
           )}
         </Descriptions.Item>
-        {/* Nếu muốn hiển thị thêm các trường khác */}
-        <Descriptions.Item label="Active" span={2}>
-          {dataViewDetail?.active ? "Yes" : "No"}
-        </Descriptions.Item>
-        <Descriptions.Item label="MFG Date" span={2}>
-          {dataViewDetail?.mfgDate ? new Date(dataViewDetail.mfgDate).toLocaleDateString() : "-"}
-        </Descriptions.Item>
-        <Descriptions.Item label="EXP Date" span={2}>
-          {dataViewDetail?.expDate ? new Date(dataViewDetail.expDate).toLocaleDateString() : "-"}
-        </Descriptions.Item>
+        
       </Descriptions>
     </Drawer>
   );

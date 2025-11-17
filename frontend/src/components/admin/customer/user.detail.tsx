@@ -31,13 +31,16 @@ const DetailUser = (props: IProps) => {
             {dataViewDetail?.id}
           </Descriptions.Item>
           <Descriptions.Item label="Name" span={2}>
-            {dataViewDetail?.name}
+            {dataViewDetail?.user.name}
           </Descriptions.Item>
           <Descriptions.Item label="Email" span={2}>
-            {dataViewDetail?.email}
+            {dataViewDetail?.user.email}
           </Descriptions.Item>
           <Descriptions.Item label="Phone" span={2}>
-            {dataViewDetail?.phone}
+            {dataViewDetail?.user.phone}
+          </Descriptions.Item>
+           <Descriptions.Item label="Thành viên" span={2}>
+            {dataViewDetail?.member === true ? "Đã đăng ký" : "Chưa đăng ký"}
           </Descriptions.Item>
           <Descriptions.Item label="Avatar" span={2}>
             <Avatar icon={<UserOutlined />}/>
