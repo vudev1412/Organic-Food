@@ -32,6 +32,15 @@ export const logoutAPI = () => {
   return axios.post<IBackendRes<IFetchAccount>>(urlBackend);
 };
 
+export const getCustomersAPI = (query: string) => {
+  const urlBackend = `/api/v1/users-customer?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
+};
+export const getEmployeesAPI = (query: string) => {
+  const urlBackend = `/api/v1/users-employee?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
+};
+
 
 export const getCustomersAPI = (query:string) =>{
     const urlBackend = `/api/v1/customer/profile?${query}`;
@@ -52,25 +61,52 @@ export const createUserAPI = (name:string, email:string, password:string, phone:
 export const updateUserAPI = (id: number, payload: ICustomerTable) => {
   const urlBackend = `/api/v1/customer/profile/${id}`;
   return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
+
+export const createUserAPI = (
+  name: string,
+  email: string,
+  password: string,
+  phone: string,
+  role: string
+) => {
+  const urlBackend = `/api/v1/users`;
+  return axios.post<IBackendRes<IRegister>>(urlBackend, {
+    name,
+    email,
+    password,
+    phone,
+    role,
+  });
 };
 
-export const deleteUserAPI = (id:number) =>{
-    const urlBackend = `/api/v1/users/${id}`;
-    return axios.delete<IBackendRes<IRegister>>(urlBackend
-       
-    );
-}
+export const updateUserAPI = (
+  id: number,
+  email: string,
+  name: string,
+  phone: string
+) => {
+  const urlBackend = `/api/v1/users/${id}`;
+  return axios.patch<IBackendRes<IRegister>>(urlBackend, {
+    email,
+    name,
+    phone,
+  });
 
-export const getProductsAPI = (query:string) =>{
-    const urlBackend = `/api/v1/products?${query}`;
-    return axios.get<IBackendRes<IModelPaginate<IProduct>>>(urlBackend);
-}
-export const deleteProductAPI = (id:number) =>{
-    const urlBackend = `/api/v1/products/${id}`;
-    return axios.delete<IBackendRes<IRegister>>(urlBackend
-       
-    );
-}
+};
+
+export const deleteUserAPI = (id: number) => {
+  const urlBackend = `/api/v1/users/${id}`;
+  return axios.delete<IBackendRes<IRegister>>(urlBackend);
+};
+
+export const getProductsAPI = (query: string) => {
+  const urlBackend = `/api/v1/products?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<IProduct>>>(urlBackend);
+};
+export const deleteProductAPI = (id: number) => {
+  const urlBackend = `/api/v1/products/${id}`;
+  return axios.delete<IBackendRes<IRegister>>(urlBackend);
+};
 
 export const updateProductAPI = (
   id: number,
@@ -143,7 +179,6 @@ export const deleteSupplierAPI = (id: number) => {
   return axios.delete(`/api/v1/suppliers/${id}`);
 };
 
-
 export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories?size=1000";
   return axios.get<IBackendRes<IModelPaginate<ICategory>>>(urlBackend);
@@ -163,10 +198,14 @@ export const getProductCardListAPI = (
 
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
 };
-export const getProductDetailById = (id:number)=>{
+export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
-  return axios.get<IBackendRes<IProductDetail>>(urlBackend)
-}
+  return axios.get<IBackendRes<IProductDetail>>(urlBackend);
+};
 
 
+export const getSubImgByProductId = (id: number) => {
+  const urlBackend = `/api/v1/product-images/product/${id}`;
+  return axios.get<IBackendRes<IProductImage[]>>(urlBackend);
+};
 
