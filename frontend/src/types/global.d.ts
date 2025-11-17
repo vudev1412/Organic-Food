@@ -179,4 +179,25 @@ declare global {
     updateBy: string | null;
     categoryId: number;
   }
+  // Interface cho Chứng chỉ
+  export interface ICertification {
+    id: number;
+    name: string;
+    logo: string;
+    imageUrl: string;
+    description: string;
+  }
+
+  // Interface cho Bình luận
+  export interface IComment {
+    user: string;
+    rating: number;
+    content: string;
+    date?: string;
+  }
+  export interface IProductImage {
+    id: number;
+    img: string;
+    product_id: number;
+  }
 }

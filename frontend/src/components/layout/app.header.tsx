@@ -88,7 +88,11 @@ const AppHeader = () => {
     <header className="header">
       <div className="logo">
         <Link to="/">
-          <img src={logo} alt="Logo" />
+          <img
+            src={logo}
+            alt="Logo"
+            style={{ width: "150px", height: "auto" }}
+          />
         </Link>
       </div>
 
