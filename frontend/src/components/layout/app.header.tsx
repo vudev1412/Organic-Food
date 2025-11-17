@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/png/logo.png";
 import { ShoppingCartOutlined, UserOutlined } from "@ant-design/icons";
@@ -52,7 +52,11 @@ const AppHeader = () => {
     ...(user?.role === "ADMIN"
       ? [{ key: "3", label: <Link to="/admin">Trang quản trị</Link> }]
       : []),
-    { key: "4", danger: true, label: <label onClick={handleLogout}>Đăng xuất</label> },
+    {
+      key: "4",
+      danger: true,
+      label: <label onClick={handleLogout}>Đăng xuất</label>,
+    },
   ];
 
   const handleMenuClick = () => {
@@ -108,9 +112,15 @@ const AppHeader = () => {
           </div>
         </div>
 
-        <Link to="/gioi-thieu" className="nav-link">Về chúng tôi</Link>
-        <Link to="/chung-chi" className="nav-link">Chứng chỉ</Link>
-        <Link to="/lien-he" className="nav-link">Liên hệ</Link>
+        <Link to="/gioi-thieu" className="nav-link">
+          Về chúng tôi
+        </Link>
+        <Link to="/chung-chi" className="nav-link">
+          Chứng chỉ
+        </Link>
+        <Link to="/lien-he" className="nav-link">
+          Liên hệ
+        </Link>
       </nav>
 
       <ProductSearch onSearch={handleSearch} />

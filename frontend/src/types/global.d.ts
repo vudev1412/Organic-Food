@@ -66,12 +66,11 @@ declare global {
     email: string;
     phone: string;
     image?: string | null;
-    
   }
   interface ICustomerTable {
     id: number;
-    member:boolean;
-    user:ICustomer;
+    member: boolean;
+    user: ICustomer;
   }
   interface IRegister {
     name: string;
@@ -101,6 +100,7 @@ declare global {
     categoryId: number;
   }
   interface ICategory {
+    parentCategoryId: null;
     data: {
       id: number;
       name: string;
@@ -204,9 +204,10 @@ declare global {
       member: boolean;
       userId: number;
     };
+  }
 
   // Interface cho Chứng chỉ
-  export interface ICertification {
+  interface ICertification {
     id: number;
     name: string;
     logo: string;
