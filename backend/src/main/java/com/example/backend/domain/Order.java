@@ -33,7 +33,7 @@ public class Order {
 
     private Instant actualDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "customer_user_id")
     private User user;
 
@@ -45,7 +45,10 @@ public class Order {
     @JsonIgnore
     private Invoice invoice;
 
-    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     @JsonIgnore
     private List<Return> returns;
+
 }

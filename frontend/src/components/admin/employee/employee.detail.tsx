@@ -4,8 +4,8 @@ import { Avatar, Descriptions, Drawer } from "antd";
 interface IProps {
   openViewDetail: boolean;
   setOpenViewDetail: (v: boolean) => void;
-  dataViewDetail: ICustomerTable | null;
-  setDataViewDetail: (v: ICustomerTable | null) => void;
+  dataViewDetail: IEmployee | null;
+  setDataViewDetail: (v: IEmployee | null) => void;
 }
 
 const DetailEmployee = (props: IProps) => {
@@ -27,14 +27,27 @@ const DetailEmployee = (props: IProps) => {
         <Descriptions.Item label="Id" span={2}>
           {dataViewDetail?.id}
         </Descriptions.Item>
-        <Descriptions.Item label="Name" span={2}>
-          {dataViewDetail?.name}
+        <Descriptions.Item label="Mã nhân viên" span={2}>
+          {dataViewDetail?.employeeCode}
+        </Descriptions.Item>
+        <Descriptions.Item label="Tên" span={2}>
+          {dataViewDetail?.user.name}
         </Descriptions.Item>
         <Descriptions.Item label="Email" span={2}>
-          {dataViewDetail?.email}
+          {dataViewDetail?.user.email}
         </Descriptions.Item>
-        <Descriptions.Item label="Phone" span={2}>
-          {dataViewDetail?.phone}
+        <Descriptions.Item label="Điện thoại" span={2}>
+          {dataViewDetail?.user.phone}
+        </Descriptions.Item>
+         <Descriptions.Item label="Địa chỉ" span={2}>
+          {dataViewDetail?.address}
+        </Descriptions.Item>
+        
+        <Descriptions.Item label="Ngày làm" span={2}>
+          {dataViewDetail?.hireDate}
+        </Descriptions.Item>
+        <Descriptions.Item label="Lương" span={2}>
+          {dataViewDetail?.salary}
         </Descriptions.Item>
         <Descriptions.Item label="Avatar" span={2}>
           <Avatar icon={<UserOutlined />} />

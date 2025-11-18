@@ -37,13 +37,13 @@ public class Invoice {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_user_id")
+    @JoinColumn(name = "customer_user_id", nullable = true)
     private User customer;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_user_id")
+    @JoinColumn(name = "employee_user_id", nullable = true)
     private User employee;
+
 
 
     @ManyToOne(fetch = FetchType.LAZY)

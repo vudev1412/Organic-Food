@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.domain.PromotionDetail;
 import com.example.backend.domain.request.ReqPromotionDetailDTO;
 import com.example.backend.domain.response.ResPromotionDetailDTO;
 
@@ -11,4 +12,6 @@ public interface PromotionDetailService {
     ResPromotionDetailDTO update(long promotionId, long productId, ReqPromotionDetailDTO dto);
     void delete(long promotionId, long productId);
     ResPromotionDetailDTO getById(long promotionId, long productId);
+    List<ResPromotionDetailDTO> handleGetByProductId(Long productId);
+    List<ResPromotionDetailDTO> handleGetByPromotionId(Long promotionId);
 }

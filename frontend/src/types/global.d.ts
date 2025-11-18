@@ -72,6 +72,14 @@ declare global {
     member: boolean;
     user: ICustomer;
   }
+  interface IEmployee{
+    id: number;
+    employeeCode:string;
+    address:string;
+    hireDate:string;
+    salary:number;
+    user:ICustomer;
+  }
   interface IRegister {
     name: string;
     email: string;
@@ -98,6 +106,18 @@ declare global {
     createBy: string;
     updateBy: string | null;
     categoryId: number;
+  }
+  interface ICertificate{
+    id:number;
+    name:string;
+    image:string;
+  }
+  interface IProductTable{
+      imageUrl:string;
+      certNo:string;
+      date:string;
+      product:IProduct;
+      certificate:ICertificate;
   }
   interface ICategory {
     parentCategoryId: null;
