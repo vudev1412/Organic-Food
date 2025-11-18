@@ -1,9 +1,15 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.EmployeeProfile;
+import com.example.backend.domain.User;
+import com.example.backend.domain.request.ReqUpdateEmployeeProfile;
 import com.example.backend.domain.response.ResEmployeeProfile;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.EmployeeProfileService;
+import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,11 +33,11 @@ public class EmployeeProfileController {
 //    }
 
     @GetMapping("/employee/profile")
-    public ResponseEntity<List<ResEmployeeProfile>> getAllEmployeeProfile(){
-        return ResponseEntity.ok().body(this.employeeProfileService.handleGetAllEmployeeProfile());
+    public ResponseEntity<ResultPaginationDTO> getAllEmployeeProfile(@Filter Specification<EmployeeProfile> spec, Pageable pageable){
+        return ResponseEntity.ok().body(this.employeeProfileService.handleGetAllEmployeeProfile(spec, pageable));
     }
     @PatchMapping("/employee/profile/{id}")
-    public ResponseEntity<ResEmployeeProfile> updateEmployeeProfile(@PathVariable Long id,@RequestBody EmployeeProfile employeeProfile){
+    public ResponseEntity<ResEmployeeProfile> updateEmployeeProfile(@PathVariable Long id,@RequestBody ReqUpdateEmployeeProfile employeeProfile){
         return ResponseEntity.ok().body(this.employeeProfileService.handleUpdateEmployeeProfile(id,employeeProfile));
     }
     @GetMapping("/employee/profile/{userId}")

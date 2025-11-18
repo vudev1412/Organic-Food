@@ -13,8 +13,6 @@ type TSearch = {
   email: string;
   phone: string;
 };
-interface IUser {}
-
 const MyTable = () => {
   const actionRef = useRef<ActionType>(null);
   const [meta, setMeta] = useState({
@@ -50,22 +48,32 @@ const MyTable = () => {
   // ========================= DELETE =========================
   const handleDeleteUser = async (id: number) => {
     setIsDeleteUser(true);
-    const res = await deleteUserAPI(id);
+    try {
+      const res:any = await deleteUserAPI(id);
 
-    if (res && res.data) {
-      message.success("Xóa user thành công");
-      refreshTable();
-    } else {
+      if (res.status === 204) {
+        message.success("Xóa user thành công");
+        refreshTable();
+      } else {
+        notification.error({
+          message: "Xảy ra lỗi",
+          description: "Không thể xóa user",
+          duration: 5,
+        });
+      }
+    } catch (error: any) {
       notification.error({
         message: "Xảy ra lỗi",
         description:
-          res.message && Array.isArray(res.message)
-            ? res.message[0]
-            : res.message,
+          error.response?.data?.message &&
+          Array.isArray(error.response.data.message)
+            ? error.response.data.message[0]
+            : error.response?.data?.message || error.message,
         duration: 5,
       });
+    } finally {
+      setIsDeleteUser(false);
     }
-    setIsDeleteUser(false);
   };
 
   // ========================= COLUMNS =========================

@@ -1,6 +1,7 @@
 package com.example.backend.domain;
 
 import com.example.backend.domain.key.ProductCertificateKey;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

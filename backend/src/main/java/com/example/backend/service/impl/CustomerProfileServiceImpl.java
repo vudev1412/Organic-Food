@@ -35,7 +35,15 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 
 
     public void handleDeleteCustomerProfile(Long id) {
-        this.customerProfileRepository.deleteById(id);
+
+        CustomerProfile profile = customerProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Customer profile not found: " + id));
+
+        User user = profile.getUser();
+        customerProfileRepository.delete(profile);
+        if (user != null) {
+            userRepository.delete(user);
+        }
     }
 
     @Override

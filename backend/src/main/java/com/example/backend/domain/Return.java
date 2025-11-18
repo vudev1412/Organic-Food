@@ -37,7 +37,7 @@ public class Return {
     private String processNote;
 
     @ManyToOne
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = true)
     private Order order;
 
     @OneToMany(mappedBy = "returns", cascade = CascadeType.ALL)

@@ -3,18 +3,26 @@ package com.example.backend.service.impl;
 import com.example.backend.domain.Certificate;
 import com.example.backend.domain.Product;
 import com.example.backend.domain.ProductCertificate;
+import com.example.backend.domain.User;
 import com.example.backend.domain.key.ProductCertificateKey;
 import com.example.backend.domain.request.ReqProductCertificate;
+import com.example.backend.domain.response.ProductCertificateDTO;
 import com.example.backend.domain.response.ResProductCertificate;
+import com.example.backend.domain.response.ResUserDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.mapper.ProductCertificateMapper;
 import com.example.backend.repository.CertificateRepository;
 import com.example.backend.repository.ProductCertificateRepository;
 import com.example.backend.repository.ProductRepository;
 import com.example.backend.service.ProductCertificateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,12 +52,30 @@ public class ProductCertificateServiceImpl implements ProductCertificateService 
     }
 
     @Override
-    public List<ResProductCertificate> handleGetAllProductCertificate() {
-        return this.productCertificateRepository.findAll()
+    public ResultPaginationDTO handleGetAllProductCertificate(Specification<ProductCertificate> spec, Pageable pageable) {
+
+        Page<ProductCertificate> pagePC = this.productCertificateRepository.findAll(spec, pageable);
+
+        // META
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+        meta.setPages(pagePC.getTotalPages());
+        meta.setTotal(pagePC.getTotalElements());
+        rs.setMeta(meta);
+
+        List<ProductCertificateDTO> dtoList = pagePC.getContent()
                 .stream()
-                .map(this.productCertificateMapper::toResProductCertificate)
+                .map(productCertificateMapper::toDTO)
                 .toList();
+
+        rs.setResult(dtoList);
+
+        return rs;
     }
+
 
     @Override
     public ResProductCertificate handleGetProductCertificateById(Long productId, Long certificateId) {

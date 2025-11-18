@@ -3,6 +3,7 @@ import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {
   deleteUserAPI,
   getCustomersAPI,
+  getEmployeesAPI,
 
 } from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
@@ -29,11 +30,11 @@ const TableEmployee = () => {
     total: 0,
   });
   const [openViewDetail, setOpenViewDetail] = useState<boolean>(false);
-  const [dataViewDetail, setDataViewDetail] = useState<ICustomerTable | null>(
+  const [dataViewDetail, setDataViewDetail] = useState<IEmployee | null>(
     null
   );
   const [openModelCreate, setOpenModalCreate] = useState<boolean>(false);
-  const [dataUpdate, setDataUpdate] = useState<ICustomerTable | null>(null);
+  const [dataUpdate, setDataUpdate] = useState<IEmployee | null>(null);
   const [openModalUpdate, setOpenModalUpdate] = useState<boolean>(false);
   const [isDeleteUser, setIsDeleteUser] = useState<boolean>(false);
   const { message, notification } = App.useApp();
@@ -56,7 +57,7 @@ const TableEmployee = () => {
     }
     setIsDeleteUser(false);
   };
-  const columns: ProColumns<ICustomerTable>[] = [
+  const columns: ProColumns<IEmployee>[] = [
     {
       title: "ID",
       dataIndex: "userId",
@@ -78,20 +79,23 @@ const TableEmployee = () => {
     },
     {
       title: "Tên",
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "userName",
+      key: "userName",
       sorter: true,
+      renderText: (_, entity) => entity.user.name,
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
       copyable: true,
+      renderText: (_, entity) => entity.user.email,
     },
     {
       title: "Điện thoại",
       dataIndex: "phone",
       key: "phone",
+      renderText: (_, entity) => entity.user.phone,
     },
     {
       title: "Địa chỉ",
@@ -107,9 +111,9 @@ const TableEmployee = () => {
       title: "Ngày làm",
       dataIndex: "hireDate",
       key: "hireDate",
-      render: (text:string) => {
-        const date = new Date(text);
-        return date.toLocaleDateString("vi-VN"); // vd: 01/01/2022
+      render: (_, entity) => {
+        const date = new Date(entity.hireDate);
+        return date.toLocaleDateString("vi-VN");
       },
     },
     {
@@ -156,44 +160,38 @@ const TableEmployee = () => {
   };
   return (
     <>
-      <ProTable<ICustomerTable, TSearch>
+      <ProTable<IEmployee, TSearch>
         columns={columns}
         cardBordered
         actionRef={actionRef}
         request={async (params, sort, filter) => {
-          
+          console.log("Request called with sort:", sort);
           let query = `page=${params.current}&size=${params.pageSize}`;
-          if (params.email) query += `&filter=email ~ '${params.email}'`;
-          if (params.name) query += `&filter=name ~ '${params.name}'`;
-          if (params.phone) query += `&filter=phone ~ '${params.phone}'`;
 
-          // 2. Sort
-          if (sort) {
-            const sortField = Object.keys(sort)[0];
-            const sortOrder = sort[sortField];
+          // ================== FILTER ==================
+          if (params.name) query += `&filter=user.name~'${params.name}'`;
+          if (params.email) query += `&filter=user.email~'${params.email}'`;
+          if (params.phone) query += `&filter=user.phone~'${params.phone}'`;
+
+          if (sort && Object.keys(sort).length > 0) {
+            const sortField = Object.keys(sort)[0].replace(/,/g, ".");
+            const sortOrder = sort[Object.keys(sort)[0]];
+
             if (sortOrder) {
               const order = sortOrder === "ascend" ? "ASC" : "DESC";
               query += `&sort=${sortField},${order}`;
             }
           }
 
-          // 3. Gọi API employee để lấy danh sách cơ bản
-          const resEmployees = await getCustomersAPI(query);
-          const employees = resEmployees.data?.data.result || [];
-          const metaData = resEmployees.data?.data.meta || {
-            page: 1,
-            size: 5,
-            total: employees.length,
-            pages: 1,
-          };
-          setMeta(metaData);
+          const res = await getEmployeesAPI(query);
+          console.log(res);
+          if (res.data) setMeta(res.data.data.meta);
 
-          
-          // 5. Trả về dữ liệu cho ProTable
           return {
+            data: res.data?.data.result,
             success: true,
-            page: metaData.page,
-            total: metaData.total,
+            total: res.data?.data.meta.total,
+            page: res.data?.data.meta.page,
           };
         }}
         rowKey="id"
