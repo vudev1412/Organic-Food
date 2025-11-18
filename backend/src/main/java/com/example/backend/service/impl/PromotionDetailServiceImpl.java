@@ -78,5 +78,15 @@ public class PromotionDetailServiceImpl implements PromotionDetailService {
         return this.mapper.toResPromotionDetailDTO(existing);
     }
 
+    @Override
+    public List<ResPromotionDetailDTO> handleGetByProductId(Long productId) {
+        return promotionDetailRepository.findByProduct_Id(productId).stream().map(mapper::toResPromotionDetailDTO).toList();
+    }
+
+    @Override
+    public List<ResPromotionDetailDTO> handleGetByPromotionId(Long promotionId) {
+        return promotionDetailRepository.findByPromotion_Id(promotionId).stream().map(mapper::toResPromotionDetailDTO).toList();
+    }
+
 
 }

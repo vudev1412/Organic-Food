@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import com.example.backend.domain.PromotionDetail;
 import com.example.backend.domain.request.ReqPromotionDetailDTO;
 import com.example.backend.domain.response.ResPromotionDetailDTO;
 import com.example.backend.service.PromotionDetailService;
@@ -48,4 +49,17 @@ public class PromotionDetailController {
                                                          @PathVariable long productId){
         return ResponseEntity.ok().body(this.promotionDetailService.getById(promotionId,productId));
     }
+    @GetMapping("/by-product/{productId}")
+    public ResponseEntity<List<ResPromotionDetailDTO>> getPromotionDetailByProductId(@PathVariable Long productId) {
+
+        return ResponseEntity.ok().body(promotionDetailService.handleGetByProductId(productId));
+    }
+
+    @GetMapping("/by-promotion/{promotionId}")
+    public ResponseEntity<List<ResPromotionDetailDTO>> getPromotionDetailByPromotionId(@PathVariable Long promotionId) {
+
+        return ResponseEntity.ok().body(promotionDetailService.handleGetByPromotionId(promotionId));
+    }
+
+
 }

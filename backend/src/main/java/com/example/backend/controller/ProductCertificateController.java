@@ -1,10 +1,16 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.ProductCertificate;
+import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqProductCertificate;
+import com.example.backend.domain.response.ProductCertificateDTO;
 import com.example.backend.domain.response.ResProductCertificate;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.ProductCertificateService;
+import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +30,8 @@ public class ProductCertificateController {
     }
 
     @GetMapping("/product-certificates")
-    public ResponseEntity<List<ResProductCertificate>> getAllProductCertificates() {
-        return ResponseEntity.ok().body(this.productCertificateService.handleGetAllProductCertificate());
+    public ResponseEntity<ResultPaginationDTO> getAllProductCertificates(@Filter Specification<ProductCertificate> spec, Pageable pageable) {
+        return ResponseEntity.ok().body(this.productCertificateService.handleGetAllProductCertificate(spec,pageable));
     }
 
     @GetMapping("/product-certificates/{productId}/{certificateId}")

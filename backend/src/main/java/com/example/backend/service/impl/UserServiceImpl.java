@@ -1,5 +1,8 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.domain.CustomerProfile;
+import com.example.backend.domain.Order;
+import com.example.backend.domain.Return;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqCreateUserDTO;
 import com.example.backend.domain.request.ReqUserDTO;
@@ -8,13 +11,14 @@ import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.domain.response.ResUserDTO;
 import com.example.backend.enums.Role;
 import com.example.backend.mapper.UserMapper;
-import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.*;
 import com.example.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -26,6 +30,19 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper mapper;
+    private final ReturnRepository returnRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReceiptRepository receiptRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final ReturnItemRepository returnItemRepository;
+    private final ReturnImageRepository returnImageRepository;
+    private final OrderDetailRepository orderDetailRepository;
+    private final OrderRepository orderRepository;
+    private final CartRepository cartRepository;
+    private final CustomerAddressRepository customerAddressRepository;
+    private final CustomerProfileRepository customerProfileRepository;
+    private final EmployeeProfileRepository employeeProfileRepository;
+
     public boolean isEmailExist(String email){
         return this.userRepository.existsByEmail(email);
     }
@@ -106,8 +123,52 @@ public class UserServiceImpl implements UserService {
         return resCreateUserDTO;
     }
 
+    @Transactional
     public String handleDeleteUser(Long id){
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1. Xóa reviews
+        reviewRepository.deleteAllByUser(user);
+
+        // 2. Xóa receipts
+        receiptRepository.deleteAllByUser(user);
+
+        // 3. Xóa invoice customer + employee
+        invoiceRepository.clearCustomerReference(user.getId());
+        invoiceRepository.clearEmployeeReference(user.getId());
+
+        // 4. Xóa orders và tất cả return liên quan
+        for (Order order : user.getOrders()) {
+            // Xóa return trước
+            for (Return r : order.getReturns()) {
+                returnItemRepository.deleteAllByReturns(r);
+                returnImageRepository.deleteAllByReturns(r);
+            }
+            returnRepository.deleteAllByOrder(order);
+
+            // Xóa orderDetails
+            orderDetailRepository.deleteAllByOrder(order);
+
+            // Xóa invoice
+            invoiceRepository.deleteByOrder(order);
+
+            // Xóa order
+            orderRepository.delete(order);
+        }
+
+        // 5. Xóa cart
+        if (user.getCart() != null) cartRepository.delete(user.getCart());
+
+        // 6. Xóa address
+        customerAddressRepository.deleteAllByUser(user);
+
+        // 7. Xóa customerProfile / employeeProfile
+        if (user.getCustomerProfile() != null) customerProfileRepository.delete(user.getCustomerProfile());
+        if (user.getEmployeeProfile() != null) employeeProfileRepository.delete(user.getEmployeeProfile());
+
+        // 8. Cuối cùng xoá user
+        userRepository.delete(user);
         return "Delete success";
     }
     public User handleGetUserByUsername(String email){
