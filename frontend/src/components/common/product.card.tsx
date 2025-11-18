@@ -52,7 +52,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
       state={{ productId: id }}
     >
       <div className="image-box">
-        <img src={imageUrl} alt={altText} />
+        <div className="image-wrapper">
+          <img src={imageUrl} alt={altText} />
+        </div>
         {/* Badge giảm giá */}
         {discount && (
           <span className="discount-badge">
