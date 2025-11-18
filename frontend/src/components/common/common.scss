@@ -6,10 +6,12 @@
   overflow: hidden;
   background: #fff;
   transition: transform 0.2s ease;
-
-  // Thêm style cho thẻ <a> được render bởi Link
   color: inherit; // Kế thừa màu chữ
   text-decoration: none; // Bỏ gạch chân
+  // --- THÊM 3 DÒNG NÀY ---
+  display: flex;
+  flex-direction: column;
+  height: 450px;
 
   &:hover {
     transform: translateY(-5px);
@@ -19,7 +21,10 @@
   .image-box {
     position: relative;
     width: 100%;
-    overflow: hidden;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     .discount-badge {
       position: absolute;
       top: 10px;
@@ -49,8 +54,13 @@
       height: auto;
       display: block;
       transition: transform 0.3s ease-in-out;
+      object-fit: cover;
     }
-
+    .image-wrapper {
+      width: 100%; 
+      margin: 0 auto;
+      overflow: hidden;
+    }
     // Hover phóng ảnh
     .product:hover & img {
       transform: scale(1.05);
