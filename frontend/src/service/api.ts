@@ -32,28 +32,24 @@ export const logoutAPI = () => {
   return axios.post<IBackendRes<IFetchAccount>>(urlBackend);
 };
 
-
-
-export const getCustomersAPI = (query:string) =>{
-    const urlBackend = `/api/v1/customer/profile?${query}`;
-    return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
-}
-export const getEmployeesAPI = (query:string) =>{
-    const urlBackend = `/api/v1/employee/profile?${query}`;
-    return axios.get<IBackendRes<IModelPaginate<IEmployee>>>(urlBackend);
-}
-
+export const getCustomersAPI = (query: string) => {
+  const urlBackend = `/api/v1/customer/profile?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
+};
+export const getEmployeesAPI = (query: string) => {
+  const urlBackend = `/api/v1/employee/profile?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<IEmployee>>>(urlBackend);
+};
 
 export const updateUserAPI = (id: number, payload: ICustomerTable) => {
   const urlBackend = `/api/v1/customer/profile/${id}`;
   return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
 };
 
-}
 export const updateEmployeeAPI = (id: number, payload: IEmployee) => {
   const urlBackend = `/api/v1/employee/profile/${id}`;
   return axios.patch<IBackendRes<IEmployee>>(urlBackend, payload);
-}
+};
 
 export const createUserAPI = (
   name: string,
@@ -190,4 +186,39 @@ export const searchProductsAPI = (query: string) => {
 export const getSubImgByProductId = (id: number) => {
   const urlBackend = `/api/v1/product-images/product/${id}`;
   return axios.get<IBackendRes<IProductImage[]>>(urlBackend);
+};
+export const getBestPromotionByProductId = (id: number) => {
+  const urlBackend = `/api/v1/promotion-details/${id}/best-promotion`;
+  return axios.get<IBackendRes<IBestPromotion>>(urlBackend);
+};
+
+// Cart API functions
+export const addToCartAPI = (productId: number, quantity: number) => {
+  const urlBackend = `/api/v1/cart/items`;
+  return axios.post<IBackendRes<ICartItemResponse>>(urlBackend, {
+    productId,
+    quantity,
+  });
+};
+
+export const getCartByUserAPI = () => {
+  const urlBackend = `/api/v1/cart`;
+  return axios.get(urlBackend);
+};
+
+export const updateCartItemAPI = (cartItemId: number, quantity: number) => {
+  const urlBackend = `/api/v1/cart/items/${cartItemId}`;
+  return axios.patch<IBackendRes<ICartItemResponse>>(urlBackend, {
+    quantity,
+  });
+};
+
+export const deleteCartItemAPI = (cartItemId: number) => {
+  const urlBackend = `/api/v1/cart/items/${cartItemId}`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
+};
+
+export const clearCartAPI = () => {
+  const urlBackend = `/api/v1/cart`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
 };

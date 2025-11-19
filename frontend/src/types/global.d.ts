@@ -48,7 +48,7 @@ declare global {
   }
 
   interface IDiscount {
-    id: number;
+    id?: number;
     type: string;
     value: number;
   }
@@ -59,6 +59,8 @@ declare global {
     image: string;
     price: number;
     quantity: number;
+    originalPrice?: number;
+    discount?: IDiscount;
   }
   interface ICustomer {
     id: number;
@@ -72,13 +74,13 @@ declare global {
     member: boolean;
     user: ICustomer;
   }
-  interface IEmployee{
+  interface IEmployee {
     id: number;
-    employeeCode:string;
-    address:string;
-    hireDate:string;
-    salary:number;
-    user:ICustomer;
+    employeeCode: string;
+    address: string;
+    hireDate: string;
+    salary: number;
+    user: ICustomer;
   }
   interface IRegister {
     name: string;
@@ -107,17 +109,17 @@ declare global {
     updateBy: string | null;
     categoryId: number;
   }
-  interface ICertificate{
-    id:number;
-    name:string;
-    image:string;
+  interface ICertificate {
+    id: number;
+    name: string;
+    image: string;
   }
-  interface IProductTable{
-      imageUrl:string;
-      certNo:string;
-      date:string;
-      product:IProduct;
-      certificate:ICertificate;
+  interface IProductTable {
+    imageUrl: string;
+    certNo: string;
+    date: string;
+    product: IProduct;
+    certificate: ICertificate;
   }
   interface ICategory {
     parentCategoryId: null;
@@ -182,6 +184,7 @@ declare global {
     originalPrice?: number;
     discount?: number;
     quantity: number;
+    maxQuantityAvailable?: number; // Tối đa có thể mua (từ product.quantity)
   }
   /**
    * Interface cho chi tiết sản phẩm,
@@ -246,5 +249,41 @@ declare global {
     id: number;
     img: string;
     product_id: number;
+  }
+  export interface IBestPromotion {
+    id: number;
+    promotionName: string;
+    value: number;
+    type: string;
+    originalPrice: number;
+    discountAmount: number;
+    finalPrice: number;
+    endDate: string;
+  }
+
+  // Cart API Types
+  interface ICreateCartItemDTO {
+    productId: number;
+    quantity: number;
+  }
+
+  interface IUpdateCartItemDTO {
+    quantity: number;
+  }
+
+  interface ICartItemResponse {
+    id: number;
+    quantity: number;
+    product: IProductCard;
+    originalPrice?: number;
+    discount?: number;
+  }
+
+  interface ICartResponse {
+    id: number;
+    userId: number;
+    items: ICartItemResponse[];
+    createdAt: string;
+    updatedAt: string;
   }
 }

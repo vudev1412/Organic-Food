@@ -19,6 +19,7 @@ interface ProductInfoProps {
   onDecrease: () => void;
   onIncrease: () => void;
   onQuantityChange: (newQty: number) => void; // callback khi người dùng nhập
+  bestPromotion?: IBestPromotion | null;
 }
 
 const ProductInfo: React.FC<ProductInfoProps> = ({
@@ -31,6 +32,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   onDecrease,
   onIncrease,
   onQuantityChange,
+  bestPromotion,
 }) => {
   const [inputQty, setInputQty] = useState<number>(quantity);
   useEffect(() => {
@@ -57,6 +59,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       onDecrease();
     }
   };
+  // *** LOGIC TÍNH TOÁN GIÁ MỚI ***
+  const originalPrice = product.price;
+  const finalPrice = bestPromotion?.finalPrice ?? originalPrice;
+  const hasPromotion = !!bestPromotion;
 
   return (
     <div className="flex flex-col gap-3">
@@ -73,10 +79,28 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       </div>
 
       <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+        {/* HIỂN THỊ GIÁ CÓ KHUYẾN MÃI */}
         <div className="flex items-baseline gap-3 mb-1">
-          <span className="text-3xl font-bold text-green-700">
-            {product.price.toLocaleString()}₫ / {product.unit}
+          {hasPromotion && (
+            // Giá gốc (gạch ngang)
+            <span className="text-xl font-semibold text-gray-500 line-through">
+              {originalPrice.toLocaleString()}₫
+            </span>
+          )}
+
+          {/* Giá cuối cùng (lớn và nổi bật) */}
+          <span className="text-3xl font-bold text-green-600">
+            {finalPrice.toLocaleString()}₫ / {product.unit}
           </span>
+
+          {hasPromotion && (
+            // Hiển thị phần trăm/giá trị giảm
+            <span className="text-sm font-bold text-white bg-red-600 px-2 py-0.5 rounded-full">
+              {bestPromotion.type === "percent"
+                ? `GIẢM ${bestPromotion.value}%`
+                : `GIẢM ${bestPromotion.discountAmount?.toLocaleString()}₫`}
+            </span>
+          )}
         </div>
 
         {/* === PHẦN THÊM MỚI === */}

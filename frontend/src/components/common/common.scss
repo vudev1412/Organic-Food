@@ -1,6 +1,6 @@
 .product {
   position: relative;
-  max-width: 300px;
+  width: 250px;
   border: 1px solid #eee;
   border-radius: 12px;
   overflow: hidden;
@@ -11,7 +11,7 @@
   // --- THÊM 3 DÒNG NÀY ---
   display: flex;
   flex-direction: column;
-  height: 450px;
+  height: 250px;
 
   &:hover {
     transform: translateY(-5px);
@@ -21,10 +21,12 @@
   .image-box {
     position: relative;
     width: 100%;
+    height: 50%;
     flex-grow: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
     .discount-badge {
       position: absolute;
       top: 10px;
@@ -51,13 +53,11 @@
     }
     img {
       width: 100%;
-      height: auto;
       display: block;
       transition: transform 0.3s ease-in-out;
-      object-fit: cover;
     }
     .image-wrapper {
-      width: 100%; 
+      width: 70%;
       margin: 0 auto;
       overflow: hidden;
     }
@@ -97,15 +97,23 @@
 
   .info {
     padding: 10px 15px;
-    text-align: center;
+  
 
     .product-name {
       font-size: 1rem;
       font-weight: 500;
       margin-bottom: 8px;
-      white-space: nowrap;
+
+      /* 💥 START: Thay thế 1 dòng bằng giới hạn 2 dòng */
+
+      /* Bắt buộc để cắt chữ nhiều dòng */
+      display: -webkit-box;
+      /* Giới hạn số dòng hiển thị */
+      -webkit-line-clamp: 2;
+      /* Đặt hướng box (webkit) là dọc */
+      -webkit-box-orient: vertical;
+      /* Ẩn nội dung bị cắt */
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .price {

@@ -11,33 +11,33 @@ const Cart = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showClearCartModal, setShowClearCartModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
-  const fixed_discount = {
-    id: 1,
-    type: "percent",
-    value: 20,
-  };
 
   const getDiscountedPrice = (
     price: number,
-    discount?: { id: number; type: string; value: number }
+    discount?: { id: number; type: string; value: number } | null
   ) => {
     if (!discount) return price;
-    if (discount.type === "percent") return price * (1 - discount.value / 100);
-    if (discount.type === "fixed_amount")
-      return Math.max(0, price - discount.value);
+    // Chuyển type về lowercase để so sánh an toàn
+    const type = discount.type ? discount.type.toLowerCase() : "";
+
+    if (type === "percent") return price * (1 - discount.value / 100);
+    if (type === "fixed_amount") return Math.max(0, price - discount.value);
     return price;
   };
 
   const subtotal = cartItems.reduce((total, item) => {
-    const discounted = getDiscountedPrice(item.price, fixed_discount);
+    const discounted = getDiscountedPrice(item.price, item.discount);
     return total + discounted * item.quantity;
   }, 0);
 
   const totalSavings = cartItems.reduce((total, item) => {
-    if (!fixed_discount) return total;
-    const discounted = getDiscountedPrice(item.price, fixed_discount);
-    const savedPerItem = item.price - discounted;
-    return total + savedPerItem * item.quantity;
+    // Sử dụng originalPrice nếu có (được lưu lúc add to cart), nếu không thì dùng price
+    const originalPrice = item.originalPrice || item.price;
+    const discounted = getDiscountedPrice(item.price, item.discount);
+    const savedPerItem = originalPrice - discounted;
+
+    // Chỉ cộng nếu có tiết kiệm thực sự
+    return total + (savedPerItem > 0 ? savedPerItem : 0) * item.quantity;
   }, 0);
 
   const shipping = subtotal > 500000 ? 0 : 25000;
@@ -150,10 +150,10 @@ const Cart = () => {
                 {cartItems.map((item) => {
                   const discountedPrice = getDiscountedPrice(
                     item.price,
-                    fixed_discount
+                    item.discount
                   );
                   const itemTotal = discountedPrice * item.quantity;
-                  const hasDiscount = !!fixed_discount;
+                  const hasDiscount = !!item.discount;
 
                   return (
                     <li
@@ -173,9 +173,13 @@ const Cart = () => {
                               alt={item.name}
                               className="h-20 w-20 sm:h-28 sm:w-28 rounded-xl object-cover object-center ring-1 ring-gray-200"
                             />
-                            {hasDiscount && (
+                            {hasDiscount && item.discount && (
                               <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                                -{fixed_discount.value}%
+                                {item.discount.type === "percent"
+                                  ? `-${item.discount.value}%`
+                                  : `-${(
+                                      item.discount.value / 1000
+                                    ).toLocaleString()}K`}
                               </div>
                             )}
                           </div>
@@ -252,20 +256,38 @@ const Cart = () => {
                               <input
                                 type="number"
                                 value={item.quantity}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const newQty = Math.max(
+                                    1,
+                                    parseInt(e.target.value) || 1
+                                  );
+                                  const maxAvailable =
+                                    item.maxQuantityAvailable || 100;
                                   updateCartQuantity(
                                     item.id,
-                                    Math.max(1, parseInt(e.target.value) || 1)
-                                  )
-                                }
+                                    Math.min(newQty, maxAvailable)
+                                  );
+                                }}
                                 className="w-12 sm:w-14 text-center py-2 bg-transparent font-semibold text-gray-900 focus:outline-none"
                                 min="1"
+                                max={item.maxQuantityAvailable || 100}
                               />
                               <button
-                                onClick={() =>
-                                  updateCartQuantity(item.id, item.quantity + 1)
+                                onClick={() => {
+                                  const maxAvailable =
+                                    item.maxQuantityAvailable || 100;
+                                  if (item.quantity < maxAvailable) {
+                                    updateCartQuantity(
+                                      item.id,
+                                      item.quantity + 1
+                                    );
+                                  }
+                                }}
+                                disabled={
+                                  item.quantity >=
+                                  (item.maxQuantityAvailable || 100)
                                 }
-                                className="px-3 py-2 text-gray-600 hover:bg-gray-200 transition-colors"
+                                className="px-3 py-2 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 aria-label="Tăng số lượng"
                               >
                                 <svg
@@ -282,6 +304,25 @@ const Cart = () => {
                                   />
                                 </svg>
                               </button>
+                            </div>
+
+                            {/* Stock availability indicator */}
+                            <div className="mt-2 text-sm">
+                              {item.quantity >=
+                              (item.maxQuantityAvailable || 100) ? (
+                                <span className="text-orange-600 font-medium">
+                                  ⚠️ Đã đạt số lượng tối đa
+                                </span>
+                              ) : (
+                                <span className="text-gray-600">
+                                  Còn lại:{" "}
+                                  <span className="font-semibold text-green-600">
+                                    {(item.maxQuantityAvailable || 100) -
+                                      item.quantity}
+                                  </span>{" "}
+                                  sản phẩm
+                                </span>
+                              )}
                             </div>
 
                             {/* Nút xóa */}

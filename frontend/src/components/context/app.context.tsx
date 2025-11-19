@@ -2,7 +2,6 @@
 
 import { createContext, useContext } from "react";
 
-
 // 1. Định nghĩa Interface (khuôn khổ data)
 export interface IAppContext {
   isAuthenticated: boolean;
@@ -25,9 +24,7 @@ export const CurrentAppContext = createContext<IAppContext | null>(null);
 export const useCurrentApp = () => {
   const ctx = useContext(CurrentAppContext);
   if (!ctx) {
-    throw new Error(
-      "useCurrentApp must be used within <AppProvider>"
-    );
+    throw new Error("useCurrentApp must be used within <AppProvider>");
   }
   return ctx;
 };

@@ -23,6 +23,9 @@ const ProductRight = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProductCard | null>(
     null
   );
+  const [selectedDiscount, setSelectedDiscount] = useState<
+    IDiscount | undefined
+  >(undefined);
 
   // --- LOGIC GỌI API ---
   useEffect(() => {
@@ -62,22 +65,32 @@ const ProductRight = () => {
   // --- HANDLERS ---
 
   // Mở modal khi nhấn "Thêm vào giỏ"
-  const handleShowQuantityModal = (product: IProductCard) => {
+  const handleShowQuantityModal = (
+    product: IProductCard,
+    discount?: IDiscount
+  ) => {
     setSelectedProduct(product);
+    setSelectedDiscount(discount);
   };
 
   // Xác nhận từ modal
-  const handleConfirmAddToCart = (product: IProductCard, quantity: number) => {
+  const handleConfirmAddToCart = (
+    product: IProductCard,
+    quantity: number,
+    discount?: IDiscount
+  ) => {
     if (product && quantity > 0) {
       console.log("Adding to cart:", product.name, "Quantity:", quantity);
 
       const productWithOriginalPrice = {
         ...product,
         originalPrice: product.price, // giá gốc
+        discount: discount, // thông tin giảm giá
       };
 
       addToCart(productWithOriginalPrice, quantity);
       setSelectedProduct(null); // Đóng modal
+      setSelectedDiscount(undefined);
       showToast(
         `Đã thêm ${quantity} sản phẩm "${product.name}" vào giỏ hàng!`,
         "success",
@@ -89,6 +102,7 @@ const ProductRight = () => {
   // Đóng modal
   const handleCloseModal = () => {
     setSelectedProduct(null);
+    setSelectedDiscount(undefined);
   };
 
   // Thay đổi sắp xếp
@@ -109,6 +123,7 @@ const ProductRight = () => {
       <QuantityModal
         product={selectedProduct}
         onClose={handleCloseModal}
+        discount={selectedDiscount}
         onConfirm={handleConfirmAddToCart}
       />
 

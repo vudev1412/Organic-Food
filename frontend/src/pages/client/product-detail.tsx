@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { getProductDetailById, getSubImgByProductId } from "../../service/api";
+import { getBestPromotionByProductId, getProductDetailById, getSubImgByProductId } from "../../service/api";
 
 // Giả lập import logo chứng chỉ (Mock data)
 import vietgapLogo from "../../../../upload/images/certs/vietgap.png";
@@ -10,6 +10,7 @@ import ProductInfo from "../../components/section/product-detail/ProductInfo";
 import ProductTabs from "../../components/section/product-detail/ProductTabs";
 import RelatedProducts from "../../components/common/RelatedProducts";
 import CertificationModal from "../../components/section/product-detail/CertificationModal";
+import type { AxiosError } from "axios";
 
 // Dữ liệu cho chứng chỉ (Mock data)
 const certifications: ICertification[] = [
@@ -56,7 +57,9 @@ const ProductDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState<IComment[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
-
+  const [bestPromotion, setBestPromotion] = useState<IBestPromotion | null>(
+    null
+  );
   const [selectedImage, setSelectedImage] = useState<string>("");
 
   // State cho tương tác UI
@@ -70,55 +73,80 @@ const ProductDetail: React.FC = () => {
   // --- Data Fetching ---
   useEffect(() => {
     const fetchProductData = async () => {
-      if (productId) {
-        setIsLoading(true);
-        const baseUrl = "http://localhost:8080/storage/images/products/";
+      if (!productId) {
+        console.error("Không tìm thấy ID sản phẩm (Có thể do F5).");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      const baseUrl = "http://localhost:8080/storage/images/products/";
+
+      // Hàm con để lấy chi tiết sản phẩm và ảnh
+      const fetchMainData = async () => {
+        let productData: IProductDetail | null = null;
+        let mainImageUrl = "";
+
         try {
+          // 1. Lấy chi tiết sản phẩm
           const response = await getProductDetailById(productId);
           if (response.data.data) {
-            const productData = response.data.data;
+            productData = response.data.data;
             setProduct(productData);
-
-            const mainImageUrl = `${baseUrl}${productData.image}`;
+            mainImageUrl = `${baseUrl}${productData.image}`;
             setSelectedImage(mainImageUrl);
+          }
 
-            try {
-              const imgRes = await getSubImgByProductId(productId);
+          // 2. Lấy ảnh phụ (Sub Images)
+          try {
+            const imgRes = await getSubImgByProductId(productId);
+            let subImageUrls: string[] = [];
 
-              if (
-                imgRes.data.data &&
-                Array.isArray(imgRes.data.data) &&
-                imgRes.data.data.length > 0
-              ) {
-                // Map mảng ảnh phụ
-                const subImageUrls = imgRes.data.data.map(
-                  (img: IProductImage) => `${baseUrl}${img.imgUrl}`
-                );
-
-                // Set gallery = ảnh chính + ảnh phụ
-                setGalleryImages([mainImageUrl, ...subImageUrls]);
-              } else {
-                // Không có ảnh phụ, set gallery chỉ có ảnh chính
-                setGalleryImages([mainImageUrl]);
-              }
-            } catch (imgError) {
-              console.error("Lỗi khi tải ảnh phụ:", imgError);
-              // Nếu lỗi, vẫn set gallery với ảnh chính
-              setGalleryImages([mainImageUrl]);
+            if (
+              imgRes.data.data &&
+              Array.isArray(imgRes.data.data) &&
+              imgRes.data.data.length > 0
+            ) {
+              subImageUrls = imgRes.data.data.map(
+                (img: IProductImage) => `${baseUrl}${img.imgUrl}`
+              );
             }
 
-            // TODO: Fetch comment theo productId
-            setComments(initialComments);
+            // Set gallery = ảnh chính + ảnh phụ
+            setGalleryImages([mainImageUrl, ...subImageUrls]);
+          } catch (imgError) {
+            console.error("Lỗi khi tải ảnh phụ:", imgError);
+            // Nếu lỗi, vẫn set gallery với ảnh chính
+            setGalleryImages([mainImageUrl]);
           }
+
+          // 3. Lấy khuyến mãi tốt nhất
+          try {
+            const promotionRes = await getBestPromotionByProductId(productId);
+            if (promotionRes.data.data) {
+              setBestPromotion(promotionRes.data.data);
+            }
+          } catch (promotionError) {
+            const axiosError = promotionError as AxiosError;
+            // Xử lý 404: Không có khuyến mãi là bình thường
+            if (axiosError.response?.status === 404) {
+              setBestPromotion(null);
+            } else {
+              console.error("Lỗi khi tải khuyến mãi:", promotionError);
+              setBestPromotion(null);
+            }
+          }
+
+          // TODO: Fetch comment theo productId
+          setComments(initialComments);
         } catch (error) {
           console.error("Lỗi khi tải chi tiết sản phẩm:", error);
         } finally {
           setIsLoading(false);
         }
-      } else {
-        console.error("Không tìm thấy ID sản phẩm (Có thể do F5).");
-        setIsLoading(false);
-      }
+      };
+
+      fetchMainData();
     };
 
     fetchProductData();
@@ -194,6 +222,7 @@ const ProductDetail: React.FC = () => {
               averageRating={averageRating}
               commentCount={comments.length}
               certifications={certifications}
+              bestPromotion={bestPromotion}
               onCertClick={setSelectedCert}
               quantity={quantity}
               onDecrease={handleDecrease}

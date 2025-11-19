@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.PromotionDetail;
 import com.example.backend.domain.request.ReqPromotionDetailDTO;
+import com.example.backend.domain.response.BestPromotionDTO;
 import com.example.backend.domain.response.ResPromotionDetailDTO;
 import com.example.backend.service.PromotionDetailService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/promotion-details")
@@ -59,6 +61,15 @@ public class PromotionDetailController {
     public ResponseEntity<List<ResPromotionDetailDTO>> getPromotionDetailByPromotionId(@PathVariable Long promotionId) {
 
         return ResponseEntity.ok().body(promotionDetailService.handleGetByPromotionId(promotionId));
+    }
+    @GetMapping("/{productId}/best-promotion")
+    public ResponseEntity<BestPromotionDTO> getBestPromotion(@PathVariable Long productId) {
+
+        Optional<BestPromotionDTO> bestPromotionOpt = promotionDetailService.findBestActivePromotion(productId);
+
+        return bestPromotionOpt
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 

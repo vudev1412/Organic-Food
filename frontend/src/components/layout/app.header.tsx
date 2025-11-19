@@ -7,12 +7,31 @@ import { Dropdown, Space, type MenuProps } from "antd";
 import { logoutAPI, getAllCategoriesAPI } from "../../service/api";
 import "./index.scss";
 import ProductSearch from "../section/product/search.bar";
+import CartDropdown from "../common/cart.dropdown";
+
+// --- Interface định nghĩa (nếu chưa có thì thêm vào, hoặc dùng any tạm) ---
+interface ICategory {
+  id: number;
+  name: string;
+  slug: string;
+  parentCategoryId: number | null;
+}
 
 const AppHeader = () => {
-  const { user, isAuthenticated, setUser, setIsAuthenticated } =
-    useCurrentApp();
+  const {
+    user,
+    isAuthenticated,
+    setUser,
+    setIsAuthenticated,
+    cartItems,
+    removeFromCart,
+    updateCartQuantity,
+  } = useCurrentApp();
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
+
+  // --- STATE MỚI: Quản lý việc đóng mở giỏ hàng ---
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -22,8 +41,6 @@ const AppHeader = () => {
 
         if (Array.isArray(results)) {
           setAllCategories(results);
-
-          // Parent categories: parentCategoryId === null
           const parentCategories = results.filter(
             (cat: ICategory) => cat.parentCategoryId === null
           );
@@ -87,7 +104,6 @@ const AppHeader = () => {
 
           <div className="mega-menu" onClick={handleMenuClick}>
             {categories.map((cat) => {
-              // Subcategories: parentCategoryId === parent.id
               const subCategories = allCategories.filter(
                 (c: ICategory) => c.parentCategoryId === cat.id
               );
@@ -126,9 +142,29 @@ const AppHeader = () => {
       <ProductSearch onSearch={handleSearch} />
 
       <div className="actions">
-        <Link to="/gio-hang">
-          <ShoppingCartOutlined />
-        </Link>
+        {/* --- BẮT ĐẦU PHẦN SỬA GIỎ HÀNG --- */}
+        <div className="relative z-50">
+          {/* Nút icon giỏ hàng: Thêm onClick để toggle state */}
+          <div
+            className="cursor-pointer py-2 relative"
+            onClick={() => setIsCartOpen(!isCartOpen)}
+          >
+            <ShoppingCartOutlined className="text-2xl text-gray-700 hover:text-blue-600 transition duration-200" />
+
+            <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+              {cartItems.length}
+            </span>
+          </div>
+          {/* Sử dụng CartDropdown component */}
+          <CartDropdown
+            isOpen={isCartOpen}
+            onClose={() => setIsCartOpen(false)}
+            cartItems={cartItems}
+            onRemove={removeFromCart}
+            onUpdateQuantity={updateCartQuantity}
+          />
+        </div>
+        {/* --- KẾT THÚC PHẦN GIỎ HÀNG --- */}
 
         {isAuthenticated ? (
           <Dropdown menu={{ items }} placement="bottomRight" arrow>

@@ -32,7 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     discount?.type === "percent"
       ? price * (1 - discount.value / 100)
       : discount?.type === "fixed_amount"
-      ? price - discount.value * 1000
+      ? price - discount.value 
       : price;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -60,7 +60,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <span className="discount-badge">
             {discount.type === "percent"
               ? `-${discount.value}%`
-              : `-${discount.value.toLocaleString()}K`}
+              : `-${(discount.value/1000).toLocaleString()}K`}
           </span>
         )}
 
