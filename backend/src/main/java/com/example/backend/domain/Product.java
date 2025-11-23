@@ -26,8 +26,6 @@ public class Product {
     @NotBlank(message = "name không được để trống")
     private String name;
 
-    private String unit;
-
     @Column(nullable = false)
     private double price;
 
@@ -99,7 +97,7 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "unit_id")
-    private Unit units;
+    private Unit unit;
 
     @PrePersist
     public void handleCreateAt(){

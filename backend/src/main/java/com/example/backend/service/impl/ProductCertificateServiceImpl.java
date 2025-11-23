@@ -6,15 +6,15 @@ import com.example.backend.domain.ProductCertificate;
 import com.example.backend.domain.User;
 import com.example.backend.domain.key.ProductCertificateKey;
 import com.example.backend.domain.request.ReqProductCertificate;
-<<<<<<< HEAD
+
 import com.example.backend.domain.response.*;
-=======
+
 import com.example.backend.domain.request.ReqUpdateProductCertificate;
 import com.example.backend.domain.response.ProductCertificateDTO;
 import com.example.backend.domain.response.ResProductCertificate;
 import com.example.backend.domain.response.ResUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
->>>>>>> 856c190357b00a1f9dc4ab2ba623ef29197e379d
+
 import com.example.backend.mapper.ProductCertificateMapper;
 import com.example.backend.repository.CertificateRepository;
 import com.example.backend.repository.ProductCertificateRepository;
