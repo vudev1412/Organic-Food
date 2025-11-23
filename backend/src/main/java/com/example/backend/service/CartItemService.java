@@ -1,7 +1,9 @@
 package com.example.backend.service;
 
 import com.example.backend.domain.CartItem;
+import com.example.backend.domain.request.ReqCartItemDTO;
 import com.example.backend.domain.response.ResCartItemDTO;
+import com.example.backend.util.error.IdInvalidException;
 
 import java.util.List;
 
@@ -11,4 +13,7 @@ public interface CartItemService {
     public List<ResCartItemDTO> handleGetAllCartItem();
     public ResCartItemDTO handleUpdateCartItem(Long id, CartItem cartItem);
     public void handleDeleteCartItem(Long id);
+    public void addToCart(Long cartId, Long productId, int quantity) ;
+    public ResCartItemDTO handleAddCartItem(ReqCartItemDTO req) throws IdInvalidException;
+    public ResCartItemDTO handleUpdateCartItem(ReqCartItemDTO req) throws IdInvalidException;
 }

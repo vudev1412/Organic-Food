@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
@@ -14,12 +15,12 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
         SELECT 
             id, product_name, slug, image, originalPrice, 
             final_price AS price, quantity, 
-            promotion_id, promotion_type, promotion_value AS value
+            promotion_id, promotion_type, promotion_value AS value,stock
         FROM (
             SELECT 
                 p.id, p.name AS product_name, p.slug, p.image, p.price AS originalPrice,
-                ci.quantity,
-                promo.id AS promotion_id, promo.type AS promotion_type, promo.value AS promotion_value,
+                ci.quantity, 
+                promo.id AS promotion_id, promo.type AS promotion_type, promo.value AS promotion_value,  p.quantity AS stock,
                 
                 CAST(CASE 
                     WHEN UPPER(promo.type) = 'PERCENT' THEN p.price * (1 - promo.value / 100)
@@ -37,7 +38,7 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
                         END) ASC, promo.id DESC 
                 ) as rn
             FROM carts c
-            JOIN cartItems ci ON c.id = ci.cart_id
+            JOIN cart_items ci ON c.id = ci.cart_id
             JOIN products p ON ci.product_id = p.id
             LEFT JOIN promotion_detail pd ON p.id = pd.product_id AND NOW() BETWEEN pd.start_date AND pd.end_date
             LEFT JOIN promotions promo ON pd.promotion_id = promo.id AND promo.active = TRUE
@@ -46,4 +47,5 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
         WHERE temp_table.rn = 1
         """, nativeQuery = true)
     List<Object[]> fetchCartItemsRaw(@Param("userId") Long userId);
+    Optional<Cart> findByUser_Email(String email);
 }

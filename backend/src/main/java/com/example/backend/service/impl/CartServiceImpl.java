@@ -73,15 +73,15 @@ public class CartServiceImpl implements CartService {
         dto.setSlug((String) row[2]);
         dto.setImage((String) row[3]);
 
-        dto.setOriginalPrice((BigDecimal) row[4]);
-        dto.setPrice((BigDecimal) row[5]);
+        dto.setOriginalPrice(convertToBigDecimal(row[4]));
+        dto.setPrice(convertToBigDecimal(row[5]));
 
         dto.setQuantity((Integer) row[6]);
 
         dto.setPromotionId(castToLong(row[7]));
         dto.setPromotionType((String) row[8]);
         dto.setValue((Double) row[9]);
-
+        dto.setStock((Integer) row[10]);
         return dto;
     }
 
@@ -89,4 +89,15 @@ public class CartServiceImpl implements CartService {
     private Long castToLong(Object obj) {
         return obj != null ? ((Number) obj).longValue() : null;
     }
+
+    private BigDecimal convertToBigDecimal(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof BigDecimal bd) {
+            return bd;
+        }
+        return BigDecimal.valueOf(((Number) obj).doubleValue());
+    }
+
 }
