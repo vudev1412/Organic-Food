@@ -1,5 +1,6 @@
 package com.example.backend.domain.response;
 
+import com.example.backend.domain.Unit;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.Instant;
@@ -33,7 +34,7 @@ public class ResOrderDetailDTO {
     public static class ProductInfo {
         private Long id;
         private String name;
-        private String unit;
+        private Unit unit;
         private String image;
         private String slug;
     }
