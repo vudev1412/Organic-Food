@@ -1,5 +1,6 @@
 package com.example.backend.domain.request;
 
+import com.example.backend.domain.Unit;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +11,7 @@ import java.time.Instant;
 public class ReqProductDTO {
     private Long id;
     private String name;
-    private String unit;
+    private Unit unit;
     private double price;
     private String origin_address;
     private String description;

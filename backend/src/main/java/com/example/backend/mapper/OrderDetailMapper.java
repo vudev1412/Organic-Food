@@ -15,6 +15,7 @@ public interface OrderDetailMapper {
 
     @Mapping(source = "order.id", target = "orderId")
     @Mapping(source = "product.id", target = "productId")
+
     ResOrderDetailDTO toResOrderDetailDTO(OrderDetail entity);
 
     public static ResOrderDetailFullDTO toFullDTO(OrderDetail od) {
@@ -24,8 +25,8 @@ public interface OrderDetailMapper {
         ResProductDTO productDTO = ResProductDTO.builder()
                 .id(p.getId())
                 .name(p.getName())
-                .unit(p.getUnit())
                 .price(p.getPrice())
+
                 .origin_address(p.getOrigin_address())
                 .description(p.getDescription())
                 .rating_avg(p.getRating_avg())
