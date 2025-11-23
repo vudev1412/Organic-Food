@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-// import { IProductCard } from "../../../types";
 
 interface QuantityModalProps {
   product: IProductCard | null;
   discount?: IDiscount;
   onClose: () => void;
-  onConfirm: (product: IProductCard, quantity: number, discount?: IDiscount) => void;
+  onConfirm: (
+    product: IProductCard,
+    quantity: number,
+    discount?: IDiscount
+  ) => void;
 }
 
 const QuantityModal = ({
@@ -14,7 +17,8 @@ const QuantityModal = ({
   onClose,
   onConfirm,
 }: QuantityModalProps) => {
-  const [quantity, setQuantity] = useState(1);
+  // Cho phép state là string để xử lý trường hợp người dùng xóa trắng ô input
+  const [quantity, setQuantity] = useState<number | string>(1);
   const [error, setError] = useState("");
 
   // Reset số lượng về 1 mỗi khi mở modal cho sản phẩm mới
@@ -28,27 +32,77 @@ const QuantityModal = ({
   if (!product) {
     return null;
   }
+
+  const type = discount?.type?.toUpperCase();
+
   const discountedPrice =
-    discount?.type === "percent"
+    // Kiểm tra discount có tồn tại không trước
+    discount && type === "PERCENT"
       ? product.price * (1 - discount.value / 100)
-      : discount?.type === "fixed_amount"
+      : discount && type === "FIXED_AMOUNT"
       ? product.price - discount.value
       : product.price;
-
   // Kiểm tra số lượng tối đa có sẵn
-  const maxAvailable = product.quantity || 0;
+  const maxAvailable = product.quantity ?? 0;
   const isOutOfStock = maxAvailable === 0;
 
-  const handleQuantityChange = (newQuantity: number) => {
-    const validated = Math.max(1, newQuantity);
+  // Hàm xử lý khi người dùng nhập trực tiếp vào ô input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
 
-    if (validated > maxAvailable) {
+    // 1. Cho phép xóa trắng ô input (trải nghiệm người dùng tốt hơn)
+    if (inputValue === "") {
+      setQuantity("");
+      setError("");
+      return;
+    }
+
+    // 2. Chỉ cho phép nhập số
+    const parsedValue = parseInt(inputValue);
+    if (isNaN(parsedValue)) return;
+
+    // 3. Kiểm tra giới hạn tồn kho ngay khi nhập
+    if (parsedValue > maxAvailable) {
       setQuantity(maxAvailable);
-      setError(`Chỉ còn ${maxAvailable} sản phẩm có sẵn`);
+      setError(`Chỉ còn ${maxAvailable} sản phẩm sẵn có`);
     } else {
-      setQuantity(validated);
+      setQuantity(parsedValue);
       setError("");
     }
+  };
+
+  // Hàm xử lý khi người dùng click chuột ra ngoài ô input (Blur)
+  const handleBlur = () => {
+    const finalValue =
+      typeof quantity === "string" ? parseInt(quantity) : quantity;
+
+    // Nếu ô trống hoặc số <= 0 hoặc NaN, reset về 1
+    if (!finalValue || finalValue < 1) {
+      setQuantity(1);
+      setError("");
+    }
+    // Logic check maxAvailable đã có ở onChange, nhưng check lại cho chắc
+    else if (finalValue > maxAvailable) {
+      setQuantity(maxAvailable);
+      setError(`Chỉ còn ${maxAvailable} sản phẩm có sẵn`);
+    }
+  };
+
+  // Hàm tăng giảm số lượng bằng nút bấm
+  const handleButtonClick = (delta: number) => {
+    const currentQty =
+      typeof quantity === "string" ? parseInt(quantity) || 0 : quantity;
+    const newQty = currentQty + delta;
+
+    if (newQty < 1) return;
+
+    if (newQty > maxAvailable) {
+      setError(`Chỉ còn ${maxAvailable} sản phẩm có sẵn`);
+      return;
+    }
+
+    setQuantity(newQty);
+    setError("");
   };
 
   const handleConfirm = () => {
@@ -57,12 +111,21 @@ const QuantityModal = ({
       return;
     }
 
-    if (quantity > maxAvailable) {
+    // Chuyển đổi chắc chắn về number trước khi confirm
+    const finalQty =
+      typeof quantity === "string" ? parseInt(quantity) || 1 : quantity;
+
+    if (finalQty > maxAvailable) {
       setError(`Chỉ có thể mua tối đa ${maxAvailable} sản phẩm`);
       return;
     }
 
-     onConfirm(product, quantity, discount);
+    if (finalQty < 1) {
+      setError("Số lượng phải lớn hơn 0");
+      return;
+    }
+
+    onConfirm(product, finalQty, discount);
   };
 
   return (
@@ -97,9 +160,9 @@ const QuantityModal = ({
                   {discountedPrice.toLocaleString()}₫
                 </strong>
                 <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded">
-                  {discount.type === "percent"
+                  {type === "PERCENT"
                     ? `-${discount.value}%`
-                    : `-${discount.value/1000}k`}
+                    : `-${discount.value / 1000}k`}
                 </span>
               </>
             ) : (
@@ -121,26 +184,30 @@ const QuantityModal = ({
             <label className="text-gray-700 font-medium">Số lượng:</label>
             <div className="flex items-center border border-gray-300 rounded-lg">
               <button
-                onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
-                disabled={isOutOfStock}
+                onClick={() => handleButtonClick(-1)}
+                disabled={
+                  isOutOfStock ||
+                  (typeof quantity === "number" && quantity <= 1)
+                }
                 className="px-3 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 −
               </button>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={quantity}
-                onChange={(e) =>
-                  handleQuantityChange(parseInt(e.target.value) || 1)
-                }
+                onChange={handleInputChange}
+                onBlur={handleBlur}
                 disabled={isOutOfStock}
                 className="w-16 text-center py-2 border-l border-r border-gray-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                min="1"
-                max={maxAvailable}
               />
               <button
-                onClick={() => handleQuantityChange(quantity + 1)}
-                disabled={isOutOfStock || quantity >= maxAvailable}
+                onClick={() => handleButtonClick(1)}
+                disabled={
+                  isOutOfStock ||
+                  (typeof quantity === "number" && quantity >= maxAvailable)
+                }
                 className="px-3 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 +

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number; // 0-indexed
@@ -23,59 +24,55 @@ const Pagination = ({
   const handleGoToPage = () => {
     const pageNumber = parseInt(pageInput, 10);
     if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
-      onPageChange(pageNumber - 1); // Chuyển sang 0-indexed
+      onPageChange(pageNumber - 1);
       setPageInput("");
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleGoToPage();
-    }
+    if (e.key === "Enter") handleGoToPage();
   };
 
-  // --- Logic render các nút trang ---
+  // --- Render các nút trang (3 trang quanh currentPage) ---
   const renderPageButtons = () => {
     const buttons = [];
-    for (let index = 0; index < totalPages; index++) {
-      const mobileRange = index >= currentPage - 1 && index <= currentPage + 1;
-      const desktopRange = index >= currentPage - 2 && index <= currentPage + 2;
+    const start = Math.max(0, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
 
-      if (mobileRange || desktopRange) {
-        buttons.push(
-          <button
-            key={index}
-            onClick={() => onPageChange(index)}
-            className={`px-2.5 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-              currentPage === index
-                ? "bg-green-600 text-white shadow-sm"
-                : "border border-gray-300 hover:bg-gray-50"
-            } ${!mobileRange ? "hidden sm:inline-block" : ""}`}
-          >
-            {index + 1}
-          </button>
-        );
-      }
+    for (let index = start; index <= end; index++) {
+      buttons.push(
+        <button
+          key={index}
+          onClick={() => onPageChange(index)}
+          className={`px-2.5 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+            currentPage === index
+              ? "bg-green-600 text-white shadow-sm"
+              : "border border-gray-300 hover:bg-gray-50"
+          }`}
+        >
+          {index + 1}
+        </button>
+      );
     }
+
     return buttons;
   };
 
   return (
     <div className="mt-8 space-y-4">
-      {/* Phần điều hướng trang */}
+      {/* Thanh điều hướng */}
       <div className="flex justify-center items-center gap-1.5 sm:gap-2 flex-wrap px-2">
-        {/* Nút Previous */}
+        {/* Prev */}
         <button
           onClick={() => onPageChange(Math.max(0, currentPage - 1))}
           disabled={currentPage === 0}
-          className="px-3 sm:px-4 py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+          className="h-9 px-3 flex items-center gap-1 border border-gray-300 bg-white rounded-md text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
         >
-          <span className="hidden sm:inline">← Trước</span>
-          <span className="sm:hidden">←</span>
+          <ChevronLeft size={16} />
         </button>
 
         {/* Trang đầu */}
-        {currentPage > 2 && (
+        {currentPage > 1 && (
           <>
             <button
               onClick={() => onPageChange(0)}
@@ -83,24 +80,20 @@ const Pagination = ({
             >
               1
             </button>
-            {currentPage > 3 && (
-              <span className="px-1 sm:px-2 text-gray-500 text-xs sm:text-sm">
-                ...
-              </span>
+            {currentPage > 2 && (
+              <span className="px-1 sm:px-2 text-gray-500">...</span>
             )}
           </>
         )}
 
-        {/* Các trang xung quanh */}
+        {/* Trang giữa */}
         {renderPageButtons()}
 
         {/* Trang cuối */}
-        {currentPage < totalPages - 3 && (
+        {currentPage < totalPages - 2 && (
           <>
-            {currentPage < totalPages - 4 && (
-              <span className="px-1 sm:px-2 text-gray-500 text-xs sm:text-sm">
-                ...
-              </span>
+            {currentPage < totalPages - 3 && (
+              <span className="px-1 sm:px-2 text-gray-500">...</span>
             )}
             <button
               onClick={() => onPageChange(totalPages - 1)}
@@ -111,21 +104,20 @@ const Pagination = ({
           </>
         )}
 
-        {/* Nút Next */}
+        {/* Next */}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages - 1}
-          className="px-3 sm:px-4 py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+          className="h-9 px-3 flex items-center gap-1 border border-gray-300 bg-white rounded-md text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
         >
-          <span className="hidden sm:inline">Sau →</span>
-          <span className="sm:hidden">→</span>
+          <ChevronRight size={16} />
         </button>
       </div>
 
-      {/* Phần nhập trang */}
+      {/* Input chuyển trang */}
       <div className="flex justify-center items-center gap-2 px-2">
         <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">
-          Đến trang:
+          Trang
         </span>
         <input
           type="text"
@@ -139,7 +131,7 @@ const Pagination = ({
           onClick={handleGoToPage}
           className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-md text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors"
         >
-          Đi
+          Chuyển
         </button>
       </div>
     </div>

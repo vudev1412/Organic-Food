@@ -173,9 +173,30 @@ export const getProductCardListAPI = (
 
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
 };
+export const getProductsByCategoryAPI = (
+  id: number, // Thêm tham số id danh mục
+  page: number,
+  size: number,
+  sort?: string
+) => {
+  // Lưu ý: Đường dẫn này phải khớp với @GetMapping bên backend
+  // Giả sử prefix global của bạn là /api/v1
+  let urlBackend = `/api/v1/product/category/${id}?page=${page}&size=${size}`;
+
+  // Thêm sort param nếu có
+  if (sort) {
+    urlBackend += `&sort=${sort}`;
+  }
+
+  return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+};
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
   return axios.get<IBackendRes<IProductDetail>>(urlBackend);
+};
+export const getProductCertificateByIdProduct = (id: number) => {
+  const urlBackend = `/api/v1/products/${id}/certificate-details`;
+  return axios.get<IBackendRes<ProductCertificateDetail>>(urlBackend);
 };
 
 export const searchProductsAPI = (query: string) => {
@@ -194,8 +215,9 @@ export const getBestPromotionByProductId = (id: number) => {
 
 // Cart API functions
 export const addToCartAPI = (productId: number, quantity: number) => {
-  const urlBackend = `/api/v1/cart/items`;
-  return axios.post<IBackendRes<ICartItemResponse>>(urlBackend, {
+  const URL_API = "/api/v1/items";
+
+  return axios.post<IBackendRes<ICartItemResponse>>(URL_API, {
     productId,
     quantity,
   });
@@ -206,18 +228,19 @@ export const getCartByUserAPI = () => {
   return axios.get(urlBackend);
 };
 
-export const updateCartItemAPI = (cartItemId: number, quantity: number) => {
-  const urlBackend = `/api/v1/cart/items/${cartItemId}`;
-  return axios.patch<IBackendRes<ICartItemResponse>>(urlBackend, {
+export const getMyCartAPI = () => {
+  const urlBackend = `/api/v1/cart/my-cart`;
+  return axios.get<IBackendRes<ICartItemDTO[]>>(urlBackend);
+};
+
+export const updateCartAPI = (productId: number, quantity: number) => {
+  const URL_API = "/api/v1/items";
+  console.log("Check ID gửi đi:", productId);
+  return axios.put<IBackendRes<ICartItemResponse>>(URL_API, {
+    productId,
     quantity,
   });
 };
-
-export const deleteCartItemAPI = (cartItemId: number) => {
-  const urlBackend = `/api/v1/cart/items/${cartItemId}`;
-  return axios.delete<IBackendRes<void>>(urlBackend);
-};
-
 export const clearCartAPI = () => {
   const urlBackend = `/api/v1/cart`;
   return axios.delete<IBackendRes<void>>(urlBackend);

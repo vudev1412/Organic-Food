@@ -68,12 +68,15 @@
 
     .add-to-cart {
       position: absolute;
-      top: 50%; // giữa ảnh
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #08740e;
+      background-color: rgba(8, 116, 14, 0.8);
       color: white;
-      padding: 10px 10px;
+
+      padding: 10px 30px;
+      white-space: nowrap;
+
       border: none;
       border-radius: 20px;
       cursor: pointer;
@@ -81,9 +84,10 @@
       transition: opacity 0.3s ease-in-out;
       font-weight: 500;
       font-size: 13px;
+
       &.sold-out {
-        opacity: 1; // Luôn luôn hiện
-        background-color: #999; // Màu xám
+        opacity: 1;
+        background-color: #999;
         cursor: not-allowed;
         font-weight: 600;
       }
@@ -97,7 +101,6 @@
 
   .info {
     padding: 10px 15px;
-  
 
     .product-name {
       font-size: 1rem;
@@ -124,6 +127,10 @@
 
       .discounted {
         color: #e60000;
+        font-weight: 700;
+      }
+      .no-discounted {
+        color: #12ca1b;
         font-weight: 700;
       }
 

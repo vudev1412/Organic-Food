@@ -7,13 +7,15 @@ import { logoutAPI } from "../../service/api";
 import { useCurrentApp } from "../context/app.context";
 
 const AdminHeader: React.FC = () => {
-  const { user, isAuthenticated,setUser, setIsAuthenticated } = useCurrentApp();
-  const handleLogout = async() => {
+  const { user, setUser, setIsAuthenticated, clearCart } = useCurrentApp();
+  const handleLogout = async () => {
       const res = await logoutAPI();
       if(res.data){
         setUser(null);
         setIsAuthenticated(false);
         localStorage.removeItem("access_token");
+        localStorage.removeItem("organic_cart_items");
+        clearCart();
       }
     }
    const items: MenuProps["items"] = [

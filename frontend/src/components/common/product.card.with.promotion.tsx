@@ -55,11 +55,10 @@ const ProductCardWithPromotion = ({
   }, [product.id]);
 
   // 3. CHUYỂN ĐỔI DỮ LIỆU TỪ IBestPromotion SANG IDiscount (Dạng ProductCard cần)
-  const discountProps: IDiscount | undefined = bestPromotion
+  const discountProps: IDiscount = bestPromotion
     ? {
         id: bestPromotion.id,
-        // Đảm bảo type phù hợp với ProductCard (VD: chuyển "PERCENT" thành "percent")
-        type: bestPromotion.type.toLowerCase(),
+        type: bestPromotion.type,
         value: bestPromotion.value,
       }
     : undefined;

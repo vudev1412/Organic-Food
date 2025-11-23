@@ -1,21 +1,23 @@
 import { App, Button, Divider, Form, Input, type FormProps } from "antd";
 import { Link, useNavigate } from "react-router-dom";
-import bg from "../assets/png/bg-auth.png";
 import fb from "../../assets/png/facebook.png";
 import gg from "../../assets/png/google.png";
 import { useState } from "react";
 import { loginAPI } from "../../service/api";
 import { useCurrentApp } from "../../components/context/app.context";
+
 interface FieldType {
   username: string;
   password: string;
 }
-const SingIn = () => {
+
+const SignIn = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [isSubmit, setIsSubmit] = useState(false);
-  const {message, notification} = App.useApp();
-  const {setIsAuthenticated, setUser} = useCurrentApp();
+  const { message, notification } = App.useApp();
+  const { setIsAuthenticated, setUser } = useCurrentApp();
+
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
     const { username, password } = values;
     setIsSubmit(true);
@@ -23,7 +25,7 @@ const SingIn = () => {
     console.log(res.data);
     setIsSubmit(false);
     if (res?.data) {
-      setIsAuthenticated(true); 
+      setIsAuthenticated(true);
       setUser(res.data.data.userLogin);
       localStorage.setItem("access_token", res.data?.data?.access_token);
       message.success("Đăng nhập tài khoản thành công");
@@ -32,11 +34,14 @@ const SingIn = () => {
       notification.error({
         message: "Xảy ra lỗi",
         description:
-          res.message && Array.isArray(res.message) ? res.message[0] : res.message,
-          duration: 5
+          res.message && Array.isArray(res.message)
+            ? res.message[0]
+            : res.message,
+        duration: 5,
       });
     }
   };
+
   return (
     <div className="flex h-screen justify-center">
       <div className=" flex justify-center items-center">
@@ -58,11 +63,16 @@ const SingIn = () => {
                 name="username"
                 rules={[
                   { required: true, message: "Tài khoản không được để trống" },
-                  
+                  // THÊM DÒNG DƯỚI ĐÂY ĐỂ CHECK EMAIL
+                  {
+                    type: "email",
+                    message: "Vui lòng nhập đúng định dạng email",
+                  },
                 ]}
               >
                 <Input placeholder="Nhập email" />
               </Form.Item>
+
               <Form.Item
                 label="Mật khẩu"
                 name="password"
@@ -72,6 +82,7 @@ const SingIn = () => {
               >
                 <Input.Password placeholder="Nhập mật khẩu" />
               </Form.Item>
+
               <Form.Item>
                 <Button
                   type="default"
@@ -114,4 +125,5 @@ const SingIn = () => {
     </div>
   );
 };
-export default SingIn;
+
+export default SignIn;

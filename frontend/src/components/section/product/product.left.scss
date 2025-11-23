@@ -1,35 +1,97 @@
 .product-left {
+  /* --- 0. QUAN TRỌNG: Reset thẻ a --- */
   a {
     text-decoration: none;
     transition: all 0.2s ease-in-out;
+    color: inherit; /* [FIX] Dòng này cực quan trọng: Ép thẻ a lấy màu của thẻ cha */
   }
 
   button {
     transition: all 0.2s ease-in-out;
   }
 
-  /* Link danh mục cha không có con */
-  .category-parent-link {
-    color: #4b5563;
-    &:hover {
-      background-color: #16a34a !important;
-      color: white !important;
+  /* --- 1. Style Tiêu đề --- */
+  h3 {
+    transition: all 0.2s ease-in-out;
+    &:hover,
+    &.active {
+      color: #16a34a;
+      background-color: #f0fdf4;
     }
   }
 
-  /* Child category links */
+  /* --- 2. Scrollbar (Giữ nguyên) --- */
+  .custom-scrollbar {
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    &::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    &::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f1f1f1;
+  }
+
+  /* --- 3. Danh mục cha KHÔNG có con (Link đơn - Thẻ A) --- */
+  .category-parent-link {
+    display: flex; /* Đảm bảo flex để canh chỉnh icon nếu có */
+    color: #4b5563; 
+
+    &:hover,
+    &.active {
+      background-color: #16a34a !important;
+      color: white !important; /* Vì đây là thẻ a trực tiếp nên nó sẽ ăn */
+      font-weight: 500;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* --- 4. Danh mục cha CÓ con (Group Header - Thẻ DIV) --- */
+  .category-group-header {
+    color: #374151; /* Màu mặc định cho text bên trong div */
+
+    /* [FIX] Target trực tiếp thẻ a bên trong để chắc chắn nó không bị màu mặc định */
+    a {
+        color: #374151;
+    }
+
+    &:hover,
+    &.active {
+      background-color: #16a34a !important; 
+      
+      /* [FIX] Khi div cha active/hover, ép thẻ a và icon bên trong đổi màu trắng */
+      color: white !important; 
+      a, button, svg {
+          color: white !important;
+      }
+      
+      font-weight: 500;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* --- 5. Danh mục CON (Child Link - Thẻ A) --- */
   .category-child {
     display: block;
-    padding: 0.5rem;
-    border-radius: 0.375rem;
-    color: #4b5563;
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+    border-radius: 0 0.375rem 0.375rem 0;
+    color: #6b7280; 
     font-size: 0.875rem;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
+    border-left: 3px solid transparent;
+
+    &:hover,
+    &.active {
+      background-color: #f0fdf4; 
+      color: #16a34a !important; /* Thêm !important cho chắc */
+    }
+
+    &.active {
+      font-weight: 600;
+      border-left-color: #16a34a;
+    }
 
     &:hover {
-      background-color: #dcfce7;
-      color: #15803d;
+       padding-left: 1rem;
     }
   }
 }
