@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.List;
 
 public interface ProductCertificateRepository extends JpaRepository<ProductCertificate, ProductCertificateKey>, JpaSpecificationExecutor<ProductCertificate> {
-<<<<<<< HEAD
     @Query("SELECT new com.example.backend.domain.response.ProductCertificateDetailDTO(" +
             "  pc.certificate.id, " +
             "  pc.certificate.name, " +
@@ -25,7 +24,6 @@ public interface ProductCertificateRepository extends JpaRepository<ProductCerti
             "FROM ProductCertificate pc " +
             "WHERE pc.product.id = :productId")
     List<ProductCertificateDetailDTO> findProductCertificateDetailsByProductId(@Param("productId") Long productId);
-=======
     List<ProductCertificate> findByIdProductId(Long productId);
->>>>>>> 856c190357b00a1f9dc4ab2ba623ef29197e379d
+
 }

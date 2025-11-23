@@ -26,7 +26,6 @@ public class Product {
     @NotBlank(message = "name không được để trống")
     private String name;
 
-
     @Column(nullable = false)
     private double price;
 

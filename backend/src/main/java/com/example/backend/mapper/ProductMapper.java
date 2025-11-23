@@ -1,6 +1,7 @@
 package com.example.backend.mapper;
 
 import com.example.backend.domain.Product;
+import com.example.backend.domain.Unit;
 import com.example.backend.domain.request.ReqProductDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import org.mapstruct.Mapper;
@@ -16,5 +17,12 @@ public interface ProductMapper {
 
     @Mapping(source = "category.id", target = "categoryId")
     ResProductDTO toResProductDto(Product dto);
-
+    default Unit map(String value) {
+        if (value == null) {
+            return null;
+        }
+        Unit unit = new Unit();
+        unit.setName(value);
+        return unit;
+    }
 }

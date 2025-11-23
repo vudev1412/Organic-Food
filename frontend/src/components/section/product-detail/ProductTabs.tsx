@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
-import { parseDescription } from "../../../components/common/parseDescription";
+// Import helper vừa tạo (nhớ chỉnh đường dẫn đúng với cấu trúc thư mục của bạn)
+import ProductDescription from "./ProductDescription";
 import StarRating from "./StarRating";
 
 type TabName = "desc" | "info" | "reviews";
@@ -32,14 +33,8 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case "desc":
-        return (
-          <div
-            className="prose max-w-none text-gray-700 leading-relaxed"
-            dangerouslySetInnerHTML={{
-              __html: parseDescription(product.description),
-            }}
-          />
-        );
+        return <ProductDescription content={product.description} />;
+
       case "info":
         return (
           <ul className="space-y-2 text-gray-700">
@@ -71,6 +66,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             </li>
           </ul>
         );
+
       case "reviews":
         return (
           <div>
@@ -110,7 +106,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
                       setNewComment(e.target.value)
                     }
                     placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                    className="border border-gray-300 rounded-xl p-4 w-full h-32 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    className="border border-gray-300 rounded-xl p-4 w-full h-32 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none outline-none"
                   />
                 </div>
                 <button
@@ -135,7 +131,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg">
-                        {c.user.charAt(0).toUpperCase()}
+                        {c.user ? c.user.charAt(0).toUpperCase() : "A"}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">

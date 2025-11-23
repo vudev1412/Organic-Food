@@ -19,9 +19,6 @@ public interface ProductCertificateService {
     ResProductCertificate handleGetProductCertificateById(Long productId, Long certificateId);
     ResProductCertificate handleUpdateProductCertificate(Long productId, Long certificateId, ReqUpdateProductCertificate productCertificate);
     void handleDeleteProductCertificate(Long productId, Long certificateId);
-<<<<<<< HEAD
     List<ProductCertificateDetailDTO> handleGetCertificateDetailsByProductId(Long productId);
-=======
     List<ResProductCertificate> handleGetByProductId(Long id);
->>>>>>> 856c190357b00a1f9dc4ab2ba623ef29197e379d
 }
