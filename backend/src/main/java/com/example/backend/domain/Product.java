@@ -97,6 +97,10 @@ public class Product {
     @JsonIgnore
     private ReturnItem returnItems;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")
+    private Unit units;
+
     @PrePersist
     public void handleCreateAt(){
         this.createBy = "lehienvu";
