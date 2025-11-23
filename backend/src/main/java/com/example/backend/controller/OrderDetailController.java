@@ -1,10 +1,16 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.OrderDetail;
+import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqOrderDetail;
 import com.example.backend.domain.response.ResOrderDetailDTO;
+import com.example.backend.domain.response.ResOrderDetailFullDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.OrderDetailService;
+import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +30,8 @@ public class OrderDetailController {
     }
 
     @GetMapping("/order-details")
-    public ResponseEntity<List<ResOrderDetailDTO>> getAllOrderDetails() {
-        return ResponseEntity.ok(orderDetailService.getAllOrderDetails());
+    public ResponseEntity<ResultPaginationDTO> getAllOrderDetails(@Filter Specification<OrderDetail> spec, Pageable pageable) {
+        return ResponseEntity.ok(orderDetailService.getAllOrderDetails(spec,pageable));
     }
 
     @GetMapping("/order-details/{orderId}/{productId}")

@@ -30,10 +30,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public ResOrderDTO handleGetOrderById(Long id) {
+    public Order handleGetOrderById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
-        return orderMapper.toResOrderDTO(order);
+        return order;
     }
 
     @Override
@@ -56,5 +56,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void handleDeleteOrder(Long id) {
         orderRepository.deleteById(id);
+    }
+
+    @Override
+    public List<ResOrderDTO> handleGetOrderByUserId(Long id) {
+        return this.orderRepository.findByUser_Id(id).stream().map(this.orderMapper::toResOrderDTO).toList();
     }
 }

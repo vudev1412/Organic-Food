@@ -17,5 +17,7 @@ public class ReqReturnDTO {
     private Instant approvedAt;
     private int processedBy;
     private String processNote;
-    private long orderId;
+
+    private Long orderId;
+    private String customerName;
 }

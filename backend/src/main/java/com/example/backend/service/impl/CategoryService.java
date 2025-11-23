@@ -1,6 +1,7 @@
 package com.example.backend.service.impl;
 
 import com.example.backend.domain.Category;
+import com.example.backend.domain.request.ReqCategory;
 import com.example.backend.domain.request.ReqCategoryDTO;
 import com.example.backend.domain.response.ResCategoryDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
@@ -56,25 +57,38 @@ public class CategoryService {
             Category parent = categoryRepository.findById(dto.getParentCategoryId())
                     .orElseThrow(() -> new RuntimeException("Parent category not found"));
             category.setParentCategory(parent);
+
         }
 
         return categoryRepository.save(category);
     }
 
-    public Category handleUpdateCategory(Long id, Category updatedCategory) {
+    public Category handleUpdateCategory(Long id, ReqCategory req) {
 
-        Category existingCategory = this.categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
 
+        category.setName(req.getName());
+        if(req.getSlug() != null){
+            category.setSlug(req.getSlug());
+        }
+        if (req.getParentId() != null) {
+            Category parent = categoryRepository.findById(req.getParentId())
+                    .orElseThrow(() -> new RuntimeException("Parent category not found"));
 
-        existingCategory.setName(updatedCategory.getName());
+            category.setParentCategory(parent);
+        } else {
+            category.setParentCategory(null); // nếu muốn remove cha
+        }
 
-
-        return this.categoryRepository.save(existingCategory);
+        return categoryRepository.save(category);
     }
 
     public String handleDeleteCategory(Long id){
         this.categoryRepository.deleteById(id);
         return "Delete success";
+    }
+    public List<Category> getAllParentCategories() {
+        return categoryRepository.findByParentCategoryIsNull();
     }
 }

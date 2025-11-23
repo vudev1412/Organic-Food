@@ -1,6 +1,10 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { deleteUserAPI, getCustomersAPI } from "../../../service/api";
+import {
+  deleteUserAPI,
+  deleteUserProfileAPI,
+  getCustomersAPI,
+} from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
 import { App, Button, Popconfirm, Tag } from "antd";
@@ -38,26 +42,38 @@ const MyTable = () => {
 
     const id = entity.id;
 
-    if (id < 10) return `NV00${id}`;
-    if (id < 100) return `NV0${id}`;
-    if (id < 1000) return `NV${id}`;
+    if (id < 10) return `KH00${id}`;
+    if (id < 100) return `KH0${id}`;
+    if (id < 1000) return `KH${id}`;
 
-    return `NV${id}`;
+    return `KH${id}`;
   };
 
   // ========================= DELETE =========================
-  const handleDeleteUser = async (id: number) => {
+  const handleDeleteUser = async (id: number, userId: number) => {
     setIsDeleteUser(true);
     try {
-      const res:any = await deleteUserAPI(id);
+      // 1. Xóa CustomerProfile trước (nếu có)
+      const resProfile: any = await deleteUserProfileAPI(id);
 
-      if (res.status === 204) {
-        message.success("Xóa user thành công");
-        refreshTable();
+      if (resProfile.status === 204 || resProfile.status === 200) {
+        // 2. Sau đó xóa User
+        const resUser: any = await deleteUserAPI(userId);
+
+        if (resUser.status === 204 || resUser.status === 200) {
+          message.success("Xóa user thành công");
+          refreshTable();
+        } else {
+          notification.error({
+            message: "Xảy ra lỗi",
+            description: "Không thể xóa user",
+            duration: 5,
+          });
+        }
       } else {
         notification.error({
           message: "Xảy ra lỗi",
-          description: "Không thể xóa user",
+          description: "Không thể xóa CustomerProfile",
           duration: 5,
         });
       }
@@ -79,25 +95,16 @@ const MyTable = () => {
   // ========================= COLUMNS =========================
   const columns: ProColumns<ICustomerTable>[] = [
     {
-      title: "ID",
+      title: "Mã",
       dataIndex: ["user", "id"],
       key: "id",
       hideInSearch: true,
-      render: (_, entity) => (
-        <a
-          onClick={() => {
-            setOpenViewDetail(true);
-            setDataViewDetail(entity);
-          }}
-        >
-          {formatUserId(entity)}
-        </a>
-      ),
+      render: (_, entity) => <a>{formatUserId(entity)}</a>,
     },
     {
       title: "Tên",
-      dataIndex: "userName",
-      key: "userName",
+      dataIndex: ["user", "name"],
+      key: "name",
       sorter: true,
       renderText: (_, entity) => entity.user.name,
     },
@@ -132,9 +139,10 @@ const MyTable = () => {
           <EditTwoTone
             twoToneColor="#f57800"
             style={{ cursor: "pointer", marginRight: 15 }}
-            onClick={() => {
+            onClick={(e) => {
               setDataUpdate(entity);
               setOpenModalUpdate(true);
+              e.stopPropagation();
             }}
           />
 
@@ -142,15 +150,16 @@ const MyTable = () => {
             placement="leftTop"
             title="Xác nhận xóa user"
             description="Bạn có chắc muốn xóa user này?"
-            onConfirm={() => handleDeleteUser(entity.id)}
+            onConfirm={() => handleDeleteUser(entity.id, entity.user.id)}
             okText="Xác nhận"
             cancelText="Hủy"
             okButtonProps={{ loading: isDeleteUser }}
           >
-            <DeleteTwoTone
+            {/* <DeleteTwoTone
               twoToneColor="#ff4d4f"
               style={{ cursor: "pointer" }}
-            />
+              onClick={(e) => e.stopPropagation()}
+            /> */}
           </Popconfirm>
         </>
       ),
@@ -165,12 +174,13 @@ const MyTable = () => {
   // ========================= RENDER =========================
   return (
     <>
+      <h2>Tìm kiếm</h2>
       <ProTable<ICustomerTable, TSearch>
         columns={columns}
         cardBordered
         actionRef={actionRef}
         rowKey="id"
-        headerTitle="Table user"
+        headerTitle="Khách hàng"
         toolBarRender={() => [
           <Button
             key="button"
@@ -211,6 +221,12 @@ const MyTable = () => {
             page: res.data?.data.meta.page,
           };
         }}
+        onRow={(record) => ({
+          onClick: () => {
+            setOpenViewDetail(true);
+            setDataViewDetail(record);
+          },
+        })}
         pagination={{
           current: meta.page,
           pageSize: meta.size,
@@ -218,7 +234,7 @@ const MyTable = () => {
           showSizeChanger: true,
           showTotal: (total, range) => (
             <span>
-              {range[0]} - {range[1]} trên {total} rows
+              {range[0]} - {range[1]} trên {total} hàng
             </span>
           ),
         }}

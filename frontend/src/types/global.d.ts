@@ -108,6 +108,7 @@ declare global {
     updateBy: string | null;
     categoryId: number;
   }
+
   interface ICertificate {
     id: number;
     name: string;
@@ -119,20 +120,54 @@ declare global {
     date: string;
     product: IProduct;
     certificate: ICertificate;
+
+  export interface IOrder {
+    id: number;
+    orderAt: string;
+    note?: string;
+    statusOrder: string;
+    shipAddress: string;
+    estimatedDate?: string;
+    actualDate?: string;
+    userId?: number;
   }
-  interface ICategory {
-    parentCategoryId: null;
-    data: {
-      id: number;
-      name: string;
-      slug: string;
-      parentCategoryId?: number;
-    };
+  export interface IOrderDetailFull {
+    orderId: number;
+    productId: number;
+    quantity: number;
+    price: number;
+    product: IProduct;
+    order: IOrder;
+
   }
+  export interface ICreateOrderDetailDTO {
+    orderId: number;
+    productId: number;
+    quantity: number;
+    price: number;
+  }
+  interface ICertificate {
+    id: number;
+    name: string;
+    image: string;
+  }
+  interface IProductTable {
+    imageUrl: string;
+    certNo: string;
+    date: string;
+    product: IProduct;
+    certificate: ICertificate[];
+  }
+
   interface ICreateCategoryDTO {
     name: string;
     slug: string;
-    parent_category_id?: number;
+    parentCategoryId?: number;
+  }
+  interface IUpdateCategoryDTO {
+    name: string;
+    slug: string;
+    parentId?: number;
   }
   export interface ISupplier {
     id: number;
@@ -158,16 +193,21 @@ declare global {
     name: string;
     phone: string;
   }
-  interface IProductTable {
+  interface ICategoryTable {
     id: number;
-    image: string;
     name: string;
     slug: string;
-    price: number;
-    quantity: number;
-    active: boolean;
+    parentCategoryId?: number | null;
+    parentName?: string | null;
   }
+
   interface ICategory {
+    id: number;
+    name: string;
+    slug: string;
+    parentCategory: ICategory | null;
+  }
+  interface IParentCategory {
     id: number;
     name: string;
     slug: string;
@@ -268,6 +308,7 @@ declare global {
     img: string;
     product_id: number;
   }
+
   export interface IBestPromotion {
     id: number;
     promotionName: string;
@@ -317,5 +358,33 @@ declare global {
     items: ICartItemResponse[];
     createdAt: string;
     updatedAt: string;
+
+  export interface Certificate {
+    data: {
+      id: number;
+      name: string;
+    };
+  }
+  export interface IReturn {
+    id: number;
+    reason: string;
+    status: string;
+    returnType: string;
+    createdAt: string;
+    approvedAt: string;
+    processedBy: string;
+    processNote: string;
+    orderId: number;
+    customerName: string;
+  }
+  export interface ICreateReturnDTO {
+    reason: string;
+    status: string;
+    returnType: string;
+    processNote: string;
+    orderId: number;
+  }
+  export interface ICreateCustomerProfile{
+    
   }
 }

@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.domain.ProductCertificate;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqProductCertificate;
+import com.example.backend.domain.request.ReqUpdateProductCertificate;
 import com.example.backend.domain.response.ProductCertificateDTO;
 import com.example.backend.domain.response.ResProductCertificate;
 import com.example.backend.domain.response.ResultPaginationDTO;
@@ -25,7 +26,7 @@ public class ProductCertificateController {
     private final ProductCertificateService productCertificateService;
 
     @PostMapping("/product-certificates")
-    public ResponseEntity<ResProductCertificate> createProductCertificate(@RequestBody ReqProductCertificate productCertificate) {
+    public ResponseEntity<ResProductCertificate> createProductCertificate(@RequestBody ReqUpdateProductCertificate productCertificate) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.productCertificateService.handleCreateProductCertificate(productCertificate));
     }
 
@@ -44,7 +45,7 @@ public class ProductCertificateController {
     public ResponseEntity<ResProductCertificate> updateProductCertificate(
             @PathVariable Long productId,
             @PathVariable Long certificateId,
-            @RequestBody ProductCertificate productCertificate) {
+            @RequestBody ReqUpdateProductCertificate productCertificate) {
         return ResponseEntity.ok().body(this.productCertificateService.handleUpdateProductCertificate(productId, certificateId, productCertificate));
     }
 
@@ -53,5 +54,9 @@ public class ProductCertificateController {
             @PathVariable Long productId, @PathVariable Long certificateId) {
         this.productCertificateService.handleDeleteProductCertificate(productId, certificateId);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/product-certificates/product/{productId}")
+    public ResponseEntity<List<ResProductCertificate>> getByProductId(@PathVariable Long productId) {
+        return ResponseEntity.ok(this.productCertificateService.handleGetByProductId(productId));
     }
 }

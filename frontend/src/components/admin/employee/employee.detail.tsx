@@ -1,5 +1,6 @@
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar, Descriptions, Drawer } from "antd";
+import dayjs from "dayjs"; // <-- import dayjs
 
 interface IProps {
   openViewDetail: boolean;
@@ -16,6 +17,21 @@ const DetailEmployee = (props: IProps) => {
     setDataViewDetail(null);
   };
 
+  const formatUserId = (entity: ICustomerTable) => {
+    if (!entity?.id) return "Không có ID";
+
+    const id = entity.id;
+    if (id < 10) return `NV00${id}`;
+    if (id < 100) return `NV0${id}`;
+    if (id < 1000) return `NV${id}`;
+    return `NV${id}`;
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    return dayjs(dateStr).format("DD/MM/YYYY");
+  };
+
   return (
     <Drawer
       title="Chức năng xem chi tiết"
@@ -24,12 +40,10 @@ const DetailEmployee = (props: IProps) => {
       open={openViewDetail}
     >
       <Descriptions title="Thông tin user" bordered column={2}>
-        <Descriptions.Item label="Id" span={2}>
-          {dataViewDetail?.id}
+        <Descriptions.Item label="Mã" span={2}>
+          {formatUserId(dataViewDetail)}
         </Descriptions.Item>
-        <Descriptions.Item label="Mã nhân viên" span={2}>
-          {dataViewDetail?.employeeCode}
-        </Descriptions.Item>
+
         <Descriptions.Item label="Tên" span={2}>
           {dataViewDetail?.user.name}
         </Descriptions.Item>
@@ -39,12 +53,11 @@ const DetailEmployee = (props: IProps) => {
         <Descriptions.Item label="Điện thoại" span={2}>
           {dataViewDetail?.user.phone}
         </Descriptions.Item>
-         <Descriptions.Item label="Địa chỉ" span={2}>
+        <Descriptions.Item label="Địa chỉ" span={2}>
           {dataViewDetail?.address}
         </Descriptions.Item>
-        
         <Descriptions.Item label="Ngày làm" span={2}>
-          {dataViewDetail?.hireDate}
+          {formatDate(dataViewDetail?.hireDate)}
         </Descriptions.Item>
         <Descriptions.Item label="Lương" span={2}>
           {dataViewDetail?.salary}

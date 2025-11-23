@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 
 public interface UserService {
     boolean isEmailExist(String email);
-    User handleCreateUser(ReqCreateUserDTO user);
+    boolean isPhoneExist(String phone);
+    ResUserDTO handleCreateUser(ReqCreateUserDTO user);
 
     ResultPaginationDTO handleGetAllUser(Specification<User> spec, Pageable pageable);
 
