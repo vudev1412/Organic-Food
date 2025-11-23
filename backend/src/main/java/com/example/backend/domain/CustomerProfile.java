@@ -16,7 +16,7 @@ public class CustomerProfile {
 
     private boolean member;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
 }

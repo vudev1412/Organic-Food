@@ -10,5 +10,6 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
     @Mapping(source = "role", target = "userRole")
     User toUser(ReqCreateUserDTO userDTO);
+
     ResUserDTO toResUserDTO(User user);
 }

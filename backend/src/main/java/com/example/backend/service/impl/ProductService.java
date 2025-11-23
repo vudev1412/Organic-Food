@@ -69,18 +69,7 @@ public class ProductService {
 
     }
 
-    private ResProductDTO mapToResponseDTO(Product product) {
-        ResProductDTO dto = new ResProductDTO();
-        dto.setId(product.getId());
-        dto.setName(product.getName());
-        dto.setUnit(product.getUnit());
-        dto.setPrice(product.getPrice());
-        dto.setOrigin_address(product.getOrigin_address());
-        dto.setDescription(product.getDescription());
 
-        dto.setCategoryId(product.getCategory().getId());
-        return dto;
-    }
 
 
     public ResProductDTO handleUpdateProduct(Long id, ReqProductDTO updatedProduct) {

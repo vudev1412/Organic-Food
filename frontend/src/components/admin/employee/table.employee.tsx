@@ -1,11 +1,6 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import {
-  deleteUserAPI,
-  getCustomersAPI,
-  getEmployeesAPI,
-
-} from "../../../service/api";
+import { deleteUserAPI, getEmployeesAPI } from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
 import { App, Button, Popconfirm } from "antd";
@@ -13,216 +8,194 @@ import DetailEmployee from "./employee.detail";
 import CreateEmployee from "./create.employee";
 import UpdateEmployee from "./update.employee";
 
-// Định nghĩa các cột
-
 type TSearch = {
-  name: string;
-  email: string;
-  phone: string;
+  name?: string;
+  email?: string;
+  phone?: string;
 };
-// Component
+
 const TableEmployee = () => {
   const actionRef = useRef<ActionType>(null);
-  const [meta, setMeta] = useState({
-    page: 1,
-    size: 5,
-    pages: 0,
-    total: 0,
-  });
-  const [openViewDetail, setOpenViewDetail] = useState<boolean>(false);
-  const [dataViewDetail, setDataViewDetail] = useState<IEmployee | null>(
-    null
-  );
-  const [openModelCreate, setOpenModalCreate] = useState<boolean>(false);
+  const [meta, setMeta] = useState({ page: 1, size: 5, total: 0 });
+  const [openViewDetail, setOpenViewDetail] = useState(false);
+  const [dataViewDetail, setDataViewDetail] = useState<IEmployee | null>(null);
+  const [openModalCreate, setOpenModalCreate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<IEmployee | null>(null);
-  const [openModalUpdate, setOpenModalUpdate] = useState<boolean>(false);
-  const [isDeleteUser, setIsDeleteUser] = useState<boolean>(false);
+  const [openModalUpdate, setOpenModalUpdate] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { message, notification } = App.useApp();
 
+  const formatUserId = (entity: ICustomerTable) => {
+    if (!entity?.id) return "Không có ID";
+
+    const id = entity.id;
+
+    if (id < 10) return `NV00${id}`;
+    if (id < 100) return `NV0${id}`;
+    if (id < 1000) return `NV${id}`;
+
+    return `NV${id}`;
+  };
+
+  // Xóa user
   const handleDeleteUser = async (id: number) => {
-    setIsDeleteUser(true);
-    const res = await deleteUserAPI(id);
-    if (res && res.data) {
-      message.success("Xóa user thành công");
-      refreshTable();
-    } else {
+    setIsDeleting(true);
+    try {
+      const res = await deleteUserAPI(id);
+      if (res?.data) {
+        message.success("Xóa user thành công");
+        actionRef.current?.reload();
+      } else {
+        throw new Error(res?.message || "Xóa thất bại");
+      }
+    } catch (err: any) {
       notification.error({
         message: "Xảy ra lỗi",
-        description:
-          res.message && Array.isArray(res.message)
-            ? res.message[0]
-            : res.message,
-        duration: 5,
+        description: err.message || "Có lỗi xảy ra",
       });
+    } finally {
+      setIsDeleting(false);
     }
-    setIsDeleteUser(false);
   };
+
+  // Cấu hình cột ProTable
   const columns: ProColumns<IEmployee>[] = [
     {
-      title: "ID",
-      dataIndex: "userId",
-      key: "userId",
+      title: "Mã",
+      dataIndex: "id",
       hideInSearch: true,
-      render(dom, entity, index, action, schema) {
-        return (
-          <a
-            onClick={() => {
-              setOpenViewDetail(true);
-              setDataViewDetail(entity);
-            }}
-            href="#"
-          >
-            {entity.id}
-          </a>
-        );
-      },
+      render: (_, entity) => <a>{formatUserId(entity)}</a>,
     },
     {
       title: "Tên",
-      dataIndex: "userName",
-      key: "userName",
+      dataIndex: ["user", "name"],
+      key: "name",
       sorter: true,
-      renderText: (_, entity) => entity.user.name,
     },
     {
       title: "Email",
-      dataIndex: "email",
+      dataIndex: ["user", "email"],
       key: "email",
       copyable: true,
-      renderText: (_, entity) => entity.user.email,
     },
     {
       title: "Điện thoại",
-      dataIndex: "phone",
+      dataIndex: ["user", "phone"],
       key: "phone",
-      renderText: (_, entity) => entity.user.phone,
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
-      key: "address",
-    },
-    {
-      title: "Employee code",
-      dataIndex: "employeeCode",
-      key: "employeeCode",
+      hideInSearch: true,
     },
     {
       title: "Ngày làm",
       dataIndex: "hireDate",
-      key: "hireDate",
-      render: (_, entity) => {
-        const date = new Date(entity.hireDate);
-        return date.toLocaleDateString("vi-VN");
-      },
+      hideInSearch: true,
+      render: (_, record) =>
+        record.hireDate
+          ? new Date(record.hireDate).toLocaleDateString("vi-VN")
+          : "-",
     },
     {
       title: "Lương",
       dataIndex: "salary",
-      key: "salary",
+       align: "right",
+      hideInSearch: true,
+      render: (_, record) => record.salary.toLocaleString("vi-VN") + " VNĐ"
     },
     {
       title: "Action",
       hideInSearch: true,
-      render(dom, entity, index, action, schema) {
-        return (
-          <>
-            <EditTwoTone
-              twoToneColor="#f57800"
-              style={{ cursor: "pointer", marginRight: 15 }}
-              onClick={() => {
-                setDataUpdate(entity);
-                setOpenModalUpdate(true);
-              }}
-            />
-            <Popconfirm
-              placement="leftTop"
-              title="Xác nhận xóa user"
-              description="Bạn có chắc muốn xóa user này?"
-              onConfirm={() => handleDeleteUser(entity.id)}
-              okText="Xác nhận"
-              cancelText="Hủy"
-              okButtonProps={{ loading: isDeleteUser }}
-            >
-              <DeleteTwoTone
-                twoToneColor="#ff4d4f"
-                style={{ cursor: "pointer" }}
-              />
-            </Popconfirm>
-          </>
-        );
-      },
+      render: (_, record) => (
+        <>
+          <EditTwoTone
+            twoToneColor="#f57800"
+            style={{ cursor: "pointer", marginRight: 12 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDataUpdate(record);
+              setOpenModalUpdate(true);
+            }}
+          />
+          <Popconfirm
+            title="Xác nhận xóa user?"
+            onConfirm={() => handleDeleteUser(record.id)}
+            okText="Xác nhận"
+            cancelText="Hủy"
+            okButtonProps={{ loading: isDeleting }}
+          >
+            {/* <DeleteTwoTone
+              twoToneColor="#ff4d4f"
+              style={{ cursor: "pointer" }}
+              onClick={(e) => e.stopPropagation()}
+            /> */}
+          </Popconfirm>
+        </>
+      ),
     },
   ];
 
-  const refreshTable = () => {
-    actionRef.current?.reload();
-  };
   return (
     <>
+      <h2>Tìm kiếm</h2>
       <ProTable<IEmployee, TSearch>
         columns={columns}
         cardBordered
         actionRef={actionRef}
-        request={async (params, sort, filter) => {
-          console.log("Request called with sort:", sort);
+        rowKey="id"
+        headerTitle="Quản lý nhân viên"
+        search={{ labelWidth: "auto" }}
+        toolBarRender={() => [
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setOpenModalCreate(true)}
+          >
+            Thêm mới
+          </Button>,
+        ]}
+        request={async (params, sort) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
-
-          // ================== FILTER ==================
           if (params.name) query += `&filter=user.name~'${params.name}'`;
           if (params.email) query += `&filter=user.email~'${params.email}'`;
           if (params.phone) query += `&filter=user.phone~'${params.phone}'`;
 
           if (sort && Object.keys(sort).length > 0) {
-            const sortField = Object.keys(sort)[0].replace(/,/g, ".");
-            const sortOrder = sort[Object.keys(sort)[0]];
-
-            if (sortOrder) {
-              const order = sortOrder === "ascend" ? "ASC" : "DESC";
-              query += `&sort=${sortField},${order}`;
-            }
+            const sortField = Object.keys(sort)[0].replace(",", ".");
+            const sortOrder =
+              sort[Object.keys(sort)[0]] === "ascend" ? "ASC" : "DESC";
+            query += `&sort=${sortField},${sortOrder}`;
           }
 
           const res = await getEmployeesAPI(query);
-          console.log(res);
-          if (res.data) setMeta(res.data.data.meta);
+          if (res?.data?.data?.meta) setMeta(res.data.data.meta);
 
           return {
-            data: res.data?.data.result,
+            data: res?.data?.data?.result || [],
             success: true,
-            total: res.data?.data.meta.total,
-            page: res.data?.data.meta.page,
+            total: res?.data?.data?.meta?.total || 0,
           };
         }}
-        rowKey="id"
         pagination={{
           current: meta.page,
           pageSize: meta.size,
           showSizeChanger: true,
           total: meta.total,
-          showTotal: (total, range) => {
-            return (
-              <div className="">
-                {range[0]} - {range[1]} trên {total} rows
-              </div>
-            );
-          },
+          showTotal: (total, range) =>
+            `${range[0]} - ${range[1]} trên ${total} hàng`,
         }}
-        headerTitle="Employee"
-        toolBarRender={() => [
-          <Button
-            key="button"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setOpenModalCreate(true);
-            }}
-            type="primary"
-          >
-            Thêm mới
-          </Button>,
-        ]}
+        onRow={(record) => ({
+          onClick: () => {
+            setOpenViewDetail(true);
+            setDataViewDetail(record);
+          },
+        })}
       />
 
+      {/* Modals */}
       <DetailEmployee
         openViewDetail={openViewDetail}
         setOpenViewDetail={setOpenViewDetail}
@@ -230,16 +203,16 @@ const TableEmployee = () => {
         setDataViewDetail={setDataViewDetail}
       />
       <CreateEmployee
-        openModelCreate={openModelCreate}
+        openModelCreate={openModalCreate}
         setOpenModalCreate={setOpenModalCreate}
-        refreshTable={refreshTable}
+        refreshTable={() => actionRef.current?.reload()}
       />
       <UpdateEmployee
         openModelUpdate={openModalUpdate}
         setOpenModelUpdate={setOpenModalUpdate}
-        refreshTable={refreshTable}
-        setDataUpdate={setDataUpdate}
         dataUpdate={dataUpdate}
+        setDataUpdate={setDataUpdate}
+        refreshTable={() => actionRef.current?.reload()}
       />
     </>
   );
