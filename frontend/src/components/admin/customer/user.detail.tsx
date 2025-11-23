@@ -27,16 +27,16 @@ const DetailUser = (props: IProps) => {
         open={openViewDetail}
       >
         <Descriptions title="Thông tin user" bordered column={2}>
-          <Descriptions.Item label="Id" span={2}>
+          <Descriptions.Item label="Mã" span={2}>
             {dataViewDetail?.id}
           </Descriptions.Item>
-          <Descriptions.Item label="Name" span={2}>
+          <Descriptions.Item label="Tên" span={2}>
             {dataViewDetail?.user.name}
           </Descriptions.Item>
           <Descriptions.Item label="Email" span={2}>
             {dataViewDetail?.user.email}
           </Descriptions.Item>
-          <Descriptions.Item label="Phone" span={2}>
+          <Descriptions.Item label="Số điện thoại" span={2}>
             {dataViewDetail?.user.phone}
           </Descriptions.Item>
            <Descriptions.Item label="Thành viên" span={2}>

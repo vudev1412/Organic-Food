@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.Category;
 import com.example.backend.domain.Product;
+import com.example.backend.domain.request.ReqCategory;
 import com.example.backend.domain.request.ReqCategoryDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.impl.CategoryService;
@@ -38,12 +39,16 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.categoryService.handleCreateCategory(category));
     }
     @PutMapping("/categories/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category category){
+    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody ReqCategory category){
         return ResponseEntity.ok().body(this.categoryService.handleUpdateCategory(id,category));
     }
 
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id){
         return ResponseEntity.ok().body(this.categoryService.handleDeleteCategory(id));
+    }
+    @GetMapping("/categories/parents")
+    public ResponseEntity<List<Category>> getParentCategories() {
+        return ResponseEntity.ok(categoryService.getAllParentCategories());
     }
 }

@@ -1,7 +1,16 @@
-import { App, Divider, Form, Input, Modal, type FormProps, InputNumber, DatePicker } from "antd";
+import {
+  App,
+  Divider,
+  Form,
+  Input,
+  Modal,
+  type FormProps,
+  InputNumber,
+  DatePicker,
+} from "antd";
 import { useEffect, useState } from "react";
+import dayjs from "dayjs";
 import { updateEmployeeAPI } from "../../../service/api";
-
 
 interface IProps {
   openModelUpdate: boolean;
@@ -35,16 +44,23 @@ type FieldType = {
   phone: string;
   address: string;
   employeeCode: string;
-  hireDate: string; // string
+  hireDate: dayjs.Dayjs | null;
   salary: number;
 };
 
 const UpdateEmployee = (props: IProps) => {
-  const { openModelUpdate, setOpenModelUpdate, refreshTable, setDataUpdate, dataUpdate } = props;
+  const {
+    openModelUpdate,
+    setOpenModelUpdate,
+    refreshTable,
+    setDataUpdate,
+    dataUpdate,
+  } = props;
   const [isSubmit, setIsSubmit] = useState<boolean>(false);
   const { message, notification } = App.useApp();
   const [form] = Form.useForm<FieldType>();
 
+  // set giá trị khi mở modal
   useEffect(() => {
     if (dataUpdate) {
       form.setFieldsValue({
@@ -54,7 +70,7 @@ const UpdateEmployee = (props: IProps) => {
         phone: dataUpdate.user.phone,
         address: dataUpdate.address,
         employeeCode: dataUpdate.employeeCode,
-        hireDate: dataUpdate.hireDate, // giữ string
+        hireDate: dataUpdate.hireDate ? dayjs(dataUpdate.hireDate) : null,
         salary: dataUpdate.salary,
       });
     }
@@ -68,7 +84,7 @@ const UpdateEmployee = (props: IProps) => {
       id: dataUpdate.id,
       employeeCode: values.employeeCode,
       address: values.address,
-      hireDate: values.hireDate, // gửi trực tiếp string
+      hireDate: values.hireDate ? values.hireDate.toISOString() : "",
       salary: values.salary,
       user: {
         id: dataUpdate.user.id,
@@ -106,7 +122,7 @@ const UpdateEmployee = (props: IProps) => {
 
   return (
     <Modal
-      title="Cập nhật người dùng"
+      title="Cập nhật nhân viên"
       open={openModelUpdate}
       onOk={() => form.submit()}
       onCancel={() => {
@@ -119,7 +135,13 @@ const UpdateEmployee = (props: IProps) => {
       confirmLoading={isSubmit}
     >
       <Divider />
-      <Form form={form} name="update-employee" layout="vertical" onFinish={onFinish} autoComplete="off">
+      <Form
+        form={form}
+        name="update-employee"
+        layout="vertical"
+        onFinish={onFinish}
+        autoComplete="off"
+      >
         <Form.Item<FieldType> hidden label="ID" name="id">
           <Input disabled />
         </Form.Item>
@@ -170,9 +192,9 @@ const UpdateEmployee = (props: IProps) => {
         <Form.Item<FieldType>
           label="Ngày vào làm"
           name="hireDate"
-          rules={[{ required: true, message: "Vui lòng nhập ngày vào làm!" }]}
+          rules={[{ required: true, message: "Vui lòng chọn ngày vào làm!" }]}
         >
-          <Input placeholder="YYYY-MM-DD" />
+          <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
         </Form.Item>
 
         <Form.Item<FieldType>
@@ -180,7 +202,7 @@ const UpdateEmployee = (props: IProps) => {
           name="salary"
           rules={[{ required: true, message: "Vui lòng nhập lương!" }]}
         >
-          <InputNumber style={{ width: "100%" }} min={0} />
+          <Input style={{ width: "100%" }} min={0} />
         </Form.Item>
       </Form>
     </Modal>

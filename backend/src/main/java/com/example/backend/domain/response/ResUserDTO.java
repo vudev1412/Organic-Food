@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResUserDTO {
-    private long id;
+    private Long id;
 
     private String name;
 

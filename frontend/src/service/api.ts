@@ -49,7 +49,7 @@ export const updateUserAPI = (id: number, payload: ICustomerTable) => {
   return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
 };
 
-}
+
 export const updateEmployeeAPI = (id: number, payload: IEmployee) => {
   const urlBackend = `/api/v1/employee/profile/${id}`;
   return axios.patch<IBackendRes<IEmployee>>(urlBackend, payload);
@@ -72,60 +72,62 @@ export const createUserAPI = (
   });
 };
 
-export const deleteUserAPI = (id: number) => {
+export const deleteUserProfileAPI = (id: number) => {
   const urlBackend = `/api/v1/customer/profile/${id}`;
   return axios.delete<IBackendRes<IRegister>>(urlBackend);
 };
-
-export const getProductsAPI = (query: string) => {
-  const urlBackend = `/api/v1/product-certificates?${query}`;
-  return axios.get<IBackendRes<IModelPaginate<IProductTable>>>(urlBackend);
-};
-
-export const deleteProductAPI = (id: number) => {
-  const urlBackend = `/api/v1/products/${id}`;
+export const deleteUserAPI = (id: number) => {
+  const urlBackend = `/api/v1/users/${id}`;
   return axios.delete<IBackendRes<IRegister>>(urlBackend);
 };
 
-export const updateProductAPI = (
-  id: number,
-  name: string,
-  unit: string,
-  price: number,
-  origin_address: string,
-  description: string,
-  active: boolean,
-  categoryId?: number
-) => {
-  const urlBackend = `/api/v1/products/${id}`;
-  return axios.patch<IBackendRes<IProduct>>(urlBackend, {
-    name,
-    unit,
-    price,
-    origin_address,
-    description,
-    active,
-    categoryId,
-  });
+export const getProductAPI = () => {
+  const urlBackend = `/api/v1/products?size=1000`;
+  return axios.get<IBackendRes<IModelPaginate<IProduct>>>(urlBackend);
 };
+export const getOrderAPI = () => {
+  const urlBackend = `/api/v1/orders`;
+  return axios.get<IBackendRes<IOrder>>(urlBackend);
+};
+export const getOrderAPIByUserId = (id:number) => {
+  const urlBackend = `/api/v1/orders/user-order/${id}`;
+  return axios.get<IBackendRes<IOrder>>(urlBackend);
+};
+
+
+
+
+
+
 export interface ICreateProductDTO {
   name: string;
-  unit: string;
+  unit?: string;
   price: number;
-  quantity: number;
   origin_address?: string;
   description?: string;
-  active: boolean;
   rating_avg?: number;
+  quantity?: number;
   image?: string;
-  mfgDate?: Date; // ISO string
-  expDate?: Date; // ISO string
+  active?: boolean;
+  mfgDate?: string;
+  expDate?: string;
   categoryId?: number;
 }
-export const createProductAPI = (product: ICreateProductDTO) => {
-  const urlBackend = `/api/v1/products`; // endpoint backend
-  return axios.post<IBackendRes<ICreateProductDTO>>(urlBackend, product);
-};
+export const getProductsAPI = (query: string) =>
+  axios.get(`/api/v1/products?${query}`);
+
+export const createProductAPI = (product: ICreateProductDTO) =>
+  axios.post(`/api/v1/products`, product);
+
+export const updateProductAPI = (id: number, product: ICreateProductDTO) =>
+  axios.patch(`/api/v1/products/${id}`, product);
+
+export const deleteProductAPI = (id: number) =>
+  axios.delete(`/api/v1/products/${id}`);
+
+export const getProductByIdAPI = (id: number) =>
+  axios.get(`/api/v1/products/${id}`);
+
 
 export const getCategoriesAPI = (query: string) => {
   return axios.get(`/api/v1/categories?${query}`);
@@ -135,7 +137,7 @@ export const createCategoryAPI = (category: ICreateCategoryDTO) => {
   return axios.post(`/api/v1/categories`, category);
 };
 
-export const updateCategoryAPI = (id: number, category: ICreateCategoryDTO) => {
+export const updateCategoryAPI = (id: number, category: IUpdateCategoryDTO) => {
   return axios.put(`/api/v1/categories/${id}`, category);
 };
 
@@ -158,9 +160,40 @@ export const deleteSupplierAPI = (id: number) => {
   return axios.delete(`/api/v1/suppliers/${id}`);
 };
 
+
+export const getReturnsAPI = (query: string) => {
+  return axios.get<IBackendRes<IModelPaginate<IReturn>>>(`/api/v1/returns?${query}`);
+};
+
+// Lấy chi tiết 1 return theo id
+export const getReturnByIdAPI = (id: number) => {
+  return axios.get(`/api/v1/returns/${id}`);
+};
+
+// Tạo return
+export const createReturnAPI = (dto: ICreateReturnDTO) => {
+  return axios.post(`/api/v1/returns`, dto);
+};
+
+// Update return
+export const updateReturnAPI = (id: number, dto: ICreateReturnDTO) => {
+  return axios.put(`/api/v1/returns/${id}`, dto);
+};
+
+// Delete return
+export const deleteReturnAPI = (id: number) => {
+  return axios.delete(`/api/v1/returns/${id}`);
+};
 export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories?size=1000";
   return axios.get<IBackendRes<IModelPaginate<ICategory>>>(urlBackend);
+};
+
+
+
+export const getParentCategoriesAPI = () => {
+  const urlBackend = "/api/v1/categories/parents";
+  return axios.get<IBackendRes<IParentCategory>>(urlBackend);
 };
 
 export const getProductCardListAPI = (
@@ -190,4 +223,41 @@ export const searchProductsAPI = (query: string) => {
 export const getSubImgByProductId = (id: number) => {
   const urlBackend = `/api/v1/product-images/product/${id}`;
   return axios.get<IBackendRes<IProductImage[]>>(urlBackend);
+};
+
+export const getCertificate = () => {
+  const urlBackend = `/api/v1/certificates`;
+  return axios.get<IBackendRes<ICertificate>>(urlBackend);
+};
+
+export const getOrderDetailsFullAPI = (query: string) => {
+  return axios.get<IBackendRes<IModelPaginate<IOrderDetailFull>>>(`/api/v1/order-details?${query}`);
+};
+
+export const deleteOrderDetailAPI = (orderId: number, productId: number) => {
+  return axios.delete(`/api/order-details/${orderId}/${productId}`);
+};
+export const createOrderDetailAPI = (data: ICreateOrderDetailDTO) => {
+  return axios.post(`/api/v1/order-details`, data);
+};
+
+export const updateOrderDetailAPI = (orderId: number, productId: number, data: ICreateOrderDetailDTO) => {
+  return axios.patch(`/api/v1/order-details/${orderId}/${productId}`, data);
+};
+export const createCustomerProfileAPI  = (data: any) => {
+  return axios.post(`/api/v1/customer/profile`, data);
+};
+export const createEmployeeProfileAPI  = (data: any) => {
+  return axios.post(`/api/v1/employee/profile`, data);
+};
+
+export const uploadFileAPI = (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/upload`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
