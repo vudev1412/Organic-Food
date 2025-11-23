@@ -81,12 +81,12 @@ const Sidebar: React.FC = () => {
       icon: <Building />,
       to: "suppliers",
     },
-    {
-      id: "purchase-orders",
-      text: "Quản lý nhập",
-      icon: <Truck />,
-      to: "purchase-orders",
-    },
+    // {
+    //   id: "purchase-orders",
+    //   text: "Quản lý nhập",
+    //   icon: <Truck />,
+    //   to: "purchase-orders",
+    // },
     {
       id: "orders",
       text: "Quản lý đơn hàng",

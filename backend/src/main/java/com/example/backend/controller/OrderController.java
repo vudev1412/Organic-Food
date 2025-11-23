@@ -17,7 +17,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<ResOrderDTO> createOrder(@RequestBody Order order) {
+    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
         Order createdOrder = orderService.handleCreateOrder(order);
         return ResponseEntity.ok(orderService.handleGetOrderById(createdOrder.getId()));
     }
@@ -28,7 +28,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResOrderDTO> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.handleGetOrderById(id));
     }
 
@@ -41,5 +41,10 @@ public class OrderController {
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.handleDeleteOrder(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/user-order/{id}")
+    public ResponseEntity<List<ResOrderDTO>> getOrderByUserId(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.handleGetOrderByUserId(id));
     }
 }

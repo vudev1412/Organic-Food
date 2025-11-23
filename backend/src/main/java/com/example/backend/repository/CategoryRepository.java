@@ -12,4 +12,5 @@ import java.util.List;
 public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSpecificationExecutor<Category>
 {
     List<Category> findAllByParentCategoryId(Long parentId);
+    List<Category> findByParentCategoryIsNull();
 }

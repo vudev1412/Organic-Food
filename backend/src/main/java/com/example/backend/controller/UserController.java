@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqCreateUserDTO;
 import com.example.backend.domain.request.ReqUserDTO;
+import com.example.backend.domain.response.ResUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.service.UserService;
@@ -45,17 +46,23 @@ public class UserController {
     }
     @PostMapping("/users")
     @ApiMessage("Created a user")
-    public ResponseEntity<ResCreateUserDTO> createUser(@Valid @RequestBody ReqCreateUserDTO user) throws IdInvalidException{
+    public ResponseEntity<ResUserDTO> createUser(@Valid @RequestBody ReqCreateUserDTO user) throws IdInvalidException{
         boolean isEmailExist = this.userService.isEmailExist(user.getEmail());
+        boolean isPhoneExist = this.userService.isPhoneExist(user.getPhone());
         if (isEmailExist){
             throw new IdInvalidException(
-                    "Email" + user.getEmail() + "đã tồn tại, vui lòng sử dụng email khác"
+                    "Email" + user.getEmail() + " đã tồn tại, vui lòng sử dụng email khác"
+            );
+        }
+        if (isPhoneExist){
+            throw new IdInvalidException(
+                      user.getPhone() + " đã tồn tại, vui lòng sử dụng số điện thoại khác"
             );
         }
         String hashPassWord = this.passwordEncoder.encode(user.getPassword());
         user.setPassword(hashPassWord);
-        User create = this.userService.handleCreateUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToResCreateUserDTO(create));
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.handleCreateUser(user));
     }
     @GetMapping("/users/{id}")
     public ResponseEntity<Optional<User>> getUserById(@PathVariable Long id){
@@ -70,11 +77,12 @@ public class UserController {
 
     @DeleteMapping("/users/{id}")
     @ApiMessage("Delete a user")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") Long id) throws IdInvalidException{
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) throws IdInvalidException{
         Optional<User> currentUser = this.userService.handleGetUserById(id);
         if(currentUser.isEmpty()){
             throw new IdInvalidException("User với id" + id + "không tồn tại");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(this.userService.handleDeleteUser(id));
+        this.userService.handleDeleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

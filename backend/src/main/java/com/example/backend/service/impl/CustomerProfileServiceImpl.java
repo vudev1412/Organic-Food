@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +30,14 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
     private final CustomerProfileRepository customerProfileRepository;
     private final CustomerProfileMapper customerProfileMapper;
     private final UserRepository userRepository;
+
+    @Transactional
     public CustomerProfile handleCreateCustomerProfile(CustomerProfile customerProfile) {
+        User user = userRepository.findById(customerProfile.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        customerProfile.setUser(user);
+
         return this.customerProfileRepository.save(customerProfile);
     }
 

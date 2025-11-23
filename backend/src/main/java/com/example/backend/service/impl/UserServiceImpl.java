@@ -48,10 +48,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User handleCreateUser(ReqCreateUserDTO user) {
+    public boolean isPhoneExist(String phone) {
+        return this.userRepository.existsByPhone(phone);
+    }
+
+    @Override
+    public ResUserDTO handleCreateUser(ReqCreateUserDTO user) {
         User entity = mapper.toUser(user);
 
-        // Nếu role là enum, đảm bảo convert
         if (entity.getUserRole() == null && user.getRole() != null) {
             entity.setUserRole(Role.valueOf(user.getRole()));
         }
@@ -61,7 +65,7 @@ public class UserServiceImpl implements UserService {
 
         // Nếu muốn trả về DTO
         // return userMapper.toResUserDTO(saved);
-        return saved;
+        return mapper.toResUserDTO(saved);
     }
 
 

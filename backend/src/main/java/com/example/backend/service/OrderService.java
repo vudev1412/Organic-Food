@@ -8,7 +8,8 @@ import java.util.List;
 public interface OrderService {
     Order handleCreateOrder(Order order);
     List<ResOrderDTO> handleGetAllOrders();
-    ResOrderDTO handleGetOrderById(Long id);
+    Order handleGetOrderById(Long id);
     ResOrderDTO handleUpdateOrder(Long id, Order order);
     void handleDeleteOrder(Long id);
+    List<ResOrderDTO> handleGetOrderByUserId(Long id);
 }

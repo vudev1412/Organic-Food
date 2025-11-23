@@ -8,7 +8,6 @@ import CreateSupplier from "./create.supplier";
 import UpdateSupplier from "./update.supplier";
 import { deleteSupplierAPI, getSuppliersAPI } from "../../../service/api";
 
-
 type TSearch = {
   name: string;
   code: string;
@@ -28,48 +27,46 @@ const TableSupplier = () => {
   const refreshTable = () => actionRef.current?.reload();
 
   const handleDelete = async (id: number) => {
-  setIsDeleting(true);
+    setIsDeleting(true);
 
-  const res = await deleteSupplierAPI(id);
+    const res = await deleteSupplierAPI(id);
 
-  if (res?.status === 204) {
-    message.success("Xóa supplier thành công");
-    refreshTable();
-  } else {
-    notification.error({
-      message: "Lỗi",
-      description: res?.message ?? "Có lỗi xảy ra",
-    });
-  }
+    if (res?.status === 204) {
+      message.success("Xóa supplier thành công");
+      refreshTable();
+    } else {
+      notification.error({
+        message: "Lỗi",
+        description: res?.message ?? "Có lỗi xảy ra",
+      });
+    }
 
-  setIsDeleting(false);
-};
+    setIsDeleting(false);
+  };
 
+  const formatSupplierId = (entity: ISupplier) => {
+    if (!entity?.id) return "Không có ID";
 
+    const id = entity.id;
+
+    if (id < 10) return `NCC00${id}`;
+    if (id < 100) return `NCC0${id}`;
+    if (id < 1000) return `NCC${id}`;
+
+    return `NCC${id}`;
+  };
   const columns: ProColumns<ISupplier>[] = [
     {
-      title: "ID",
+      title: "Mã",
       dataIndex: "id",
       hideInSearch: true,
-      render(_, entity) {
-        return (
-          <a
-            onClick={() => {
-              setOpenDetail(true);
-              setDataDetail(entity);
-            }}
-          >
-            {entity.id}
-          </a>
-        );
-      },
+      render: (_, entity) => <a>{formatSupplierId(entity)}</a>,
     },
-    { title: "Tên", dataIndex: "name", sorter: true },
-    { title: "Mã", dataIndex: "code" },
-    { title: "Điện thoại", dataIndex: "phone" },
-    { title: "Email", dataIndex: "email" },
+    { title: "Tên", dataIndex: "name", sorter: true, copyable: true },
+    { title: "Điện thoại", dataIndex: "phone", copyable: true },
+    { title: "Email", dataIndex: "email", copyable: true },
     {
-      title: "Action",
+      title: "Thao tác",
       hideInSearch: true,
       render(_, entity) {
         return (
@@ -77,18 +74,23 @@ const TableSupplier = () => {
             <EditTwoTone
               twoToneColor="#f57800"
               style={{ cursor: "pointer", marginRight: 15 }}
-              onClick={() => {
+              onClick={(e) => {
                 setDataUpdate(entity);
                 setOpenUpdate(true);
+                e.stopPropagation();
               }}
             />
             <Popconfirm
-              title="Xóa supplier"
+              title="Xóa nhà cung cấp"
               description="Bạn có chắc muốn xóa?"
               onConfirm={() => handleDelete(entity.id)}
               okButtonProps={{ loading: isDeleting }}
             >
-              <DeleteTwoTone twoToneColor="#ff4d4f" style={{ cursor: "pointer" }} />
+              <DeleteTwoTone
+                twoToneColor="#ff4d4f"
+                style={{ cursor: "pointer" }}
+                onClick={(e) => e.stopPropagation()}
+              />
             </Popconfirm>
           </>
         );
@@ -98,9 +100,14 @@ const TableSupplier = () => {
 
   return (
     <>
+      <h2>
+        Tìm kiếm
+      </h2>
       <ProTable<ISupplier, TSearch>
         columns={columns}
         actionRef={actionRef}
+        cardBordered
+        
         request={async (params, sort, filter) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
 
@@ -118,12 +125,29 @@ const TableSupplier = () => {
           };
         }}
         rowKey="id"
-        headerTitle="Supplier"
+        headerTitle="Quản lý nhà cung cấp"
+        pagination={{
+          defaultPageSize: 5,
+          showSizeChanger: true,
+          pageSizeOptions: ["5", "10", "20", "50"],
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} của ${total} hàng`,
+        }}
         toolBarRender={() => [
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpenCreate(true)}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setOpenCreate(true)}
+          >
             Thêm mới
           </Button>,
         ]}
+        onRow={(record) => ({
+          onClick: () => {
+            setOpenDetail(true);
+            setDataDetail(record);
+          },
+        })}
       />
 
       <DetailSupplier
