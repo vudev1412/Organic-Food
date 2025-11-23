@@ -18,7 +18,7 @@ public class Unit {
 
     private String name;
 
-    @OneToMany(mappedBy = "units",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "unit",cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Product> products;
 
