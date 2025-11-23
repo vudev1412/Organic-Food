@@ -21,9 +21,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           alt={productName}
           className="max-w-[70%] max-h-[90%] object-contain transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-          -20%
-        </div>
       </div>
       <div className="flex justify-center gap-3 flex-wrap">
         {images.map((img, index) => (

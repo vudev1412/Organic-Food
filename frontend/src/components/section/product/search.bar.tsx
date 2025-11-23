@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProductsAPI } from "../../../service/api";
 
@@ -15,10 +15,6 @@ interface SearchResult {
   price: number;
 }
 
-/**
- * Component thanh tìm kiếm sản phẩm.
- * Quản lý state của ô input và gọi hàm onSearch khi submit.
- */
 const ProductSearch = ({ onSearch }: ProductSearchProps) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,11 +22,33 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
+  // 1. Tạo ref để tham chiếu đến toàn bộ khung tìm kiếm
+  const searchRef = useRef<HTMLDivElement>(null);
+  // Tạo ref cho input để focus lại sau khi xóa (tuỳ chọn)
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // 2. Xử lý sự kiện click ra ngoài (Click Outside)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Nếu click vào vị trí KHÔNG nằm trong khung searchRef thì tắt kết quả
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
 
-    // Gọi API tìm kiếm khi nhập
     if (value.trim().length > 0) {
       handleSearch(value);
     } else {
@@ -39,9 +57,20 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
     }
   };
 
+  // 3. Hàm xử lý khi bấm nút X (Clear)
+  const handleClear = () => {
+    setSearchTerm("");
+    setSearchResults([]);
+    setShowResults(false);
+    inputRef.current?.focus(); // Focus lại vào ô input cho tiện
+  };
+
   const handleSearch = async (term: string) => {
     try {
       setIsLoading(true);
+      // Mở dropdown ngay khi bắt đầu tìm
+      setShowResults(true);
+
       const filterValue = `name~'${term}'`;
       const encodedFilter = encodeURIComponent(filterValue);
       const query = `filter=${encodedFilter}&size=10`;
@@ -49,7 +78,6 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
 
       if (response?.data?.data?.result) {
         setSearchResults(response.data.data.result);
-        setShowResults(true);
       } else {
         setSearchResults([]);
       }
@@ -63,6 +91,7 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
 
   const handleSubmit = () => {
     onSearch(searchTerm);
+    setShowResults(false); // Đóng dropdown khi submit
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -78,13 +107,22 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
     setSearchResults([]);
   };
 
+  // Thêm sự kiện onFocus để khi bấm lại vào input thì hiện lại kết quả cũ (nếu có text)
+  const handleFocus = () => {
+    if (searchTerm.trim().length > 0) {
+      setShowResults(true);
+    }
+  };
+
   return (
-    <div role="search" className="relative w-auto">
+    // Gán ref vào div bao ngoài cùng
+    <div role="search" className="relative w-auto" ref={searchRef}>
       <label htmlFor="product-search" className="sr-only">
         Tìm kiếm sản phẩm
       </label>
-      <div className="flex items-center w-full rounded-full border border-gray-300 overflow-hidden shadow-sm bg-white focus-within:ring-2 focus-within:ring-green-500 transition-all">
+      <div className="flex items-center w-full rounded-full border border-gray-300 overflow-hidden shadow-sm bg-white focus-within:ring-2 focus-within:ring-green-500 transition-all pr-1 gap-1">
         <input
+          ref={inputRef}
           type="text"
           id="product-search"
           placeholder="Tìm kiếm sản phẩm..."
@@ -92,11 +130,39 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
           value={searchTerm}
           onChange={handleChange}
           onKeyPress={handleKeyPress}
+          onFocus={handleFocus} // Mở lại dropdown khi focus
         />
+
+        {/* --- Nút X (Clear) --- */}
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-gray-400 hover:text-red-500 transition-colors p-2"
+            aria-label="Xóa tìm kiếm"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
+
+        {/* Nút Search */}
         <button
           type="button"
           onClick={handleSubmit}
-          className="text-gray-400 hover:text-green-600 transition-colors w-12 h-10 flex items-center justify-center"
+          className="text-gray-400 hover:text-green-600 transition-colors w-10 h-10 flex items-center justify-center border-l border-gray-100"
           aria-label="Tìm kiếm"
         >
           <svg

@@ -1,35 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { getProductDetailById, getSubImgByProductId } from "../../service/api";
-
-// Giả lập import logo chứng chỉ (Mock data)
-import vietgapLogo from "../../../../upload/images/certs/vietgap.png";
-import usdaLogo from "../../../../upload/images/certs/usda_organic.png";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  getBestPromotionByProductId,
+  getProductDetailById,
+  getSubImgByProductId,
+  // Thêm API mới
+  getProductCertificateByIdProduct,
+} from "../../service/api";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+// XÓA: Bỏ các import ảnh chứng chỉ mock cứng (vietgapLogo, usdaLogo, euOrganicLogo)
 import ProductImageGallery from "../../components/section/product-detail/ProductImageGallery";
 import ProductInfo from "../../components/section/product-detail/ProductInfo";
 import ProductTabs from "../../components/section/product-detail/ProductTabs";
 import RelatedProducts from "../../components/common/RelatedProducts";
 import CertificationModal from "../../components/section/product-detail/CertificationModal";
+import type { AxiosError } from "axios";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// Dữ liệu cho chứng chỉ (Mock data)
-const certifications: ICertification[] = [
-  {
-    id: 1,
-    name: "VietGAP",
-    logo: vietgapLogo,
-    imageUrl: vietgapLogo,
-    description:
-      "VietGAP (Vietnamese Good Agricultural Practices) là các quy định về thực hành sản xuất nông nghiệp tốt ở Việt Nam...",
-  },
-  {
-    id: 2,
-    name: "USDA Organic",
-    logo: usdaLogo,
-    imageUrl: usdaLogo,
-    description:
-      "USDA Organic là một chứng nhận hữu cơ của Bộ Nông nghiệp Hoa Kỳ (USDA)...",
-  },
-];
+// --- START: Interface Mới Cho Dữ Liệu API ---
+interface IProductCertificateDetail {
+  certificateId: number;
+  name: string;
+  typeImageUrl: string;
+  certNo: string;
+  date: string;
+  specificImageUrl: string;
+}
+// --- END: Interface Mới Cho Dữ Liệu API ---
 
 // Dữ liệu bình luận (Mock data)
 const initialComments: IComment[] = [
@@ -47,17 +44,28 @@ const initialComments: IComment[] = [
   },
 ];
 
+// CẬP NHẬT: Định nghĩa đường dẫn cơ sở cho ảnh sản phẩm và chứng chỉ
+const PRODUCT_IMAGE_BASE_URL = "http://localhost:8080/storage/images/products/";
+const CERT_IMAGE_BASE_URL = "http://localhost:8080/storage/images/certs/";
+
+// XÓA: Loại bỏ hàm mapCertNameToLogoPath không cần thiết
+
 const ProductDetail: React.FC = () => {
   const location = useLocation();
   const productId = location.state?.productId;
-
+  const navigate = useNavigate();
   // State quản lý dữ liệu
   const [product, setProduct] = useState<IProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState<IComment[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
-
+  const [bestPromotion, setBestPromotion] = useState<IBestPromotion | null>(
+    null
+  );
   const [selectedImage, setSelectedImage] = useState<string>("");
+  
+  // State cho chứng chỉ
+  const [certifications, setCertifications] = useState<ICertification[]>([]);
 
   // State cho tương tác UI
   const [quantity, setQuantity] = useState<number>(1);
@@ -70,61 +78,127 @@ const ProductDetail: React.FC = () => {
   // --- Data Fetching ---
   useEffect(() => {
     const fetchProductData = async () => {
-      if (productId) {
-        setIsLoading(true);
-        const baseUrl = "http://localhost:8080/storage/images/products/";
+      if (!productId) {
+        console.error("Không tìm thấy ID sản phẩm (Có thể do F5).");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      
+      // Hàm con để lấy chi tiết sản phẩm và ảnh
+      const fetchMainData = async () => {
+        let productData: IProductDetail | null = null;
+        let mainImageUrl = "";
+        let allRequests = [];
+
+        // 1. Lấy chi tiết sản phẩm
+        allRequests.push(
+            getProductDetailById(productId).then(response => {
+                if (response.data.data) {
+                    productData = response.data.data;
+                    setProduct(productData);
+                    mainImageUrl = `${PRODUCT_IMAGE_BASE_URL}${productData.image}`;
+                    setSelectedImage(mainImageUrl);
+                }
+            })
+        );
+
+        // 2. Lấy ảnh phụ (Sub Images)
+        allRequests.push(getSubImgByProductId(productId));
+        
+        // 3. Lấy khuyến mãi tốt nhất
+        allRequests.push(getBestPromotionByProductId(productId));
+        
+        // 4. Lấy chứng chỉ
+        allRequests.push(
+          getProductCertificateByIdProduct(productId).then((response) => {
+            if (response.data.data && Array.isArray(response.data.data)) {
+              // Map dữ liệu API sang interface ICertification
+              const mappedCerts: ICertification[] = response.data.data.map(
+                (cert: IProductCertificateDetail) => ({
+                  id: cert.certificateId,
+                  name: cert.name,
+                  // CẬP NHẬT: Nối đường dẫn API trực tiếp
+                  logo: `${CERT_IMAGE_BASE_URL}${cert.typeImageUrl}`, 
+                  imageUrl: `${CERT_IMAGE_BASE_URL}${cert.specificImageUrl}`, 
+                  description: `Chứng nhận số: ${cert.certNo}. Ngày cấp: ${new Date(cert.date).toLocaleDateString("vi-VN")}. Thông tin chi tiết về chứng nhận ${cert.name}.`, 
+                })
+              );
+              setCertifications(mappedCerts);
+            }
+          })
+          .catch((error: AxiosError) => {
+            console.error("Lỗi khi tải chứng chỉ:", error);
+            setCertifications([]); 
+          })
+        );
+
+
         try {
-          const response = await getProductDetailById(productId);
-          if (response.data.data) {
-            const productData = response.data.data;
-            setProduct(productData);
+          // Chạy đồng thời các request còn lại
+          const [
+            // responseProductDetail, 
+            responseSubImgs,
+            responseBestPromotion,
+            // responseCerts 
+          ] = await Promise.allSettled(allRequests);
 
-            const mainImageUrl = `${baseUrl}${productData.image}`;
-            setSelectedImage(mainImageUrl);
-
-            try {
-              const imgRes = await getSubImgByProductId(productId);
-
+          // Xử lý ảnh phụ
+          if (responseSubImgs.status === 'fulfilled') {
+              const imgRes = responseSubImgs.value as any;
+              let subImageUrls: string[] = [];
               if (
                 imgRes.data.data &&
                 Array.isArray(imgRes.data.data) &&
                 imgRes.data.data.length > 0
               ) {
-                // Map mảng ảnh phụ
-                const subImageUrls = imgRes.data.data.map(
-                  (img: IProductImage) => `${baseUrl}${img.imgUrl}`
+                subImageUrls = imgRes.data.data.map(
+                  (img: IProductImage) => `${PRODUCT_IMAGE_BASE_URL}${img.imgUrl}`
                 );
-
-                // Set gallery = ảnh chính + ảnh phụ
-                setGalleryImages([mainImageUrl, ...subImageUrls]);
-              } else {
-                // Không có ảnh phụ, set gallery chỉ có ảnh chính
-                setGalleryImages([mainImageUrl]);
               }
-            } catch (imgError) {
-              console.error("Lỗi khi tải ảnh phụ:", imgError);
-              // Nếu lỗi, vẫn set gallery với ảnh chính
+              // Set gallery = ảnh chính + ảnh phụ
+              setGalleryImages([mainImageUrl, ...subImageUrls]);
+          } else {
+              console.error("Lỗi khi tải ảnh phụ:", responseSubImgs.reason);
               setGalleryImages([mainImageUrl]);
-            }
-
-            // TODO: Fetch comment theo productId
-            setComments(initialComments);
           }
+          
+          // Xử lý khuyến mãi
+          if (responseBestPromotion.status === 'fulfilled') {
+              const promotionRes = responseBestPromotion.value as any;
+              if (promotionRes.data.data) {
+                setBestPromotion(promotionRes.data.data);
+              } else {
+                setBestPromotion(null);
+              }
+          } else if (responseBestPromotion.status === 'rejected') {
+              const axiosError = responseBestPromotion.reason as AxiosError;
+              if (axiosError.response?.status === 404) {
+                  setBestPromotion(null);
+              } else {
+                  console.error("Lỗi khi tải khuyến mãi:", responseBestPromotion.reason);
+                  setBestPromotion(null);
+              }
+          }
+
+          // TODO: Fetch comment theo productId (Giữ mock tạm thời)
+          setComments(initialComments);
+
         } catch (error) {
-          console.error("Lỗi khi tải chi tiết sản phẩm:", error);
+          console.error("Lỗi khi tải chi tiết sản phẩm hoặc dữ liệu liên quan:", error);
         } finally {
           setIsLoading(false);
         }
-      } else {
-        console.error("Không tìm thấy ID sản phẩm (Có thể do F5).");
-        setIsLoading(false);
-      }
+      };
+
+      fetchMainData();
     };
 
     fetchProductData();
   }, [productId]);
 
-  // --- Handlers ---
+  // --- Handlers (Giữ nguyên) ---
   const handleIncrease = () => setQuantity((prev) => prev + 1);
   const handleDecrease = () => {
     if (quantity > 1) setQuantity((prev) => prev - 1);
@@ -155,7 +229,7 @@ const ProductDetail: React.FC = () => {
       ? comments.reduce((acc, c) => acc + c.rating, 0) / comments.length
       : product?.rating_avg || 0;
 
-  // --- Loading / Error Guards ---
+  // --- Loading / Error Guards (Giữ nguyên) ---
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -175,17 +249,30 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  // --- Render ---
+  // --- Render (Giữ nguyên) ---
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
+      <div className="container mx-auto px-4 py-4 lg:py-12">
+        <button
+          onClick={() => navigate(-1)}
+          // Giữ lại layout flex và gap
+          className="group mb-3 flex items-center gap-2 text-gray-600 hover:text-green-700 transition-all duration-200"
+        >
+          {/* Icon Container */}
+          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:bg-green-50 transition-all">
+            <FontAwesomeIcon icon={faArrowLeft} className="text-xl" />
+          </div>
+
+          {/* Bọc chữ trong thẻ span và set size trực tiếp tại đây */}
+          <span className="text-2xl font-bold">Quay lại danh sách</span>
+        </button>
         {/* Main Product Section */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-10">
             <ProductImageGallery
               productName={product.name}
               selectedImage={selectedImage}
-              images={galleryImages} // Dùng mock cho thumbnail
+              images={galleryImages} 
               onSelectImage={setSelectedImage}
             />
 
@@ -193,7 +280,8 @@ const ProductDetail: React.FC = () => {
               product={product}
               averageRating={averageRating}
               commentCount={comments.length}
-              certifications={certifications}
+              certifications={certifications} // Sử dụng dữ liệu đã fetch từ API
+              bestPromotion={bestPromotion}
               onCertClick={setSelectedCert}
               quantity={quantity}
               onDecrease={handleDecrease}

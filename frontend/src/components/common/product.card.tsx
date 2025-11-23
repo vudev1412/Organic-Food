@@ -27,12 +27,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   // 2. TẠO BIẾN KIỂM TRA HẾT HÀNG
   const isSoldOut = quantity === 0;
+  const type = discount?.type?.toUpperCase();
 
   const discountedPrice =
-    discount?.type === "percent"
+    // Kiểm tra discount có tồn tại không trước
+    discount && type === "PERCENT"
       ? price * (1 - discount.value / 100)
-      : discount?.type === "fixed_amount"
-      ? price - discount.value * 1000
+      : discount && type === "FIXED_AMOUNT"
+      ? price - discount.value
       : price;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -58,9 +60,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Badge giảm giá */}
         {discount && (
           <span className="discount-badge">
-            {discount.type === "percent"
+            {type === "PERCENT"
               ? `-${discount.value}%`
-              : `-${discount.value.toLocaleString()}K`}
+              : `-${(discount.value / 1000).toLocaleString()}K`}
           </span>
         )}
 
@@ -83,7 +85,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <span className="original">{price.toLocaleString()}₫</span>
             </>
           ) : (
-            <span className="discounted">{price.toLocaleString()}₫</span>
+            <span className="no-discounted">{price.toLocaleString()}₫</span>
           )}
         </div>
       </div>

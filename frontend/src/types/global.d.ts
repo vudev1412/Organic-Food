@@ -48,8 +48,8 @@ declare global {
   }
 
   interface IDiscount {
-    id: number;
-    type: string;
+    id?: number;
+    type: "PERCENT" | "FIXED_AMOUNT";
     value: number;
   }
   interface IProductCard {
@@ -59,6 +59,7 @@ declare global {
     image: string;
     price: number;
     quantity: number;
+    discount?: IDiscount;
   }
   interface ICustomer {
     id: number;
@@ -107,6 +108,19 @@ declare global {
     updateBy: string | null;
     categoryId: number;
   }
+
+  interface ICertificate {
+    id: number;
+    name: string;
+    image: string;
+  }
+  interface IProductTable {
+    imageUrl: string;
+    certNo: string;
+    date: string;
+    product: IProduct;
+    certificate: ICertificate;
+
   export interface IOrder {
     id: number;
     orderAt: string;
@@ -124,6 +138,7 @@ declare global {
     price: number;
     product: IProduct;
     order: IOrder;
+
   }
   export interface ICreateOrderDetailDTO {
     orderId: number;
@@ -206,8 +221,9 @@ declare global {
     image: string;
     price: number;
     originalPrice?: number;
-    discount?: number;
+    discount?: IDiscount;
     quantity: number;
+    maxQuantityAvailable: number; // Tối đa có thể mua (từ product.quantity)
   }
   /**
    * Interface cho chi tiết sản phẩm,
@@ -233,7 +249,26 @@ declare global {
     updateBy: string | null;
     categoryId: number;
   }
+  // Định nghĩa cấu trúc chi tiết của mỗi chứng chỉ
+  export interface ProductCertificateDetail {
+    /** ID của chứng chỉ (lấy từ Certificate entity) */
+    certificateId: number;
 
+    /** Tên loại chứng chỉ (Ví dụ: EU Organic) */
+    name: string;
+
+    /** URL Logo/Hình ảnh chung của loại chứng chỉ */
+    typeImageUrl: string;
+
+    /** Số chứng nhận cụ thể được cấp cho sản phẩm */
+    certNo: string;
+
+    /** Ngày cấp/Ngày hết hạn chứng chỉ (chuỗi ISO 8601) */
+    date: string;
+
+    /** URL hình ảnh/file scan của chứng chỉ cụ thể */
+    specificImageUrl: string;
+  }
   interface IEmployeeProfile {
     data: {
       id: number;
@@ -273,6 +308,56 @@ declare global {
     img: string;
     product_id: number;
   }
+
+  export interface IBestPromotion {
+    id: number;
+    promotionName: string;
+    value: number;
+    type: "PERCENT" | "FIXED_AMOUNT";
+    originalPrice: number;
+    discountAmount: number;
+    finalPrice: number;
+    endDate: string;
+  }
+
+  // Cart API Types
+  interface ICreateCartItemDTO {
+    productId: number;
+    quantity: number;
+  }
+
+  interface IUpdateCartItemDTO {
+    quantity: number;
+  }
+
+  interface ICartItemResponse {
+    id: number;
+    quantity: number;
+    product: IProductCard;
+    originalPrice?: number;
+    discount?: number;
+  }
+
+  interface ICartItemDTO {
+    id: number;
+    productName: string;
+    slug: string;
+    image: string;
+    originalPrice: number;
+    price: number;
+    quantity: number;
+    stock: number;
+    promotionId?: number;
+    promotionType?: "PERCENT" | "FIXED_AMOUNT";
+    value?: number;
+  }
+
+  interface ICartResponse {
+    id: number;
+    userId: number;
+    items: ICartItemResponse[];
+    createdAt: string;
+    updatedAt: string;
 
   export interface Certificate {
     data: {

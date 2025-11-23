@@ -2,8 +2,10 @@ import { CloseOutlined } from "@ant-design/icons";
 import { useCurrentApp } from "../../components/context/app.context";
 import { useState } from "react";
 import "./index.scss";
+import { Link } from "react-router-dom";
+import { formatCurrency } from "../../utils/format";
+
 const Cart = () => {
-  // --- PHẦN LOGIC: Giữ nguyên 100% ---
   const { cartItems, removeFromCart, updateCartQuantity, clearCart } =
     useCurrentApp();
 
@@ -11,39 +13,32 @@ const Cart = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showClearCartModal, setShowClearCartModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
-  const fixed_discount = {
-    id: 1,
-    type: "percent",
-    value: 20,
-  };
 
-  const getDiscountedPrice = (
-    price: number,
-    discount?: { id: number; type: string; value: number }
-  ) => {
-    if (!discount) return price;
-    if (discount.type === "percent") return price * (1 - discount.value / 100);
-    if (discount.type === "fixed_amount")
-      return Math.max(0, price - discount.value);
-    return price;
-  };
+  // =================================================================
+  // 1. LOGIC TÍNH TOÁN TỔNG (Đã sửa logic Double Discount)
+  // =================================================================
 
+  // Tạm tính: Dùng item.price (Giá đã giảm từ Backend)
   const subtotal = cartItems.reduce((total, item) => {
-    const discounted = getDiscountedPrice(item.price, fixed_discount);
-    return total + discounted * item.quantity;
+    return total + item.price * item.quantity;
   }, 0);
 
+  // Tổng tiết kiệm: (Giá gốc - Giá bán) * Số lượng
   const totalSavings = cartItems.reduce((total, item) => {
-    if (!fixed_discount) return total;
-    const discounted = getDiscountedPrice(item.price, fixed_discount);
-    const savedPerItem = item.price - discounted;
+    const originalPrice = item.originalPrice || item.price;
+    const currentPrice = item.price;
+    // Chỉ cộng nếu có chênh lệch
+    const savedPerItem = Math.max(0, originalPrice - currentPrice);
     return total + savedPerItem * item.quantity;
   }, 0);
 
   const shipping = subtotal > 500000 ? 0 : 25000;
   const total = subtotal + shipping;
 
-  // Hàm xử lý xóa sản phẩm
+  // =================================================================
+  // 2. LOGIC MODAL & HANDLERS (Giữ nguyên)
+  // =================================================================
+
   const handleDeleteClick = (itemId: number) => {
     setItemToDelete(itemId);
     setShowDeleteModal(true);
@@ -62,7 +57,6 @@ const Cart = () => {
     setItemToDelete(null);
   };
 
-  // Hàm xử lý xóa giỏ hàng
   const handleClearCartClick = () => {
     setShowClearCartModal(true);
   };
@@ -75,8 +69,6 @@ const Cart = () => {
   const cancelClearCart = () => {
     setShowClearCartModal(false);
   };
-
-  // --- HẾT PHẦN LOGIC ---
 
   // 👉 Giao diện giỏ hàng trống
   if (cartItems.length === 0) {
@@ -146,14 +138,22 @@ const Cart = () => {
           {/* CỘT BÊN TRÁI: Danh sách sản phẩm */}
           <section className="lg:col-span-8">
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <ul role="list" className="divide-y divide-gray-100">
+              <ul
+                role="list"
+                className="divide-y divide-gray-100 !p-0 !m-0 list-none"
+              >
                 {cartItems.map((item) => {
-                  const discountedPrice = getDiscountedPrice(
-                    item.price,
-                    fixed_discount
-                  );
-                  const itemTotal = discountedPrice * item.quantity;
-                  const hasDiscount = !!fixed_discount;
+                  // ===========================================
+                  // FIX LOGIC HIỂN THỊ ITEM
+                  // ===========================================
+                  const finalPrice = item.price; // Giá khách phải trả
+                  const originalPrice = item.originalPrice || item.price; // Giá gốc
+                  const isDiscounted = originalPrice > finalPrice;
+                  const itemTotal = finalPrice * item.quantity;
+
+                  // ✅ THÊM STOCK VALIDATION
+                  const maxStock = item.maxQuantityAvailable || 100;
+                  const isAtMaxStock = item.quantity >= maxStock;
 
                   return (
                     <li
@@ -164,18 +164,29 @@ const Cart = () => {
                         {/* Hình ảnh sản phẩm */}
                         <div className="flex-shrink-0">
                           <div className="relative group">
-                            <img
-                              src={
-                                item.image
-                                  ? `http://localhost:8080/storage/images/products/${item.image}`
-                                  : "https://placehold.co/100x100/a0e0a0/333"
-                              }
-                              alt={item.name}
-                              className="h-20 w-20 sm:h-28 sm:w-28 rounded-xl object-cover object-center ring-1 ring-gray-200"
-                            />
-                            {hasDiscount && (
+                            <Link
+                              to={`/san-pham/${item.slug}`}
+                              state={{ productId: item.id }}
+                            >
+                              <img
+                                src={
+                                  item.image
+                                    ? `http://localhost:8080/storage/images/products/${item.image}`
+                                    : "https://placehold.co/100x100/a0e0a0/333"
+                                }
+                                alt={item.name}
+                                className="h-20 w-20 sm:h-28 sm:w-28 rounded-xl object-cover object-center ring-1 ring-gray-200"
+                              />
+                            </Link>
+
+                            {/* Badge Discount */}
+                            {isDiscounted && item.discount && (
                               <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                                -{fixed_discount.value}%
+                                {item.discount.type === "PERCENT"
+                                  ? `-${item.discount.value}%`
+                                  : `-${(
+                                      item.discount.value / 1000
+                                    ).toLocaleString()}K`}
                               </div>
                             )}
                           </div>
@@ -187,30 +198,54 @@ const Cart = () => {
                             {/* Tên & Giá */}
                             <div className="flex-1">
                               <h3 className="cart-product-name">
-                                <a
-                                  href={`/san-pham/${item.slug}`}
+                                <Link
+                                  to={`/san-pham/${item.slug}`}
+                                  state={{ productId: item.id }}
                                   className="hover:text-green-600 transition-colors"
                                 >
                                   {item.name}
-                                </a>
+                                </Link>
                               </h3>
 
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {hasDiscount ? (
-                                  <>
-                                    <span className="text-lg sm:text-xl font-bold text-red-600">
-                                      {discountedPrice.toLocaleString()}₫
-                                    </span>
-                                    <span className="text-sm text-gray-400 line-through">
-                                      {item.price.toLocaleString()}₫
-                                    </span>
-                                  </>
-                                ) : (
-                                  <span className="text-lg sm:text-xl font-bold text-gray-900">
-                                    {item.price.toLocaleString()}₫
+                              <div className="flex items-center gap-2 flex-wrap mt-1">
+                                {/* GIÁ BÁN (ĐẬM) */}
+                                <span
+                                  className={`text-lg sm:text-xl font-bold ${
+                                    isDiscounted
+                                      ? "text-red-600"
+                                      : "text-green-600"
+                                  }`}
+                                >
+                                  {formatCurrency(finalPrice)}
+                                </span>
+
+                                {/* GIÁ GỐC (GẠCH NGANG) */}
+                                {isDiscounted && (
+                                  <span className="text-sm text-gray-400 line-through">
+                                    {formatCurrency(originalPrice)}
                                   </span>
                                 )}
                               </div>
+
+                              {/* ✅ HIỂN THỊ STOCK WARNING */}
+                              {isAtMaxStock && (
+                                <div className="mt-2 flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-md w-fit">
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  <span>
+                                    Đã đạt số lượng tối đa ({maxStock})
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             {/* Tổng giá (desktop) */}
@@ -219,21 +254,29 @@ const Cart = () => {
                                 Thành tiền
                               </p>
                               <p className="text-xl font-bold text-gray-900">
-                                {itemTotal.toLocaleString()}₫
+                                {formatCurrency(itemTotal)}
                               </p>
                             </div>
                           </div>
 
                           {/* Số lượng & Xóa */}
                           <div className="mt-4 flex items-center justify-between">
-                            {/* Điều chỉnh số lượng */}
+                            {/* ✅ ĐIỀU CHỈNH SỐ LƯỢNG CÓ VALIDATION */}
                             <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden">
+                              {/* Nút giảm */}
                               <button
                                 onClick={() =>
-                                  updateCartQuantity(item.id, item.quantity - 1)
+                                  updateCartQuantity(
+                                    item.id,
+                                    Math.max(1, item.quantity - 1)
+                                  )
                                 }
-                                className="px-3 py-2 text-gray-600 hover:bg-gray-200 transition-colors"
-                                aria-label="Giảm số lượng"
+                                disabled={item.quantity <= 1}
+                                className={`px-3 py-2 transition-colors ${
+                                  item.quantity <= 1
+                                    ? "text-gray-400 cursor-not-allowed"
+                                    : "text-gray-600 hover:bg-gray-200"
+                                }`}
                               >
                                 <svg
                                   className="w-4 h-4"
@@ -249,24 +292,66 @@ const Cart = () => {
                                   />
                                 </svg>
                               </button>
+
+                              {/* ✅ INPUT SỐ LƯỢNG - GIỚI HẠN MAX */}
                               <input
                                 type="number"
                                 value={item.quantity}
-                                onChange={(e) =>
+                                min={1}
+                                max={maxStock}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  // Tự động clamp giá trị trong khoảng 1 - maxStock
+                                  if (!isNaN(val)) {
+                                    const clampedVal = Math.min(
+                                      Math.max(val, 1),
+                                      maxStock
+                                    );
+                                    updateCartQuantity(item.id, clampedVal);
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  // Fix giá trị khi blur
+                                  if (isNaN(val) || val < 1) {
+                                    e.target.value = "1";
+                                    if (item.quantity !== 1) {
+                                      updateCartQuantity(item.id, 1);
+                                    }
+                                  } else if (val > maxStock) {
+                                    e.target.value = maxStock.toString();
+                                    if (item.quantity !== maxStock) {
+                                      updateCartQuantity(item.id, maxStock);
+                                    }
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                                className="w-8 sm:w-9 text-right py-1.5 px-1.5 bg-transparent font-semibold text-sm text-gray-900 focus:outline-none rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+
+                              {/* ✅ NÚT TĂNG - DISABLED KHI ĐẠT MAX */}
+                              <button
+                                onClick={() => {
                                   updateCartQuantity(
                                     item.id,
-                                    Math.max(1, parseInt(e.target.value) || 1)
-                                  )
+                                    item.quantity + 1
+                                  );
+                                }}
+                                disabled={isAtMaxStock}
+                                className={`px-3 py-2 transition-colors ${
+                                  isAtMaxStock
+                                    ? "text-gray-400 cursor-not-allowed"
+                                    : "text-gray-600 hover:bg-gray-200"
+                                }`}
+                                title={
+                                  isAtMaxStock
+                                    ? `Đã đạt tối đa (${maxStock})`
+                                    : "Tăng số lượng"
                                 }
-                                className="w-12 sm:w-14 text-center py-2 bg-transparent font-semibold text-gray-900 focus:outline-none"
-                                min="1"
-                              />
-                              <button
-                                onClick={() =>
-                                  updateCartQuantity(item.id, item.quantity + 1)
-                                }
-                                className="px-3 py-2 text-gray-600 hover:bg-gray-200 transition-colors"
-                                aria-label="Tăng số lượng"
                               >
                                 <svg
                                   className="w-4 h-4"
@@ -295,10 +380,10 @@ const Cart = () => {
                             </button>
                           </div>
 
-                          {/* Tổng giá (mobile) */}
+                          {/* Tổng tiền mobile */}
                           <div className="mt-3 sm:hidden">
                             <p className="text-lg font-bold text-gray-900 text-right">
-                              {itemTotal.toLocaleString()}₫
+                              {formatCurrency(itemTotal)}
                             </p>
                           </div>
                         </div>
@@ -317,7 +402,7 @@ const Cart = () => {
                   <input
                     type="text"
                     placeholder="Nhập mã giảm giá"
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none "
                   />
                   <button className="bg-green-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-colors whitespace-nowrap">
                     Áp dụng
@@ -439,7 +524,7 @@ const Cart = () => {
                   href="/san-pham"
                   className="block w-full text-center text-green-600 font-semibold py-3 hover:text-green-700 transition-colors"
                 >
-                  ← Tiếp tục mua sắm
+                  Tiếp tục mua sắm
                 </a>
               </div>
 

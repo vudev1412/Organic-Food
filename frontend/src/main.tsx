@@ -37,7 +37,6 @@ import ProtectedRouter from "./components/auth/admin";
 import ProtectedRoute from "./components/auth";
 import viVN from "antd/locale/vi_VN";
 import { AppProvider } from "./components/context/app.provider";
-import { ToastProvider } from "./components/context/toast.provider";
 
 const router = createBrowserRouter([
   {
@@ -47,6 +46,14 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path: "/dang-ky",
+        element: <SingUp />,
+      },
+      {
+        path: "/dang-nhap",
+        element: <SingIn />,
       },
       {
         path: "/san-pham",
@@ -67,6 +74,10 @@ const router = createBrowserRouter([
       {
         path: "/san-pham/:slug",
         element: <ProductDetail />,
+      },
+      {
+        path: "/danh-muc/:slug",
+        element: <ProductPage />,
       },
 
       {
@@ -101,14 +112,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  {
-    path: "/dang-ky",
-    element: <SingUp />,
-  },
-  {
-    path: "/dang-nhap",
-    element: <SingIn />,
-  },
+
   {
     path: "/admin",
     element: (
@@ -133,13 +137,11 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App>
-      <ToastProvider>
-        <AppProvider>
-          <ConfigProvider locale={viVN}>
-            <RouterProvider router={router} />
-          </ConfigProvider>
-        </AppProvider>
-      </ToastProvider>
+      <AppProvider>
+        <ConfigProvider locale={viVN}>
+          <RouterProvider router={router} />
+        </ConfigProvider>
+      </AppProvider>
     </App>
   </StrictMode>
 );

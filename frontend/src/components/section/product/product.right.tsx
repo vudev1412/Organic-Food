@@ -1,18 +1,23 @@
 import { useState, useEffect } from "react";
-import { getProductCardListAPI } from "../../../service/api";
+import {
+  getProductCardListAPI,
+  getProductsByCategoryAPI,
+} from "../../../service/api";
 import { useCurrentApp } from "../../context/app.context";
-import { useToast } from "../../context/toast.context";
 
 // Import các component con
-
 import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
 import QuantityModal from "./QuantityModal";
 import ProductListHeader from "./ProductListHeader";
 
-const ProductRight = () => {
+interface ProductRightProps {
+  selectedCategoryId: number | null;
+  selectedCategoryName: string; // [MỚI] Thêm prop này để nhận tên
+}
+
+const ProductRight = ({ selectedCategoryId, selectedCategoryName }: ProductRightProps) => {
   const { addToCart } = useCurrentApp();
-  const { showToast } = useToast();
 
   // --- STATE QUẢN LÝ ---
   const [products, setProducts] = useState<IProductCard[]>([]);
@@ -23,6 +28,14 @@ const ProductRight = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProductCard | null>(
     null
   );
+  const [selectedDiscount, setSelectedDiscount] = useState<
+    IDiscount | undefined
+  >(undefined);
+
+  // Khi danh mục thay đổi, reset về trang 0
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedCategoryId]);
 
   // --- LOGIC GỌI API ---
   useEffect(() => {
@@ -36,11 +49,25 @@ const ProductRight = () => {
         }
 
         const pageToSend = currentPage + 1; // API dùng 1-indexed
-        const response = await getProductCardListAPI(
-          pageToSend,
-          pageSize,
-          sortParam
-        );
+        let response;
+
+        // Kiểm tra xem có đang chọn danh mục không
+        if (selectedCategoryId) {
+          // Nếu có ID danh mục -> Gọi API lấy sản phẩm theo danh mục
+          response = await getProductsByCategoryAPI(
+            selectedCategoryId,
+            pageToSend,
+            pageSize,
+            sortParam
+          );
+        } else {
+          // Nếu null -> Gọi API lấy tất cả sản phẩm
+          response = await getProductCardListAPI(
+            pageToSend,
+            pageSize,
+            sortParam
+          );
+        }
 
         if (response?.data?.data) {
           const paginatedData = response.data.data;
@@ -51,77 +78,81 @@ const ProductRight = () => {
 
           setProducts(productList);
           setTotalPages(pages);
+        } else {
+          setProducts([]);
+          setTotalPages(0);
         }
       } catch (error) {
         console.error("Failed to fetch products:", error);
+        setProducts([]);
       }
     };
     fetchProducts();
-  }, [currentPage, pageSize, sortOption]);
+  }, [currentPage, pageSize, sortOption, selectedCategoryId]);
 
-  // --- HANDLERS ---
-
-  // Mở modal khi nhấn "Thêm vào giỏ"
-  const handleShowQuantityModal = (product: IProductCard) => {
+  // --- HANDLERS (Giữ nguyên) ---
+  const handleShowQuantityModal = (
+    product: IProductCard,
+    discount?: IDiscount
+  ) => {
     setSelectedProduct(product);
+    setSelectedDiscount(discount);
   };
 
-  // Xác nhận từ modal
-  const handleConfirmAddToCart = (product: IProductCard, quantity: number) => {
+  const handleConfirmAddToCart = (
+    product: IProductCard,
+    quantity: number,
+    discount?: IDiscount
+  ) => {
     if (product && quantity > 0) {
-      console.log("Adding to cart:", product.name, "Quantity:", quantity);
-
       const productWithOriginalPrice = {
         ...product,
-        originalPrice: product.price, // giá gốc
+        originalPrice: product.price,
+        discount: discount,
       };
 
       addToCart(productWithOriginalPrice, quantity);
-      setSelectedProduct(null); // Đóng modal
-      showToast(
-        `Đã thêm ${quantity} sản phẩm "${product.name}" vào giỏ hàng!`,
-        "success",
-        3000
-      );
+      setSelectedProduct(null);
+      setSelectedDiscount(undefined);
     }
   };
 
-  // Đóng modal
   const handleCloseModal = () => {
     setSelectedProduct(null);
+    setSelectedDiscount(undefined);
   };
 
-  // Thay đổi sắp xếp
   const handleSortChange = (option: string) => {
     setSortOption(option);
-    setCurrentPage(0); // Reset về trang đầu
+    setCurrentPage(0);
   };
 
-  // Thay đổi trang (từ component Pagination)
   const handlePageChange = (page: number) => {
-    setCurrentPage(page); // page đã là 0-indexed
+    setCurrentPage(page);
   };
 
   // --- RENDER ---
   return (
     <div className="w-full">
-      {/* 1. Modal chọn số lượng */}
       <QuantityModal
         product={selectedProduct}
         onClose={handleCloseModal}
+        discount={selectedDiscount}
         onConfirm={handleConfirmAddToCart}
       />
 
-      {/* 2. Header (Tiêu đề + Sắp xếp) */}
       <ProductListHeader
         onSortChange={handleSortChange}
-        tilte="Tất cả sản phẩm"
+        // [SỬA ĐỔI] Sử dụng prop name truyền từ cha xuống
+        tilte={
+          selectedCategoryId 
+            ? selectedCategoryName // Hiển thị tên cụ thể (VD: Rau củ)
+            : "Tất cả sản phẩm"
+        }
       />
 
-      {/* 3. Lưới sản phẩm */}
       <ProductGrid products={products} onAddToCart={handleShowQuantityModal} />
 
-      {/* 4. Phân trang */}
       {totalPages > 1 && (
         <Pagination
           currentPage={currentPage}

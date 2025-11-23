@@ -32,28 +32,24 @@ export const logoutAPI = () => {
   return axios.post<IBackendRes<IFetchAccount>>(urlBackend);
 };
 
-
-
-export const getCustomersAPI = (query:string) =>{
-    const urlBackend = `/api/v1/customer/profile?${query}`;
-    return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
-}
-export const getEmployeesAPI = (query:string) =>{
-    const urlBackend = `/api/v1/employee/profile?${query}`;
-    return axios.get<IBackendRes<IModelPaginate<IEmployee>>>(urlBackend);
-}
-
+export const getCustomersAPI = (query: string) => {
+  const urlBackend = `/api/v1/customer/profile?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<ICustomerTable>>>(urlBackend);
+};
+export const getEmployeesAPI = (query: string) => {
+  const urlBackend = `/api/v1/employee/profile?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<IEmployee>>>(urlBackend);
+};
 
 export const updateUserAPI = (id: number, payload: ICustomerTable) => {
   const urlBackend = `/api/v1/customer/profile/${id}`;
   return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
 };
 
-
 export const updateEmployeeAPI = (id: number, payload: IEmployee) => {
   const urlBackend = `/api/v1/employee/profile/${id}`;
   return axios.patch<IBackendRes<IEmployee>>(urlBackend, payload);
-}
+};
 
 export const createUserAPI = (
   name: string,
@@ -210,9 +206,30 @@ export const getProductCardListAPI = (
 
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
 };
+export const getProductsByCategoryAPI = (
+  id: number, // Thêm tham số id danh mục
+  page: number,
+  size: number,
+  sort?: string
+) => {
+  // Lưu ý: Đường dẫn này phải khớp với @GetMapping bên backend
+  // Giả sử prefix global của bạn là /api/v1
+  let urlBackend = `/api/v1/product/category/${id}?page=${page}&size=${size}`;
+
+  // Thêm sort param nếu có
+  if (sort) {
+    urlBackend += `&sort=${sort}`;
+  }
+
+  return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+};
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
   return axios.get<IBackendRes<IProductDetail>>(urlBackend);
+};
+export const getProductCertificateByIdProduct = (id: number) => {
+  const urlBackend = `/api/v1/products/${id}/certificate-details`;
+  return axios.get<IBackendRes<ProductCertificateDetail>>(urlBackend);
 };
 
 export const searchProductsAPI = (query: string) => {
@@ -224,6 +241,44 @@ export const getSubImgByProductId = (id: number) => {
   const urlBackend = `/api/v1/product-images/product/${id}`;
   return axios.get<IBackendRes<IProductImage[]>>(urlBackend);
 };
+
+export const getBestPromotionByProductId = (id: number) => {
+  const urlBackend = `/api/v1/promotion-details/${id}/best-promotion`;
+  return axios.get<IBackendRes<IBestPromotion>>(urlBackend);
+};
+
+export const addToCartAPI = (productId: number, quantity: number) => {
+  const URL_API = "/api/v1/items";
+
+  return axios.post<IBackendRes<ICartItemResponse>>(URL_API, {
+    productId,
+    quantity,
+  });
+};
+
+export const getCartByUserAPI = () => {
+  const urlBackend = `/api/v1/cart`;
+  return axios.get(urlBackend);
+};
+
+export const getMyCartAPI = () => {
+  const urlBackend = `/api/v1/cart/my-cart`;
+  return axios.get<IBackendRes<ICartItemDTO[]>>(urlBackend);
+};
+
+export const updateCartAPI = (productId: number, quantity: number) => {
+  const URL_API = "/api/v1/items";
+  console.log("Check ID gửi đi:", productId);
+  return axios.put<IBackendRes<ICartItemResponse>>(URL_API, {
+    productId,
+    quantity,
+  });
+};
+export const clearCartAPI = () => {
+  const urlBackend = `/api/v1/cart`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
+};
+
 
 export const getCertificate = () => {
   const urlBackend = `/api/v1/certificates`;
@@ -261,3 +316,4 @@ export const uploadFileAPI = (file: File) => {
     },
   });
 };
+

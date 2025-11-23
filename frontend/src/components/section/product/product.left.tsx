@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { getAllCategoriesAPI } from "../../../service/api";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./product.left.scss";
 
-// --- ICON (Giữ nguyên) ---
 const ChevronDownIcon = ({ className }: { className: string }) => (
   <svg
     className={className}
@@ -16,11 +16,22 @@ const ChevronDownIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
-// --- COMPONENT CHÍNH ---
-const ProductLeft = () => {
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
-    {}
-  );
+interface ProductLeftProps {
+  onSelectCategory: (id: number | null, name: string) => void;
+}
+
+interface ICategory {
+  id: number;
+  name: string;
+  parentCategoryId: number | null;
+  slug: string;
+}
+
+const ProductLeft = ({ onSelectCategory }: ProductLeftProps) => {
+  const navigate = useNavigate();
+  const { slug } = useParams();
+  const location = useLocation();
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
 
@@ -28,73 +39,120 @@ const ProductLeft = () => {
     setOpenCategories((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  // Lấy danh mục từ API khi component mount
   useEffect(() => {
-      const fetchCategories = async () => {
-        try {
-          const response = await getAllCategoriesAPI();
-          const results = response?.data?.data?.result;
-  
-          if (Array.isArray(results)) {
-            setAllCategories(results);
-  
-            // Parent categories: parentCategoryId === null
-            const parentCategories = results.filter(
-              (cat: ICategory) => cat.parentCategoryId === null
-            );
-            setCategories(parentCategories);
-          }
-        } catch (error) {
-          console.error("Failed to fetch categories:", error);
+    const fetchCategories = async () => {
+      try {
+        const response = await getAllCategoriesAPI();
+        const results = response?.data?.data?.result;
+        if (Array.isArray(results)) {
+          setAllCategories(results);
+          const parentCategories = results.filter(
+            (cat: ICategory) => cat.parentCategoryId === null
+          );
+          setCategories(parentCategories);
         }
-      };
-  
-      fetchCategories();
-    }, []);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (slug && allCategories.length > 0) {
+      const currentCategory = allCategories.find((c) => c.slug === slug);
+      if (currentCategory?.parentCategoryId) {
+        const parent = allCategories.find(
+          (c) => c.id === currentCategory.parentCategoryId
+        );
+        if (parent)
+          setOpenCategories((prev) => ({ ...prev, [parent.name]: true }));
+      } else if (currentCategory) {
+        setOpenCategories((prev) => ({
+          ...prev,
+          [currentCategory.name]: true,
+        }));
+      }
+    }
+  }, [slug, allCategories]);
+
+  const checkActive = (itemSlug: string | null) => {
+    if (!itemSlug && !slug && location.pathname === "/san-pham") return true;
+    return slug === itemSlug;
+  };
+
+  const handleCategoryClick = (
+    e: React.MouseEvent,
+    id: number | null,
+    name: string,
+    slugParam: string | null
+  ) => {
+    e.preventDefault();
+    onSelectCategory(id, name);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (slugParam && slugParam !== "san-pham") {
+      navigate(`/danh-muc/${slugParam}`);
+    } else {
+      navigate("/san-pham");
+    }
+  };
 
   return (
-    <div className="product-left w-full max-w-xs space-y-8">
-      {/* Khối Danh mục */}
+    <div className="product-left w-full max-w-xs space-y-8 sticky top-24">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <h3 className="font-semibold text-base text-gray-800 p-4 border-b border-gray-200">
+        {/* --- 1. Tiêu đề chính --- */}
+        <h3
+          // Chỉ giữ lại class layout, màu sắc để SCSS lo (h3.active)
+          className={`font-semibold text-base p-4 border-b border-gray-200 cursor-pointer ${
+            !slug && location.pathname === "/san-pham" ? "active" : ""
+          }`}
+          onClick={(e) =>
+            handleCategoryClick(e, null, "Tất cả sản phẩm", "san-pham")
+          }
+        >
           Danh mục sản phẩm
         </h3>
-        <nav className="p-3 space-y-1">
+
+        <nav className="p-3 space-y-1 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
           {categories.map((category) => {
-            // Lấy tất cả danh mục con của danh mục cha này
             const subCategories = allCategories.filter(
-              (c: ICategory) => c.parentCategory?.id === category.id
+              (c) => c.parentCategoryId === category.id
             );
+            const categoryLink = `/danh-muc/${category.slug}`;
+
             return (
-              <div key={category.name}>
+              <div key={category.id}>
                 {subCategories.length > 0 ? (
                   <>
-                    {/* --- THAY ĐỔI Ở ĐÂY --- */}
-                    {/* Chúng ta tách <button> cũ thành một <div> cha
-                      để giữ hiệu ứng hover, bên trong chứa:
-                      1. Thẻ <a> để điều hướng.
-                      2. Thẻ <button> chỉ chứa icon để toggle.
-                    */}
+                    {/* --- 2. Danh mục cha có con (Group Header) --- */}
                     <div
-                      className={`
-                        flex justify-between items-center w-full p-3 rounded-md text-gray-700 font-medium text-sm
-                        transition-colors duration-200 ease-in-out
-                        hover:bg-green-600 hover:text-white
-                        group 
-                      `}
+                      // Đã xóa các class màu Tailwind cũ, chỉ giữ class layout + SCSS class
+                      className={`category-group-header flex justify-between items-center w-full p-3 rounded-md font-medium text-sm cursor-pointer ${
+                        checkActive(category.slug) ? "active" : ""
+                      }`}
                     >
-                      {/* 1. Liên kết danh mục cha */}
                       <a
-                        href={`/danh-muc/${category.slug}`}
-                        className="flex-grow group-hover:!text-white !text-[#4b5563]" // Thừa hưởng màu text khi hover
+                        href={categoryLink}
+                        onClick={(e) =>
+                          handleCategoryClick(
+                            e,
+                            category.id,
+                            category.name,
+                            category.slug
+                          )
+                        }
+                        // Xóa text-gray, group-hover...
+                        className="flex-grow"
                       >
                         {category.name}
                       </a>
-
-                      {/* 2. Nút bấm để toggle */}
                       <button
-                        onClick={() => toggleCategory(category.name)}
-                        className="pl-2 group-hover:text-white" // Thừa hưởng màu text khi hover
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCategory(category.name);
+                        }}
+                        className="pl-2"
                       >
                         <ChevronDownIcon
                           className={`w-4 h-4 transition-transform duration-200 ${
@@ -103,34 +161,53 @@ const ProductLeft = () => {
                         />
                       </button>
                     </div>
-                    {/* --- KẾT THÚC THAY ĐỔI --- */}
 
-                    {/* Danh mục con (Giữ nguyên) */}
+                    {/* --- 3. Danh mục con (Child) --- */}
                     {openCategories[category.name] && (
                       <ul className="pl-4 mt-1 mb-2 space-y-1 border-l border-gray-200 ml-3">
-                        {subCategories.map((sub: ICategory) => (
-                          <li key={sub.slug}>
-                            <a
-                              href={`/danh-muc/${sub.slug}`}
-                              className="category-child"
-                            >
-                              {sub.name}
-                            </a>
-                          </li>
-                        ))}
+                        {subCategories.map((sub) => {
+                          const subLink = `/danh-muc/${sub.slug}`;
+                          return (
+                            <li key={sub.id}>
+                              <a
+                                href={subLink}
+                                onClick={(e) =>
+                                  handleCategoryClick(
+                                    e,
+                                    sub.id,
+                                    sub.name,
+                                    sub.slug
+                                  )
+                                }
+                                // Sử dụng class 'category-child' từ SCSS
+                                className={`category-child ${
+                                  checkActive(sub.slug) ? "active" : ""
+                                }`}
+                              >
+                                {sub.name}
+                              </a>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </>
                 ) : (
-                  // Giữ nguyên cho danh mục không có con
+                  /* --- 4. Danh mục cha không con (Parent Link) --- */
                   <a
-                    href={`/danh-muc/${category.slug}`}
-                    className={`
-                      category-parent-link
-                      flex justify-between items-center w-full p-3 rounded-md text-gray-700 font-medium text-sm
-                      transition-colors duration-200 ease-in-out
-                      hover:bg-green-600 hover:text-white
-                    `}
+                    href={categoryLink}
+                    onClick={(e) =>
+                      handleCategoryClick(
+                        e,
+                        category.id,
+                        category.name,
+                        category.slug
+                      )
+                    }
+                    // Sử dụng class 'category-parent-link' từ SCSS
+                    className={`category-parent-link flex justify-between items-center w-full p-3 rounded-md font-medium text-sm ${
+                      checkActive(category.slug) ? "active" : ""
+                    }`}
                   >
                     <span>{category.name}</span>
                   </a>
