@@ -4,6 +4,7 @@ import com.example.backend.domain.ProductCertificate;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqProductCertificate;
 import com.example.backend.domain.response.ProductCertificateDTO;
+import com.example.backend.domain.response.ProductCertificateDetailDTO;
 import com.example.backend.domain.response.ResProductCertificate;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.ProductCertificateService;
@@ -53,5 +54,10 @@ public class ProductCertificateController {
             @PathVariable Long productId, @PathVariable Long certificateId) {
         this.productCertificateService.handleDeleteProductCertificate(productId, certificateId);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/products/{productId}/certificate-details")
+    public ResponseEntity<List<ProductCertificateDetailDTO>> getCertificateDetailsByProductId(@PathVariable Long productId) {
+        List<ProductCertificateDetailDTO> details = this.productCertificateService.handleGetCertificateDetailsByProductId(productId);
+        return ResponseEntity.ok().body(details);
     }
 }

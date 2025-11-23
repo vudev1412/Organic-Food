@@ -6,10 +6,7 @@ import com.example.backend.domain.ProductCertificate;
 import com.example.backend.domain.User;
 import com.example.backend.domain.key.ProductCertificateKey;
 import com.example.backend.domain.request.ReqProductCertificate;
-import com.example.backend.domain.response.ProductCertificateDTO;
-import com.example.backend.domain.response.ResProductCertificate;
-import com.example.backend.domain.response.ResUserDTO;
-import com.example.backend.domain.response.ResultPaginationDTO;
+import com.example.backend.domain.response.*;
 import com.example.backend.mapper.ProductCertificateMapper;
 import com.example.backend.repository.CertificateRepository;
 import com.example.backend.repository.ProductCertificateRepository;
@@ -104,5 +101,10 @@ public class ProductCertificateServiceImpl implements ProductCertificateService 
     public void handleDeleteProductCertificate(Long productId, Long certificateId) {
         ProductCertificateKey key = new ProductCertificateKey(productId, certificateId);
         this.productCertificateRepository.deleteById(key);
+    }
+    @Override
+    public List<ProductCertificateDetailDTO> handleGetCertificateDetailsByProductId(Long productId) {
+
+        return this.productCertificateRepository.findProductCertificateDetailsByProductId(productId);
     }
 }

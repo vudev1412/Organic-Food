@@ -7,7 +7,10 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
-@Table(name = "cartItems")
+@Table(name = "cartItems",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"cart_id", "product_id"}) // Ràng buộc quan trọng
+        })
 @Getter
 @Setter
 public class CartItem {
@@ -21,10 +24,10 @@ public class CartItem {
     private Instant addedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id")
+    @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id",nullable = false)
     private Product product;
 }

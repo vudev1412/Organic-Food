@@ -1,8 +1,10 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.CartItem;
+import com.example.backend.domain.request.ReqCartItemDTO;
 import com.example.backend.domain.response.ResCartItemDTO;
 import com.example.backend.service.CartItemService;
+import com.example.backend.util.error.IdInvalidException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,13 @@ import java.util.List;
 public class CartItemController {
     private final CartItemService cartItemService;
 
+    // API Add to Cart chuẩn
     @PostMapping("/items")
-    public ResponseEntity<CartItem> createCartItem(@RequestBody CartItem cartItem){
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.cartItemService.handleCreateCartItem(cartItem));
+    public ResponseEntity<ResCartItemDTO> addCartItem(@RequestBody ReqCartItemDTO req) throws IdInvalidException {
+        // Gọi service xử lý logic thêm hoặc cộng dồn
+        ResCartItemDTO result = this.cartItemService.handleAddCartItem(req);
+        // Trả về 201 Created (hoặc 200 OK tùy bạn)
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
     @GetMapping("/items")
     public ResponseEntity<List<ResCartItemDTO>> getAllCartItem(){
@@ -28,9 +34,17 @@ public class CartItemController {
     public ResponseEntity<ResCartItemDTO> getCartItemById(@PathVariable Long id){
         return ResponseEntity.ok().body(this.cartItemService.handleGetCartItemById(id));
     }
-    @PatchMapping("/items/{id}")
-    public ResponseEntity<ResCartItemDTO> updateCartItem(@PathVariable Long id, @RequestBody CartItem cartItem){
-        return ResponseEntity.ok().body(this.cartItemService.handleUpdateCartItem(id, cartItem));
+    @PutMapping("/items")
+    public ResponseEntity<ResCartItemDTO> updateCartItem(@RequestBody ReqCartItemDTO req) throws IdInvalidException {
+        // Frontend gửi: { "productId": 1, "quantity": 5 }
+        ResCartItemDTO res = this.cartItemService.handleUpdateCartItem(req);
+
+        if (res == null) {
+            // Đã xóa sản phẩm
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204
+        }
+
+        return ResponseEntity.ok().body(res);
     }
 
 }

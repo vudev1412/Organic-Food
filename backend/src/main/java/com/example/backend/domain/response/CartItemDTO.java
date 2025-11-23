@@ -1,6 +1,5 @@
 package com.example.backend.domain.response;
 
-import com.example.backend.enums.TypePromotion; // Nhớ import Enum của bạn
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +19,7 @@ public class CartItemDTO {
     private BigDecimal price; // Giá sau khuyến mãi
 
     private Integer quantity;
-
+    private Integer stock;
     // Thông tin khuyến mãi
     private Long promotionId;
     private String promotionType; // Có thể để String hoặc Enum
