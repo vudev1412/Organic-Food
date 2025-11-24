@@ -44,5 +44,12 @@ public class CustomerAddressController {
     public ResponseEntity<List<ResCustomerAddress>> getAddressByUserId(@PathVariable Long id){
         return ResponseEntity.ok().body(this.customerAddressService.handleGetAllCustomerAddressByUserId(id));
     }
+    @PatchMapping("/address/{id}/default")
+    public ResponseEntity<ResCustomerAddress> setDefaultAddress(@PathVariable Long id) {
+        ResCustomerAddress updatedAddress = customerAddressService.handleSetDefaultAddress(id);
+        return ResponseEntity.ok(updatedAddress);
+    }
+
+
 
 }

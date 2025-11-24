@@ -16,6 +16,7 @@ public interface ProductMapper {
     Product toEntity(ReqProductDTO dto);
 
     @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "unit.name", target = "unit")
     ResProductDTO toResProductDto(Product dto);
     default Unit map(String value) {
         if (value == null) {

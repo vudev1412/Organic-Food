@@ -85,15 +85,10 @@ export const getOrderAPI = () => {
   const urlBackend = `/api/v1/orders`;
   return axios.get<IBackendRes<IOrder>>(urlBackend);
 };
-export const getOrderAPIByUserId = (id:number) => {
+export const getOrderAPIByUserId = (id: number) => {
   const urlBackend = `/api/v1/orders/user-order/${id}`;
   return axios.get<IBackendRes<IOrder>>(urlBackend);
 };
-
-
-
-
-
 
 export interface ICreateProductDTO {
   name: string;
@@ -123,7 +118,6 @@ export const deleteProductAPI = (id: number) =>
 
 export const getProductByIdAPI = (id: number) =>
   axios.get(`/api/v1/products/${id}`);
-
 
 export const getCategoriesAPI = (query: string) => {
   return axios.get(`/api/v1/categories?${query}`);
@@ -156,9 +150,10 @@ export const deleteSupplierAPI = (id: number) => {
   return axios.delete(`/api/v1/suppliers/${id}`);
 };
 
-
 export const getReturnsAPI = (query: string) => {
-  return axios.get<IBackendRes<IModelPaginate<IReturn>>>(`/api/v1/returns?${query}`);
+  return axios.get<IBackendRes<IModelPaginate<IReturn>>>(
+    `/api/v1/returns?${query}`
+  );
 };
 
 // Lấy chi tiết 1 return theo id
@@ -184,8 +179,6 @@ export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories?size=1000";
   return axios.get<IBackendRes<IModelPaginate<ICategory>>>(urlBackend);
 };
-
-
 
 export const getParentCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories/parents";
@@ -279,14 +272,15 @@ export const clearCartAPI = () => {
   return axios.delete<IBackendRes<void>>(urlBackend);
 };
 
-
 export const getCertificate = () => {
   const urlBackend = `/api/v1/certificates`;
   return axios.get<IBackendRes<ICertificate>>(urlBackend);
 };
 
 export const getOrderDetailsFullAPI = (query: string) => {
-  return axios.get<IBackendRes<IModelPaginate<IOrderDetailFull>>>(`/api/v1/order-details?${query}`);
+  return axios.get<IBackendRes<IModelPaginate<IOrderDetailFull>>>(
+    `/api/v1/order-details?${query}`
+  );
 };
 
 export const deleteOrderDetailAPI = (orderId: number, productId: number) => {
@@ -296,13 +290,19 @@ export const createOrderDetailAPI = (data: ICreateOrderDetailDTO) => {
   return axios.post(`/api/v1/order-details`, data);
 };
 
-export const updateOrderDetailAPI = (orderId: number, productId: number, data: ICreateOrderDetailDTO) => {
+export const updateOrderDetailAPI = (
+  orderId: number,
+  productId: number,
+  data: ICreateOrderDetailDTO
+) => {
   return axios.patch(`/api/v1/order-details/${orderId}/${productId}`, data);
 };
-export const createCustomerProfileAPI  = (data: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createCustomerProfileAPI = (data: any) => {
   return axios.post(`/api/v1/customer/profile`, data);
 };
-export const createEmployeeProfileAPI  = (data: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createEmployeeProfileAPI = (data: any) => {
   return axios.post(`/api/v1/employee/profile`, data);
 };
 
@@ -310,10 +310,82 @@ export const uploadFileAPI = (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/upload`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/upload`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 };
 
+// =============================================================================
+//  CUSTOMER ADDRESS API
+// =============================================================================
+
+/**
+ * Lấy danh sách tất cả địa chỉ (Thường dùng cho Admin)
+ */
+export const getAllAddressesAPI = () => {
+  const urlBackend = "/api/v1/address";
+  return axios.get<IBackendRes<ICustomerAddress[]>>(urlBackend);
+};
+
+/**
+ * Lấy chi tiết một địa chỉ theo ID
+ */
+export const getAddressByIdAPI = (id: number) => {
+  const urlBackend = `/api/v1/address/${id}`;
+  return axios.get<IBackendRes<ICustomerAddress>>(urlBackend);
+};
+
+/**
+ * Lấy danh sách địa chỉ của một User cụ thể
+ */
+export const getAddressesByUserIdAPI = (userId: number) => {
+  const urlBackend = `/api/v1/address/user/${userId}`;
+  return axios.get<IBackendRes<ICustomerAddress[]>>(urlBackend);
+};
+
+/**
+ * Tạo mới một địa chỉ
+ * @param data DTO tạo mới
+ */
+export const createAddressAPI = (data: ICreateCustomerAddressDTO) => {
+  const urlBackend = "/api/v1/address";
+  return axios.post<IBackendRes<ICustomerAddress>>(urlBackend, data);
+};
+
+/**
+ * Cập nhật một địa chỉ
+ * @param id ID của địa chỉ cần sửa
+ * @param data DTO cập nhật (chỉ gửi các trường cần sửa)
+ */
+export const updateAddressAPI = (
+  id: number,
+  data: IUpdateCustomerAddressDTO
+) => {
+  const urlBackend = `/api/v1/address/${id}`;
+  // Controller Java dùng @PatchMapping
+  return axios.patch<IBackendRes<ICustomerAddress>>(urlBackend, data);
+};
+
+/**
+ * Xóa một địa chỉ
+ * @param id ID của địa chỉ cần xóa
+ */
+export const deleteAddressAPI = (id: number) => {
+  const urlBackend = `/api/v1/address/${id}`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
+};
+
+/**
+ * Cập nhật địa chỉ mặc định
+ * @param id ID của địa chỉ muốn đặt làm mặc định
+ */
+export const setDefaultAddressAPI = (id: number) => {
+  const urlBackend = `/api/v1/address/${id}/default`;
+  return axios.patch<IBackendRes<ICustomerAddress>>(urlBackend);
+};

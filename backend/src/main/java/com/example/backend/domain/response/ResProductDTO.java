@@ -14,7 +14,7 @@ import java.time.Instant;
 public class ResProductDTO {
     private Long id;
     private String name;
-    private Unit unit;
+    private String unit;
     private double price;
     private String origin_address;
     private String description;

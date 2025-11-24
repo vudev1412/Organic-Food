@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
-// Import helper vừa tạo (nhớ chỉnh đường dẫn đúng với cấu trúc thư mục của bạn)
 import ProductDescription from "./ProductDescription";
 import StarRating from "./StarRating";
+import ProductSubInfo from "./ProductSubInfo";
 
 type TabName = "desc" | "info" | "reviews";
 
@@ -36,36 +34,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
         return <ProductDescription content={product.description} />;
 
       case "info":
-        return (
-          <ul className="space-y-2 text-gray-700">
-            <li className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-              <FontAwesomeIcon icon={faCheck} className="text-green-600 mt-1" />
-              <span>
-                <strong>Đơn vị:</strong> {product.unit}
-              </span>
-            </li>
-            <li className="flex items-start gap-2 p-2 rounded">
-              <FontAwesomeIcon icon={faCheck} className="text-green-600 mt-1" />
-              <span>
-                <strong>Xuất xứ:</strong> {product.origin_address}
-              </span>
-            </li>
-            <li className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-              <FontAwesomeIcon icon={faCheck} className="text-green-600 mt-1" />
-              <span>
-                <strong>Ngày sản xuất:</strong>{" "}
-                {new Date(product.mfgDate).toLocaleDateString("vi-VN")}
-              </span>
-            </li>
-            <li className="flex items-start gap-2 p-2 rounded">
-              <FontAwesomeIcon icon={faCheck} className="text-green-600 mt-1" />
-              <span>
-                <strong>Hạn sử dụng:</strong>{" "}
-                {new Date(product.expDate).toLocaleDateString("vi-VN")}
-              </span>
-            </li>
-          </ul>
-        );
+        return <ProductSubInfo product={product} />;
 
       case "reviews":
         return (

@@ -120,7 +120,7 @@ declare global {
     date: string;
     product: IProduct;
     certificate: ICertificate;
-
+  }
   export interface IOrder {
     id: number;
     orderAt: string;
@@ -138,7 +138,6 @@ declare global {
     price: number;
     product: IProduct;
     order: IOrder;
-
   }
   export interface ICreateOrderDetailDTO {
     orderId: number;
@@ -358,8 +357,8 @@ declare global {
     items: ICartItemResponse[];
     createdAt: string;
     updatedAt: string;
-
-  export interface Certificate {
+  }
+  interface Certificate {
     data: {
       id: number;
       name: string;
@@ -384,7 +383,88 @@ declare global {
     processNote: string;
     orderId: number;
   }
-  export interface ICreateCustomerProfile{
-    
+  // Interface hiển thị (Mapping theo JSON response)
+  export interface ICustomerAddress {
+    id: number;
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note?: string; // Có thể null hoặc không có
+    defaultAddress: boolean;
+    user?: IUser; // Có thể chứa thông tin user hoặc không
+  }
+
+  // Interface dùng cho Payload khi Tạo mới (POST)
+  export interface ICreateCustomerAddressDTO {
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note?: string;
+    defaultAddress?: boolean; // Mặc định có thể là false
+    userId?: number; // Tùy logic backend có cần gửi userId hay lấy từ token
+  }
+
+  // Interface dùng cho Payload khi Cập nhật (PATCH/PUT)
+  export interface IUpdateCustomerAddressDTO {
+    receiverName?: string;
+    phone?: string;
+    province?: string;
+    district?: string;
+    ward?: string;
+    street?: string;
+    note?: string;
+    defaultAddress?: boolean;
+  }
+  // src/types/address.ts
+
+  // 1. Kiểu dữ liệu cho Địa chỉ (tương ứng với DB)
+  export interface IAddress {
+    id: number;
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note: string; // hoặc string | null tùy backend
+    defaultAddress: boolean;
+    user?: {
+      id: number;
+    };
+  }
+
+  // 2. Kiểu dữ liệu cho API Hành chính (Tỉnh/Huyện/Xã)
+  export interface IWard {
+    Name: string;
+    Code?: string;
+  }
+
+  export interface IDistrict {
+    Name: string;
+    Wards: IWard[];
+  }
+
+  export interface IProvince {
+    Name: string;
+    Districts: IDistrict[];
+  }
+
+  // 3. Kiểu dữ liệu Form Submit (không có ID và User vì user lấy từ context)
+  export interface IAddressPayload {
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note: string;
+    defaultAddress: boolean;
+    user?: { id: number };
   }
 }

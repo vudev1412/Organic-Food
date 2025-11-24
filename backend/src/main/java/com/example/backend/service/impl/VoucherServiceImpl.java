@@ -80,4 +80,10 @@ public class VoucherServiceImpl implements VoucherService {
     public void handleDeleteVoucher(Long id) {
         voucherRepository.deleteById(id);
     }
+    @Override
+    public ResVoucherDTO handleGetVoucherByCode(String code) {
+        Voucher voucher = voucherRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Voucher với code " + code + " không tồn tại"));
+        return voucherMapper.toResVoucherDTO(voucher);
+    }
 }
