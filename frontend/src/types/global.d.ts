@@ -107,12 +107,17 @@ declare global {
     createBy: string;
     updateBy: string | null;
     categoryId: number;
+
+    certificates?: ICertificate[];
   }
 
   interface ICertificate {
     id: number;
     name: string;
-    image: string;
+    image?: string;
+    certNo?: string;
+    imageUrl?: string;
+    date?: string | Date;
   }
   interface IProductTable {
     imageUrl: string;
@@ -120,7 +125,7 @@ declare global {
     date: string;
     product: IProduct;
     certificate: ICertificate;
-
+  }
   export interface IOrder {
     id: number;
     orderAt: string;
@@ -138,7 +143,6 @@ declare global {
     price: number;
     product: IProduct;
     order: IOrder;
-
   }
   export interface ICreateOrderDetailDTO {
     orderId: number;
@@ -358,7 +362,7 @@ declare global {
     items: ICartItemResponse[];
     createdAt: string;
     updatedAt: string;
-
+  }
   export interface Certificate {
     data: {
       id: number;
@@ -384,7 +388,5 @@ declare global {
     processNote: string;
     orderId: number;
   }
-  export interface ICreateCustomerProfile{
-    
-  }
+  export interface ICreateCustomerProfile {}
 }

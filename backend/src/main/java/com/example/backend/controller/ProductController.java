@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqProductDTO;
+import com.example.backend.domain.response.ResGetAllProductDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import com.example.backend.service.impl.ProductService;
@@ -41,7 +42,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts(spec, pageable));
     }
     @GetMapping("/products/{id}")
-    public ResponseEntity<ResProductDTO> getProductById(@PathVariable Long id){
+    public ResponseEntity<ResGetAllProductDTO> getProductById(@PathVariable Long id){
         return ResponseEntity.ok().body(this.productService.handleGetProductById(id));
     }
 

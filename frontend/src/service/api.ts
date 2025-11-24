@@ -110,7 +110,7 @@ export interface ICreateProductDTO {
   categoryId?: number;
 }
 export const getProductsAPI = (query: string) =>
-  axios.get(`/api/v1/products?${query}`);
+  axios.get<IBackendRes<IModelPaginate<IProduct>>>(`/api/v1/products?${query}`);
 
 export const createProductAPI = (product: ICreateProductDTO) =>
   axios.post(`/api/v1/products`, product);

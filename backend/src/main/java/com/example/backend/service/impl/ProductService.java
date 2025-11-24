@@ -3,6 +3,7 @@ package com.example.backend.service.impl;
 import com.example.backend.domain.Category;
 import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqProductDTO;
+import com.example.backend.domain.response.ResGetAllProductDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import com.example.backend.mapper.ProductMapper;
@@ -33,7 +34,7 @@ public class ProductService {
 
 
 
-    public ResProductDTO handleGetProductById(Long id) {
+    public ResGetAllProductDTO handleGetProductById(Long id) {
         Product product = this.productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         return this.productMapper.toResProductDto(product);
@@ -47,18 +48,21 @@ public class ProductService {
         product.setCategory(category);
         this.productRepository.save(product);
 
-        return this.productMapper.toResProductDto(product);
+        return this.productMapper.toBaseResProductDto(product);
 
     }
 
-    public ResultPaginationDTO getAllProducts(Specification<Product> sepc, Pageable pageable) {
-        Page<ResProductDTO> pageProduct = productRepository.findAll(sepc,pageable).map(productMapper::toResProductDto);
+    public ResultPaginationDTO getAllProducts(Specification<Product> spec, Pageable pageable) {
+
+        Page<ResGetAllProductDTO> pageProduct = productRepository
+                .findAll(spec, pageable)
+                .map(productMapper::toResProductDto);
+
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
 
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
-
         meta.setPages(pageProduct.getTotalPages());
         meta.setTotal(pageProduct.getTotalElements());
 
@@ -66,7 +70,6 @@ public class ProductService {
         rs.setResult(pageProduct.getContent());
 
         return rs;
-
     }
 
 
@@ -93,7 +96,7 @@ public class ProductService {
         }
 
 
-        return this.productMapper.toResProductDto(this.productRepository.save(existingProduct));
+        return this.productMapper.toBaseResProductDto(this.productRepository.save(existingProduct));
     }
     public String handleDeleteProduct(Long id){
         this.productRepository.deleteById(id);
@@ -141,7 +144,7 @@ public class ProductService {
         // 4. Gọi hàm findAll() với spec cuối cùng
         Page<ResProductDTO> pageProduct = this.productRepository
                 .findAll(finalSpec, pageable) // Dùng 'finalSpec' đã kết hợp
-                .map(productMapper::toResProductDto);
+                .map(productMapper::toBaseResProductDto);
 
         // 5. Logic tạo Meta/ResultPaginationDTO (Giữ nguyên)
         ResultPaginationDTO rs = new ResultPaginationDTO();

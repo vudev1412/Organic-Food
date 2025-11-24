@@ -1,17 +1,16 @@
 package com.example.backend.domain.response;
 
-
-import com.example.backend.domain.Unit;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
 @Builder
-public class ResProductDTO {
+public class ResGetAllProductDTO {
     private Long id;
     private String name;
     private String unit;
@@ -22,20 +21,16 @@ public class ResProductDTO {
     private int quantity;
     private String slug;
     private String image;
-
     private boolean active;
 
     private Instant mfgDate;
-
     private Instant expDate;
-
     private Instant createAt;
-
     private Instant updateAt;
 
     private String createBy;
-
     private String updateBy;
     private Long categoryId;
 
+    private List<ResCertificateProductDTO> certificates;
 }

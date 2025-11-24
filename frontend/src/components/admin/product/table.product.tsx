@@ -5,8 +5,8 @@ import { useRef, useState } from "react";
 import { App, Button, Popconfirm, Tag } from "antd";
 import { getProductsAPI, deleteProductAPI } from "../../../service/api";
 import DetailProduct from "./detail.product";
-import UpdateProduct from "./update.product";
 import CreateProductCertificate from "./create.product";
+
 
 type TSearch = {
   name?: string;
@@ -19,28 +19,27 @@ const TableProduct = () => {
   const [isDelete, setIsDelete] = useState(false);
 
   const [openViewDetail, setOpenViewDetail] = useState(false);
-  const [dataViewDetail, setDataViewDetail] = useState<IProductTable | null>(null);
+  const [dataViewDetail, setDataViewDetail] = useState<IProduct | null>(null);
 
   const [openModalCreate, setOpenModalCreate] = useState(false);
-  const [openModalUpdate, setOpenModalUpdate] = useState(false);
-  const [dataUpdate, setDataUpdate] = useState<IProductTable | null>(null);
+
   const { message, notification } = App.useApp();
 
-  const formatProdutId = (entity: IProductTable) => {
-    if (!entity?.product?.id) return "Không có ID";
-    const id = entity.product.id;
+  const formatProductId = (product: IProduct) => {
+    if (!product?.id) return "Không có ID";
+    const id = product.id;
     if (id < 10) return `SP00${id}`;
     if (id < 100) return `SP0${id}`;
     if (id < 1000) return `SP${id}`;
     return `SP${id}`;
   };
 
-  const handleDelete = async (productId: number, certificateId: number) => {
+  const handleDelete = async (productId: number) => {
     setIsDelete(true);
     try {
-      const res: any = await deleteProductAPI(productId, certificateId);
+      const res: any = await deleteProductAPI(productId);
       if (res.status === 200 || res.status === 204) {
-        message.success("Xóa thành công");
+        message.success("Xóa sản phẩm thành công");
         actionRef.current?.reload();
       } else {
         notification.error({
@@ -58,92 +57,86 @@ const TableProduct = () => {
     }
   };
 
-  const columns: ProColumns<IProductTable>[] = [
+  const columns: ProColumns<IProduct>[] = [
     {
       title: "ID",
-      dataIndex: ["product", "id"],
+      dataIndex: "id",
       sorter: true,
       defaultSortOrder: "ascend",
       hideInSearch: true,
-      render: (_, entity) => (
+      render: (_, record) => (
         <a
           onClick={() => {
             setOpenViewDetail(true);
-            setDataViewDetail(entity);
+            setDataViewDetail(record);
           }}
           href="#"
         >
-          {formatProdutId(entity)}
+          {formatProductId(record)}
         </a>
       ),
     },
     {
       title: "Tên",
-      dataIndex: ["product", "name"],
+      dataIndex: "name",
       search: true,
     },
     {
       title: "Giá",
-      dataIndex: ["product", "price"],
+      dataIndex: "price",
       sorter: true,
       hideInSearch: true,
     },
     {
       title: "Số lượng",
-      dataIndex: ["product", "quantity"],
+      dataIndex: "quantity",
       hideInSearch: true,
     },
     {
       title: "Chứng nhận",
       dataIndex: "certificates",
       search: false,
-      render: (certs: ICertificate[], entity: IProductTable) =>
+      render: (certs: ICertificate[] = []) =>
         certs.map((c) => (
           <Tag key={c.id} color="blue">
-            {c.name} - {c.name}
+            {c.name}
           </Tag>
         )),
     },
     {
       title: "Tình trạng",
-      dataIndex: "member",
-      key: "member",
       hideInSearch: true,
-      render: (_, entity: IProductTable) => (
-        <Tag color={entity.product.active ? "green" : "red"}>
-          {entity.product.active ? "Đang bán" : "Tạm ngưng"}
+      render: (_, record) => (
+        <Tag color={record.active ? "green" : "red"}>
+          {record.active ? "Đang bán" : "Tạm ngưng"}
         </Tag>
       ),
     },
     {
       title: "Thao tác",
       hideInSearch: true,
-      render: (_, entity) => (
-        <>
+      render: (_, record) => (
+        <Popconfirm
+          title="Xác nhận xóa sản phẩm"
+          description={`Bạn có chắc muốn xóa sản phẩm "${record.name}" không?`}
+          onConfirm={() => handleDelete(record.id)}
+          okText="Xác nhận"
+          cancelText="Hủy"
+          okButtonProps={{ loading: isDelete }}
+        >
           <EditTwoTone
+            twoToneColor="#f57800"
             style={{ cursor: "pointer", marginRight: 15 }}
-            onClick={() => {
-              setDataUpdate(entity);
-              setOpenModalUpdate(true);
+            onClick={(e) => {
+             
+              e.stopPropagation();
             }}
           />
-          {entity.certificates.map((c) => (
-            <Popconfirm
-              key={c.id}
-              title="Xác nhận xóa"
-              description={`Bạn có chắc muốn xóa chứng nhận "${c.name}" khỏi sản phẩm này?`}
-              onConfirm={() => handleDelete(entity.product.id, c.id)}
-              okText="Xác nhận"
-              cancelText="Hủy"
-              okButtonProps={{ loading: isDelete }}
-            >
-              <DeleteTwoTone
-                twoToneColor="#ff4d4f"
-                style={{ cursor: "pointer", marginRight: 5 }}
-              />
-            </Popconfirm>
-          ))}
-        </>
+          <DeleteTwoTone
+            twoToneColor="#ff4d4f"
+            style={{ cursor: "pointer" }}
+          />
+        </Popconfirm>
       ),
     },
   ];
@@ -154,11 +147,11 @@ const TableProduct = () => {
 
   return (
     <>
-      <ProTable<IProductTable, TSearch>
+      <ProTable<IProduct, TSearch>
         columns={columns}
         actionRef={actionRef}
         cardBordered
-        rowKey={(record) => `${record.product.id}`}
+        rowKey={(record) => `${record.id}`}
         headerTitle="Sản phẩm"
         toolBarRender={() => [
           <Button
@@ -178,43 +171,40 @@ const TableProduct = () => {
         }}
         request={async (params, sort) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
-          if (params.name) query += `&filter=product.name~'${params.name}'`;
+          if (params.name) query += `&filter=name~'${params.name}'`;
           if (params.certNo) query += `&filter=certNo~'${params.certNo}'`;
 
           if (Object.keys(sort).length === 0) {
-            query += `&sort=product.id,ASC`;
+            query += `&sort=id,ASC`;
           } else {
             const field = Object.keys(sort)[0];
             const order = sort[field];
             if (order) {
               const sortOrder = order === "ascend" ? "ASC" : "DESC";
-              query += `&sort=${field},${sortOrder}`;
+              query += `&sort=${field === "id" ? "id" : field},${sortOrder}`;
             }
           }
 
           const res = await getProductsAPI(query);
           if (res.data) setMeta(res.data.data.meta);
 
-          // Gộp các chứng nhận trùng sản phẩm
           const rawData = res.data?.data.result || [];
-          const mapProduct: Record<number, IProductTable> = {};
-          rawData.forEach((item: any) => {
-            const prodId = item.product.id;
+          const mapProduct: Record<number, IProduct> = {};
+
+          rawData.forEach((item: IProduct) => {
+            const prodId = item.id;
             if (!mapProduct[prodId]) {
               mapProduct[prodId] = {
                 ...item,
-                certificates: [...(item.certificates || [item.certificate])],
+                certificates: [...(item.certificates || [])],
               };
             } else {
-              mapProduct[prodId].certificates.push(
-                ...(item.certificates || [item.certificate])
-              );
+              mapProduct[prodId].certificates?.push(...(item.certificates || []));
             }
           });
-          const mergedData = Object.values(mapProduct);
 
           return {
-            data: mergedData,
+            data: Object.values(mapProduct),
             success: true,
             total: res.data?.data.meta.total,
           };
@@ -235,15 +225,6 @@ const TableProduct = () => {
         setOpenModalCreate={setOpenModalCreate}
         refreshTable={refreshTable}
       />
-
-      {/* Modal update sản phẩm
-      <UpdateProduct
-        openModelUpdate={openModalUpdate}
-        setOpenModelUpdate={setOpenModalUpdate}
-        refreshTable={refreshTable}
-        setDataUpdate={setDataUpdate}
-        dataUpdate={dataUpdate}
-      /> */}
     </>
   );
 };
