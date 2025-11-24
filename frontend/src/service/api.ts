@@ -389,3 +389,49 @@ export const setDefaultAddressAPI = (id: number) => {
   const urlBackend = `/api/v1/address/${id}/default`;
   return axios.patch<IBackendRes<ICustomerAddress>>(urlBackend);
 };
+
+/**
+ * API Đăng ký tài khoản mới
+ * Endpoint: /api/v1/auth/register
+ * Lưu ý: API này sẽ tạo user và tự động kích hoạt gửi OTP trong backend
+ */
+export const registerUserAPI = (data: IRegisterRequest) => {
+  const urlBackend = "/api/v1/auth/register";
+  return axios.post<IBackendRes<void>>(urlBackend, data);
+};
+
+/**
+ * API Xác thực OTP (Dùng sau khi đăng ký xong)
+ * Endpoint: /api/v1/auth/verify-otp
+ */
+export const verifyOtpAPI = (data: IVerifyOtpRequest) => {
+  const urlBackend = "/api/v1/auth/verify-otp";
+  return axios.post<IBackendRes<void>>(urlBackend, data);
+};
+
+/**
+ * API Gửi lại mã OTP (Dùng khi hết hạn hoặc user không nhận được mail)
+ * Endpoint: /api/v1/auth/send-otp
+ */
+export const resendOtpAPI = (email: string) => {
+  const urlBackend = "/api/v1/auth/send-otp";
+  return axios.post<IBackendRes<void>>(urlBackend, { email });
+};
+
+/**
+ * API Gửi yêu cầu lấy lại mật khẩu (Gửi OTP qua email)
+ * Endpoint: /api/v1/auth/forgot-password
+ */
+export const sendForgotPasswordOtpAPI = (email: string) => {
+  const urlBackend = "/api/v1/auth/forgot-password";
+  return axios.post<IBackendRes<string>>(urlBackend, { email });
+};
+
+/**
+ * API Đặt lại mật khẩu mới (Kèm OTP xác thực)
+ * Endpoint: /api/v1/auth/reset-password
+ */
+export const resetPasswordAPI = (data: IResetPasswordRequest) => {
+  const urlBackend = "/api/v1/auth/reset-password";
+  return axios.post<IBackendRes<string>>(urlBackend, data);
+};

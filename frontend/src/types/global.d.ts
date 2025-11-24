@@ -467,4 +467,21 @@ declare global {
     defaultAddress: boolean;
     user?: { id: number };
   }
+  export interface IRegisterRequest {
+    name: string;
+    email: string;
+    password: string;
+    phone: string;
+    role?: string; // Optional, backend thường mặc định là USER nếu không truyền
+  }
+
+  export interface IVerifyOtpRequest {
+    email: string;
+    otp: string;
+  }
+  export interface IResetPasswordRequest {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }
 }

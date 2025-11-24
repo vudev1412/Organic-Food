@@ -72,14 +72,21 @@ const AppHeader = () => {
   }, []);
 
   const handleLogout = async () => {
-    const res = await logoutAPI();
-    if (res.data) {
+    try {
+      // Gọi API để backend biết (invalidate token nếu cần)
+      await logoutAPI();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // ✅ LUÔN LUÔN thực hiện các bước này dù API thành công hay thất bại
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem("access_token");
       localStorage.removeItem("organic_cart_items");
       clearCart();
       navigate("/");
+      // Nếu đang mở menu mobile thì đóng lại luôn cho chắc
+      setIsMobileMenuOpen(false);
     }
   };
 
@@ -159,10 +166,11 @@ const AppHeader = () => {
       key: "4",
       danger: true,
       icon: <LogoutOutlined />,
+      // ✅ CÁCH SỬA: Đưa onClick ra ngoài làm thuộc tính của item
+      onClick: handleLogout,
       label: (
-        <span onClick={handleLogout} className="font-medium">
-          Đăng xuất
-        </span>
+        // Bỏ onClick ở trong span này đi
+        <span className="font-medium">Đăng xuất</span>
       ),
     },
   ];

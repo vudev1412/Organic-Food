@@ -37,6 +37,7 @@ import ProtectedRouter from "./components/auth/admin";
 import ProtectedRoute from "./components/auth";
 import viVN from "antd/locale/vi_VN";
 import { AppProvider } from "./components/context/app.provider";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
       {
         path: "/dang-nhap",
         element: <SingIn />,
+      },
+      {
+        path: "/quen-mat-khau",
+        element: <ForgotPassword />,
       },
       {
         path: "/san-pham",

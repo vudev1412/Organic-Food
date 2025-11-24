@@ -44,7 +44,15 @@ public class User {
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
+    // Verified
+    @Column
+    private String emailOtp;  // OTP đã hash
 
+    @Column
+    private Instant emailOtpExpiry;  // Thời hạn hết hạn
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean emailVerified = false;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
