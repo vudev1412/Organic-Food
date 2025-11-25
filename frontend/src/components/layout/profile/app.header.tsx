@@ -11,10 +11,6 @@ const items: MenuItem[] = [
     key: "/tai-khoan/dia-chi",
     label: "Địa chỉ",
   },
-  {
-    key: "/tai-khoan/mat-khau",
-    label: "Đổi mật khẩu",
-  },
 ];
 const ProfileHeader = () => {
   const navigate = useNavigate();

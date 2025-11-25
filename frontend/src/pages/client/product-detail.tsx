@@ -63,7 +63,7 @@ const ProductDetail: React.FC = () => {
     null
   );
   const [selectedImage, setSelectedImage] = useState<string>("");
-  
+
   // State cho chứng chỉ
   const [certifications, setCertifications] = useState<ICertification[]>([]);
 
@@ -85,108 +85,144 @@ const ProductDetail: React.FC = () => {
       }
 
       setIsLoading(true);
-      
+
       // Hàm con để lấy chi tiết sản phẩm và ảnh
       const fetchMainData = async () => {
         let productData: IProductDetail | null = null;
         let mainImageUrl = "";
+        let bestPromotionData: IBestPromotion | null = null;
+        let certificationsData: ICertification[] = [];
         let allRequests = [];
 
-        // 1. Lấy chi tiết sản phẩm
+        // 1. Lấy chi tiết sản phẩm (CHỈ LƯU VÀO BIẾN CỤC BỘ)
         allRequests.push(
-            getProductDetailById(productId).then(response => {
-                if (response.data.data) {
-                    productData = response.data.data;
-                    setProduct(productData);
-                    mainImageUrl = `${PRODUCT_IMAGE_BASE_URL}${productData.image}`;
-                    setSelectedImage(mainImageUrl);
-                }
-            })
+          getProductDetailById(productId).then((response) => {
+            if (response.data.data) {
+              productData = response.data.data;
+              // ĐÃ XÓA: setProduct(productData); // Tránh re-render sớm
+              mainImageUrl = `${PRODUCT_IMAGE_BASE_URL}${productData.image}`;
+              // ĐÃ XÓA: setSelectedImage(mainImageUrl); // Tránh re-render sớm
+              return response.data.data;
+            }
+            return null;
+          })
         );
 
         // 2. Lấy ảnh phụ (Sub Images)
         allRequests.push(getSubImgByProductId(productId));
-        
-        // 3. Lấy khuyến mãi tốt nhất
-        allRequests.push(getBestPromotionByProductId(productId));
-        
-        // 4. Lấy chứng chỉ
+
+        // 3. Lấy khuyến mãi tốt nhất (CHỈ LƯU VÀO BIẾN CỤC BỘ)
         allRequests.push(
-          getProductCertificateByIdProduct(productId).then((response) => {
-            if (response.data.data && Array.isArray(response.data.data)) {
-              // Map dữ liệu API sang interface ICertification
-              const mappedCerts: ICertification[] = response.data.data.map(
-                (cert: IProductCertificateDetail) => ({
-                  id: cert.certificateId,
-                  name: cert.name,
-                  // CẬP NHẬT: Nối đường dẫn API trực tiếp
-                  logo: `${CERT_IMAGE_BASE_URL}${cert.typeImageUrl}`, 
-                  imageUrl: `${CERT_IMAGE_BASE_URL}${cert.specificImageUrl}`, 
-                  description: `Chứng nhận số: ${cert.certNo}. Ngày cấp: ${new Date(cert.date).toLocaleDateString("vi-VN")}. Thông tin chi tiết về chứng nhận ${cert.name}.`, 
-                })
-              );
-              setCertifications(mappedCerts);
+          getBestPromotionByProductId(productId).then((response) => {
+            if (response.data.data) {
+              bestPromotionData = response.data.data;
             }
-          })
-          .catch((error: AxiosError) => {
-            console.error("Lỗi khi tải chứng chỉ:", error);
-            setCertifications([]); 
+            return response;
           })
         );
 
+        // 4. Lấy chứng chỉ (CHỈ LƯU VÀO BIẾN CỤC BỘ VÀ TRẢ VỀ MAPPED DATA)
+        allRequests.push(
+          getProductCertificateByIdProduct(productId)
+            .then((response) => {
+              if (response.data.data && Array.isArray(response.data.data)) {
+                // Map dữ liệu API sang interface ICertification
+                certificationsData = response.data.data.map(
+                  (cert: IProductCertificateDetail) => ({
+                    id: cert.certificateId,
+                    name: cert.name,
+                    // CẬP NHẬT: Nối đường dẫn API trực tiếp
+                    logo: `${CERT_IMAGE_BASE_URL}${cert.typeImageUrl}`,
+                    imageUrl: `${CERT_IMAGE_BASE_URL}${cert.specificImageUrl}`,
+                    description: `Chứng nhận số: ${
+                      cert.certNo
+                    }. Ngày cấp: ${new Date(cert.date).toLocaleDateString(
+                      "vi-VN"
+                    )}. Thông tin chi tiết về chứng nhận ${cert.name}.`,
+                  })
+                );
+                return { data: certificationsData }; // Trả về object chứa data đã mapped
+              }
+              return { data: [] };
+            })
+            .catch((error: AxiosError) => {
+              console.error("Lỗi khi tải chứng chỉ:", error);
+              return { data: [] };
+            })
+        );
 
         try {
-          // Chạy đồng thời các request còn lại
+          // Chạy đồng thời các request và chờ kết quả
           const [
-            // responseProductDetail, 
+            responseProductDetail,
             responseSubImgs,
             responseBestPromotion,
-            // responseCerts 
+            responseCerts,
           ] = await Promise.allSettled(allRequests);
 
-          // Xử lý ảnh phụ
-          if (responseSubImgs.status === 'fulfilled') {
-              const imgRes = responseSubImgs.value as any;
-              let subImageUrls: string[] = [];
-              if (
-                imgRes.data.data &&
-                Array.isArray(imgRes.data.data) &&
-                imgRes.data.data.length > 0
-              ) {
-                subImageUrls = imgRes.data.data.map(
-                  (img: IProductImage) => `${PRODUCT_IMAGE_BASE_URL}${img.imgUrl}`
-                );
-              }
-              // Set gallery = ảnh chính + ảnh phụ
-              setGalleryImages([mainImageUrl, ...subImageUrls]);
-          } else {
-              console.error("Lỗi khi tải ảnh phụ:", responseSubImgs.reason);
-              setGalleryImages([mainImageUrl]);
+          // *** START: SET ALL STATES CÙNG LÚC TẠI ĐÂY ***
+
+          // 1. Set Product & Selected Image
+          if (productData) {
+            setProduct(productData);
+            setSelectedImage(mainImageUrl);
           }
-          
-          // Xử lý khuyến mãi
-          if (responseBestPromotion.status === 'fulfilled') {
-              const promotionRes = responseBestPromotion.value as any;
-              if (promotionRes.data.data) {
-                setBestPromotion(promotionRes.data.data);
-              } else {
-                setBestPromotion(null);
-              }
-          } else if (responseBestPromotion.status === 'rejected') {
-              const axiosError = responseBestPromotion.reason as AxiosError;
-              if (axiosError.response?.status === 404) {
-                  setBestPromotion(null);
-              } else {
-                  console.error("Lỗi khi tải khuyến mãi:", responseBestPromotion.reason);
-                  setBestPromotion(null);
-              }
+
+          // 2. Set Certifications
+          if (
+            responseCerts.status === "fulfilled" &&
+            Array.isArray(responseCerts.value.data)
+          ) {
+            setCertifications(responseCerts.value.data);
+          }
+
+          // 3. Xử lý khuyến mãi
+          if (bestPromotionData !== undefined) {
+            setBestPromotion(bestPromotionData);
+          } else if (responseBestPromotion.status === "rejected") {
+            const axiosError = responseBestPromotion.reason as AxiosError;
+            if (axiosError.response?.status === 404) {
+              setBestPromotion(null);
+            } else {
+              console.error(
+                "Lỗi khi tải khuyến mãi:",
+                responseBestPromotion.reason
+              );
+              setBestPromotion(null);
+            }
+          }
+
+          // 4. Xử lý ảnh phụ (Cần mainImageUrl đã có từ Promise 1)
+          if (responseSubImgs.status === "fulfilled" && productData) {
+            const imgRes = responseSubImgs.value as any;
+            let subImageUrls: string[] = [];
+            if (
+              imgRes.data.data &&
+              Array.isArray(imgRes.data.data) &&
+              imgRes.data.data.length > 0
+            ) {
+              subImageUrls = imgRes.data.data.map(
+                (img: IProductImage) => `${PRODUCT_IMAGE_BASE_URL}${img.imgUrl}`
+              );
+            }
+            // Set gallery = ảnh chính + ảnh phụ
+            setGalleryImages([mainImageUrl, ...subImageUrls]);
+          } else if (productData) {
+            console.error("Lỗi khi tải ảnh phụ:", responseSubImgs.reason);
+            setGalleryImages([mainImageUrl]);
+          } else {
+            setGalleryImages([]);
           }
 
           // TODO: Fetch comment theo productId (Giữ mock tạm thời)
           setComments(initialComments);
 
+          // *** END: SET ALL STATES CÙNG LÚC TẠI ĐÂY ***
         } catch (error) {
-          console.error("Lỗi khi tải chi tiết sản phẩm hoặc dữ liệu liên quan:", error);
+          console.error(
+            "Lỗi khi tải chi tiết sản phẩm hoặc dữ liệu liên quan:",
+            error
+          );
         } finally {
           setIsLoading(false);
         }
@@ -272,7 +308,7 @@ const ProductDetail: React.FC = () => {
             <ProductImageGallery
               productName={product.name}
               selectedImage={selectedImage}
-              images={galleryImages} 
+              images={galleryImages}
               onSelectImage={setSelectedImage}
             />
 

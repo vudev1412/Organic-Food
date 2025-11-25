@@ -14,6 +14,19 @@
   animation: slide-in 0.3s ease-out;
 }
 
-a{
+a {
   text-decoration: none !important;
+}
+/* Thêm vào file CSS gốc (index.css, global.css, hoặc tương tự) */
+.scrollbar-hide {
+  /* Cho Firefox */
+  scrollbar-width: none;
+  /* Cho IE and Edge */
+  -ms-overflow-style: none;
+}
+/* Cho Chrome, Safari, Edge */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0 !important; /* Đảm bảo không chiếm không gian */
+  height: 0 !important;
 }

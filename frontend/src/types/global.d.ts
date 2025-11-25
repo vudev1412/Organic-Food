@@ -484,4 +484,18 @@ declare global {
     otp: string;
     newPassword: string;
   }
+  interface IResVoucherDTO {
+    id: number;
+    code: string;
+    description?: string;
+    typeVoucher: "PERCENT" | "FIXED_AMOUNT" | "FREESHIP"; // Map từ TypeVoucher enum
+    value: number;
+    maxDiscountAmount: number;
+    minOrderValue: number;
+    startDate: string; // Sử dụng string cho ISO date/Instant
+    endDate: string; // Sử dụng string cho ISO date/Instant
+    quantity: number;
+    usedCount: number;
+    active: boolean;
+  }
 }

@@ -435,3 +435,12 @@ export const resetPasswordAPI = (data: IResetPasswordRequest) => {
   const urlBackend = "/api/v1/auth/reset-password";
   return axios.post<IBackendRes<string>>(urlBackend, data);
 };
+/**
+ * Lấy danh sách các voucher còn sử dụng được.
+ * Endpoint: GET /api/v1/vouchers/available
+ */
+export const getAvailableVouchersAPI = () => {
+  const urlBackend = "/api/v1/vouchers/available";
+  // Giả định backend trả về IBackendRes chứa List<IResVoucherDTO>
+  return axios.get<IBackendRes<IResVoucherDTO[]>>(urlBackend);
+};

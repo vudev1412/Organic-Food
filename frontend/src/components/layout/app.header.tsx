@@ -208,6 +208,14 @@ const AppHeader = () => {
       }),
     },
     {
+      key: "sale",
+      label: "Khuyến mãi",
+      onClick: () => {
+        navigate("/khuyen-mai");
+        setIsMobileMenuOpen(false);
+      },
+    },
+    {
       key: "intro",
       label: "Về chúng tôi",
       onClick: () => {
@@ -359,7 +367,12 @@ const AppHeader = () => {
               </div>
             )}
           </div>
-
+          <Link
+            to="/khuyen-mai"
+            className="!text-gray-700 font-medium text-[15px] hover:!text-green-600 h-full flex items-center px-2 transition-colors"
+          >
+            Khuyến mãi
+          </Link>
           {/* CÁC LINK KHÁC */}
           <Link
             to="/gioi-thieu"

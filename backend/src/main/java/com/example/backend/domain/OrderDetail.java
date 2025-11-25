@@ -16,7 +16,7 @@ public class OrderDetail {
 
     @Column(nullable = false)
     private int quantity;
-
+    //giá đã giảm của sản phẩm
     @Column(nullable = false)
     private double price;
 
