@@ -1,217 +1,316 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
+import {
+  DeleteTwoTone,
+  EditTwoTone,
+  EyeOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SafetyCertificateOutlined,
+} from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Tag } from "antd";
+import {
+  App,
+  Button,
+  Tag,
+  Tooltip,
+  Avatar,
+  Space,
+  Typography,
+  Popconfirm,
+} from "antd";
 import { getProductsAPI, deleteProductAPI } from "../../../service/api";
 import DetailProduct from "./detail.product";
 import CreateProductCertificate from "./create.product";
+import UpdateProduct from "./update.product";
 
-
-type TSearch = {
-  name?: string;
-  certNo?: string;
-};
+const { Text } = Typography;
 
 const TableProduct = () => {
   const actionRef = useRef<ActionType>(null);
-  const [meta, setMeta] = useState({ page: 1, size: 5, total: 0 });
-  const [isDelete, setIsDelete] = useState(false);
-
   const [openViewDetail, setOpenViewDetail] = useState(false);
   const [dataViewDetail, setDataViewDetail] = useState<IProduct | null>(null);
-
   const [openModalCreate, setOpenModalCreate] = useState(false);
-
   const { message, notification } = App.useApp();
-
-  const formatProductId = (product: IProduct) => {
-    if (!product?.id) return "Không có ID";
-    const id = product.id;
-    if (id < 10) return `SP00${id}`;
-    if (id < 100) return `SP0${id}`;
-    if (id < 1000) return `SP${id}`;
+  const [openModelUpdate, setOpenModelUpdate] = useState(false);
+  const [dataUpdate, setDataUpdate] = useState<any>(null);
+  const formatProductId = (id: number) => {
+    if (id < 10) return `SP000${id}`;
+    if (id < 100) return `SP00${id}`;
+    if (id < 1000) return `SP0${id}`;
     return `SP${id}`;
   };
 
   const handleDelete = async (productId: number) => {
-    setIsDelete(true);
     try {
       const res: any = await deleteProductAPI(productId);
       if (res.status === 200 || res.status === 204) {
-        message.success("Xóa sản phẩm thành công");
+        message.success("Xóa sản phẩm thành công!");
         actionRef.current?.reload();
-      } else {
-        notification.error({
-          message: "Lỗi",
-          description: "Không thể xóa sản phẩm",
-        });
       }
     } catch (error: any) {
       notification.error({
-        message: "Lỗi",
-        description: error.response?.data?.message || error.message,
+        message: "Xóa thất bại",
+        description: error.response?.data?.message || "Có lỗi xảy ra",
       });
-    } finally {
-      setIsDelete(false);
     }
   };
 
   const columns: ProColumns<IProduct>[] = [
     {
-      title: "ID",
+      title: "Mã SP",
       dataIndex: "id",
+      width: 100,
+      fixed: "left",
       sorter: true,
       defaultSortOrder: "ascend",
-      hideInSearch: true,
+      render: (_, record) => <a>{formatProductId(record.id)}</a>,
+    },
+    {
+      title: "Sản phẩm",
+      dataIndex: "name",
+      width: 280,
       render: (_, record) => (
-        <a
-          onClick={() => {
-            setOpenViewDetail(true);
-            setDataViewDetail(record);
-          }}
-          href="#"
-        >
-          {formatProductId(record)}
-        </a>
+        <Space>
+          <Avatar
+            size={44}
+            shape="square"
+            src={
+              record.image
+                ? `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${
+                    record.image
+                  }`
+                : undefined
+            }
+            icon={<SafetyCertificateOutlined />}
+            style={{ backgroundColor: "#f0f2f5", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontWeight: 500, fontSize: 15 }}>{record.name}</div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.origin_address || "Chưa có xuất xứ"}
+            </Text>
+          </div>
+        </Space>
+      ),
+    },
+
+    {
+      title: "Giá bán",
+      dataIndex: "price",
+      width: 120,
+      sorter: true,
+      render: (price) => (
+        <Text strong type="danger" style={{ fontSize: 15 }}>
+          {Number(price).toLocaleString("vi-VN")} ₫
+        </Text>
       ),
     },
     {
-      title: "Tên",
-      dataIndex: "name",
-      search: true,
-    },
-    {
-      title: "Giá",
-      dataIndex: "price",
-      sorter: true,
-      hideInSearch: true,
-    },
-    {
-      title: "Số lượng",
+      title: "Tồn kho",
       dataIndex: "quantity",
-      hideInSearch: true,
+      width: 100,
+      render: (_, enity) => (
+        <Tag
+          color={
+            enity.quantity > 10
+              ? "green"
+              : enity.quantity > 0
+              ? "orange"
+              : "red"
+          }
+          style={{ fontWeight: 500 }}
+        >
+          {enity.quantity}{" "}
+          {["", "Kg", "Gram", "Lít", "Hộp", "Cái"][enity.unit.id || 0] ||
+            "Đơn vị"}
+        </Tag>
+      ),
     },
     {
       title: "Chứng nhận",
       dataIndex: "certificates",
-      search: false,
-      render: (certs: ICertificate[] = []) =>
-        certs.map((c) => (
-          <Tag key={c.id} color="blue">
-            {c.name}
-          </Tag>
-        )),
+      width: 220,
+      render: (_, record) => {
+        const certs = record.certificates || [];
+        if (certs.length === 0) return <Tag color="default">Chưa có</Tag>;
+
+        return (
+          <Space size={[0, 4]} wrap>
+            {certs.slice(0, 3).map((c) => (
+              <Tooltip key={c.id} title={c.certNo ? `Số: ${c.certNo}` : c.name}>
+                <Tag color="blue" style={{ margin: 2 }}>
+                  <SafetyCertificateOutlined style={{ marginRight: 4 }} />
+                  {c.name}
+                </Tag>
+              </Tooltip>
+            ))}
+            {certs.length > 3 && <Tag color="default">+{certs.length - 3}</Tag>}
+          </Space>
+        );
+      },
     },
     {
-      title: "Tình trạng",
-      hideInSearch: true,
+      title: "Trạng thái",
+      dataIndex: "active",
+      width: 110,
+      filters: true,
+      onFilter: true,
+      valueEnum: {
+        true: { text: "Đang bán", status: "Success" },
+        false: { text: "Tạm ngưng", status: "Error" },
+      },
       render: (_, record) => (
-        <Tag color={record.active ? "green" : "red"}>
+        <Tag
+          color={record.active ? "green" : "red"}
+          style={{ fontWeight: 500 }}
+        >
           {record.active ? "Đang bán" : "Tạm ngưng"}
         </Tag>
       ),
     },
     {
       title: "Thao tác",
-      hideInSearch: true,
+      width: 120,
+      fixed: "right",
       render: (_, record) => (
-        <Popconfirm
-          title="Xác nhận xóa sản phẩm"
-          description={`Bạn có chắc muốn xóa sản phẩm "${record.name}" không?`}
-          onConfirm={() => handleDelete(record.id)}
-          okText="Xác nhận"
-          cancelText="Hủy"
-          okButtonProps={{ loading: isDelete }}
-        >
-          <EditTwoTone
-            twoToneColor="#f57800"
-            style={{ cursor: "pointer", marginRight: 15 }}
-            onClick={(e) => {
-             
-              e.stopPropagation();
-            }}
-          />
-          <DeleteTwoTone
-            twoToneColor="#ff4d4f"
-            style={{ cursor: "pointer" }}
-          />
-        </Popconfirm>
+        <Space>
+          <Tooltip title="Xem chi tiết">
+            <Button
+              type="text"
+              icon={<EyeOutlined style={{ color: "#1890ff" }} />}
+              onClick={() => {
+                setDataViewDetail(record);
+                setOpenViewDetail(true);
+              }}
+            />
+          </Tooltip>
+
+          <Tooltip title="Chỉnh sửa">
+            <Button
+              type="text"
+              icon={<EditTwoTone twoToneColor="#fa8c16" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDataUpdate(record); // truyền toàn bộ record
+                setOpenModelUpdate(true); // mở modal
+              }}
+            />
+          </Tooltip>
+
+          <Popconfirm
+            title="Xóa sản phẩm?"
+            description={`Xóa "${record.name}" vĩnh viễn?`}
+            onConfirm={() => handleDelete(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Button
+              danger
+              type="text"
+              icon={<DeleteTwoTone twoToneColor="#ff4d4f" />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
 
-  const refreshTable = () => {
-    actionRef.current?.reload();
-  };
-
   return (
     <>
-      <ProTable<IProduct, TSearch>
+      <ProTable<IProduct>
         columns={columns}
         actionRef={actionRef}
         cardBordered
-        rowKey={(record) => `${record.id}`}
-        headerTitle="Sản phẩm"
+        rowKey="id"
+        scroll={{ x: 1300 }}
+        headerTitle={
+          <Space>
+            <SafetyCertificateOutlined
+              style={{ fontSize: 20, color: "#1890ff" }}
+            />
+            <Text strong style={{ fontSize: 20 }}>
+              Quản lý sản phẩm
+            </Text>
+          </Space>
+        }
         toolBarRender={() => [
           <Button
-            type="primary"
+            key="reload"
+            icon={<ReloadOutlined />}
+            onClick={() => actionRef.current?.reload()}
+          >
+            Làm mới
+          </Button>,
+          <Button
             key="create"
+            type="primary"
             icon={<PlusOutlined />}
+            size="large"
             onClick={() => setOpenModalCreate(true)}
           >
-            Tạo mới
+            Thêm sản phẩm mới
           </Button>,
         ]}
-        pagination={{
-          current: meta.page,
-          pageSize: meta.size,
-          total: meta.total,
-          showSizeChanger: true,
-        }}
-        request={async (params, sort) => {
+        request={async (params, sort, filter) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
-          if (params.name) query += `&filter=name~'${params.name}'`;
-          if (params.certNo) query += `&filter=certNo~'${params.certNo}'`;
 
-          if (Object.keys(sort).length === 0) {
-            query += `&sort=id,ASC`;
-          } else {
+          if (params.name) query += `&filter=name~'*${params.name}*'`;
+          if (filter.active?.length) {
+            const status = filter.active[0] === "true" ? "true" : "false";
+            query += `&filter=active==${status}`;
+          }
+
+          // Sort
+          if (Object.keys(sort).length > 0) {
             const field = Object.keys(sort)[0];
-            const order = sort[field];
-            if (order) {
-              const sortOrder = order === "ascend" ? "ASC" : "DESC";
-              query += `&sort=${field === "id" ? "id" : field},${sortOrder}`;
-            }
+            const order = sort[field] === "ascend" ? "ASC" : "DESC";
+            query += `&sort=${field === "price" ? "price" : field},${order}`;
+          } else {
+            query += "&sort=id,ASC";
           }
 
           const res = await getProductsAPI(query);
-          if (res.data) setMeta(res.data.data.meta);
-
           const rawData = res.data?.data.result || [];
           const mapProduct: Record<number, IProduct> = {};
 
-          rawData.forEach((item: IProduct) => {
-            const prodId = item.id;
-            if (!mapProduct[prodId]) {
-              mapProduct[prodId] = {
+          rawData.forEach((item: any) => {
+            const id = item.id;
+            if (!mapProduct[id]) {
+              mapProduct[id] = {
                 ...item,
-                certificates: [...(item.certificates || [])],
+                certificates: item.certificates || [],
               };
             } else {
-              mapProduct[prodId].certificates?.push(...(item.certificates || []));
+              mapProduct[id].certificates = [
+                ...(mapProduct[id].certificates || []),
+                ...(item.certificates || []),
+              ];
             }
           });
 
           return {
             data: Object.values(mapProduct),
             success: true,
-            total: res.data?.data.meta.total,
+            total: res.data?.data.meta.total || 0,
           };
+        }}
+        rowClassName={(record) => (!record.active ? "row-disabled" : "")}
+        search={{
+          labelWidth: "auto",
+          collapseRender: (collapsed) =>
+            collapsed ? "Mở rộng tìm kiếm" : "Thu gọn",
+        }}
+        options={{ reload: false, density: false, setting: false }}
+        pagination={{
+          defaultPageSize: 5,
+          showSizeChanger: true,
+          pageSizeOptions: ["5", "10", "20", "50"],
         }}
       />
 
-      {/* Modal chi tiết */}
       <DetailProduct
         openViewDetail={openViewDetail}
         setOpenViewDetail={setOpenViewDetail}
@@ -219,11 +318,17 @@ const TableProduct = () => {
         setDataViewDetail={setDataViewDetail}
       />
 
-      {/* Modal tạo mới Product + Certificate */}
       <CreateProductCertificate
         openModalCreate={openModalCreate}
         setOpenModalCreate={setOpenModalCreate}
-        refreshTable={refreshTable}
+        refreshTable={() => actionRef.current?.reload()}
+      />
+      <UpdateProduct
+        openModelUpdate={openModelUpdate}
+        setOpenModelUpdate={setOpenModelUpdate}
+        dataUpdate={dataUpdate}
+        setDataUpdate={setDataUpdate}
+        refreshTable={() => actionRef.current?.reload()}
       />
     </>
   );

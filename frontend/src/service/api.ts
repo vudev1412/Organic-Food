@@ -115,7 +115,7 @@ export const getProductsAPI = (query: string) =>
 export const createProductAPI = (product: ICreateProductDTO) =>
   axios.post(`/api/v1/products`, product);
 
-export const updateProductAPI = (id: number, product: ICreateProductDTO) =>
+export const updateProductAPI = (id: number, product: IProduct) =>
   axios.patch(`/api/v1/products/${id}`, product);
 
 export const deleteProductAPI = (id: number) =>
@@ -284,6 +284,10 @@ export const getCertificate = () => {
   const urlBackend = `/api/v1/certificates`;
   return axios.get<IBackendRes<ICertificate>>(urlBackend);
 };
+export const getUnits = () => {
+  const urlBackend = `/api/v1/units`;
+  return axios.get<IBackendRes<IUnit>>(urlBackend);
+};
 
 export const getOrderDetailsFullAPI = (query: string) => {
   return axios.get<IBackendRes<IModelPaginate<IOrderDetailFull>>>(`/api/v1/order-details?${query}`);
@@ -306,11 +310,40 @@ export const createEmployeeProfileAPI  = (data: any) => {
   return axios.post(`/api/v1/employee/profile`, data);
 };
 
-export const uploadFileAPI = (file: File) => {
+
+
+const uploadFile = (file: File, folder: string) => {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("folder", folder);
 
-  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/upload`, formData, {
+  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/files`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+
+export const uploadFileProductAPI = (file: File, folder: string = "products") => {
+  return uploadFile(file, folder);
+};
+
+export const uploadFileCertsAPI = (file: File, folder: string = "certs") => {
+  return uploadFile(file, folder);
+};
+
+
+export const uploadMultipleFilesAPI = (files: File[], folder: string = "products") => {
+  const formData = new FormData();
+  
+  files.forEach(file => {
+    formData.append("files", file);
+  });
+  
+  formData.append("folder", folder);
+
+  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/files/multiple`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

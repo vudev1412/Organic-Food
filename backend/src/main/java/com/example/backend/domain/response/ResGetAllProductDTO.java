@@ -33,4 +33,6 @@ public class ResGetAllProductDTO {
     private Long categoryId;
 
     private List<ResCertificateProductDTO> certificates;
+
+    private List<ResProductImage> images;
 }

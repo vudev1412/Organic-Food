@@ -1,61 +1,48 @@
 package com.example.backend.controller;
 
+import com.example.backend.service.FileService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class UploadController {
+    @Value("${lehienvu.upload-file.base-uri}")
+    private String baseURI;
 
-    @Value("${lehienvu.upload-file.images}")
-    private String basePath;
+    private final FileService fileService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Không có file được gửi lên");
+    // Upload 1 file - Chỉ trả về tên file
+    @PostMapping("/files")
+    public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file,
+                                         @RequestParam("folder") String folder) throws IOException {
+        this.fileService.createDirectory(baseURI + folder);
+        String savedFileName = this.fileService.store(file, folder);
+
+        // Chỉ trả về tên file
+        return ResponseEntity.ok(savedFileName);
+    }
+
+    // Upload nhiều file - Trả về danh sách tên file
+    @PostMapping("/files/multiple")
+    public ResponseEntity<List<String>> uploadMultiple(@RequestParam("files") MultipartFile[] files,
+                                                       @RequestParam("folder") String folder) throws IOException {
+        this.fileService.createDirectory(baseURI + folder);
+
+        List<String> savedFileNames = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String savedFileName = this.fileService.store(file, folder);
+            savedFileNames.add(savedFileName);
         }
 
-        try {
-            // ✅ Dùng Path thay vì File (modern way)
-            Path uploadPath = Paths.get(basePath).toAbsolutePath().normalize();
-
-            // Tạo folder nếu chưa tồn tại
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // Tạo tên file duy nhất
-            String originalFilename = file.getOriginalFilename();
-            if (originalFilename == null || originalFilename.isEmpty()) {
-                return ResponseEntity.badRequest().body("Tên file không hợp lệ");
-            }
-
-            String filename = System.currentTimeMillis() + "_" + originalFilename;
-            Path targetPath = uploadPath.resolve(filename);
-
-            // ✅ Dùng Files.copy (an toàn hơn transferTo)
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-            System.out.println("✅ File saved: " + targetPath.toString());
-
-            // ✅ Trả về chỉ tên file (không phải full URL)
-            return ResponseEntity.ok(filename);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Lỗi lưu file: " + e.getMessage());
-        }
+        return ResponseEntity.ok(savedFileNames);
     }
 }

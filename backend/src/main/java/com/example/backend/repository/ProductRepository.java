@@ -19,7 +19,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     FROM Product p
     LEFT JOIN FETCH p.productCertificates pc
     LEFT JOIN FETCH pc.certificate c
+    LEFT JOIN FETCH p.productImages pi
     """)
     List<Product> findAllWithCertificates();
+
 
 }
