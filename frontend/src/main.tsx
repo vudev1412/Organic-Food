@@ -37,6 +37,7 @@ import ProtectedRouter from "./components/auth/admin";
 import ProtectedRoute from "./components/auth";
 import viVN from "antd/locale/vi_VN";
 import { AppProvider } from "./components/context/app.provider";
+import VnpayPage from "./pages/client/vnpay";
 
 const router = createBrowserRouter([
   {
@@ -83,6 +84,10 @@ const router = createBrowserRouter([
       {
         path: "/lien-he",
         element: <Contact />,
+      },
+      {
+        path: "/thanh-toan",
+        element: <VnpayPage />,
       },
       {
         path: "/tai-khoan",

@@ -5,35 +5,28 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
 public class ReqProductDTO {
-    private Long id;
     private String name;
-    private Unit unit;
     private double price;
     private String origin_address;
     private String description;
-    private double rating_avg;
     private int quantity;
+    private boolean active;
+    private Long categoryId;
+    private Long unitId;
 
     private String image;
-
-    private boolean active;
-
     private Instant mfgDate;
 
     private Instant expDate;
+    private List<String> productImages;
 
-    private Instant createAt;
 
-    private Instant updateAt;
-
-    private String createBy;
-
-    private String updateBy;
-    private Long categoryId;
+    private List<ReqProductCertificateDTO> certificates;
 
 
 }

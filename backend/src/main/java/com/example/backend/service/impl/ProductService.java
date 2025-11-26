@@ -1,37 +1,38 @@
 package com.example.backend.service.impl;
 
-import com.example.backend.domain.Category;
-import com.example.backend.domain.Product;
+import com.example.backend.domain.*;
+import com.example.backend.domain.key.ProductCertificateKey;
+import com.example.backend.domain.request.ReqProductCertificateDTO;
 import com.example.backend.domain.request.ReqProductDTO;
 import com.example.backend.domain.response.ResGetAllProductDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import com.example.backend.mapper.ProductMapper;
-import com.example.backend.repository.CategoryRepository;
-import com.example.backend.repository.ProductRepository;
+import com.example.backend.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
-    public ProductService(ProductRepository productRepository,
-                          CategoryRepository categoryRepository,
-                          ProductMapper productMapper){
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-        this.productMapper = productMapper;
-    }
-
+    private final UnitRepository unitRepository;
+    private final ProductImageRepository productImageRepository;
+    private final CertificateRepository certificateRepository;
+    private final ProductCertificateRepository productCertificateRepository;
 
 
     public ResGetAllProductDTO handleGetProductById(Long id) {
@@ -40,15 +41,59 @@ public class ProductService {
         return this.productMapper.toResProductDto(product);
     }
 
-    public ResProductDTO createProduct(ReqProductDTO dto) {
+    @Transactional
+    public ResGetAllProductDTO createProduct(ReqProductDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
+        Unit unit = unitRepository.findById(dto.getUnitId())
+                .orElseThrow(() -> new RuntimeException("Unit not found"));
+
+        // --- tạo product ---
         Product product = productMapper.toEntity(dto);
         product.setCategory(category);
-        this.productRepository.save(product);
+        product.setUnit(unit);
+        product.setActive(dto.isActive());
+        product.setMfgDate(dto.getMfgDate());
+        product.setExpDate(dto.getExpDate());
 
-        return this.productMapper.toBaseResProductDto(product);
+        productRepository.save(product);
+
+        // --- tạo product images ---
+        if (dto.getProductImages() != null) {
+            for (String url : dto.getProductImages()) {
+                ProductImage img = new ProductImage();
+                img.setImgUrl(url);
+                img.setProduct(product);
+                productImageRepository.save(img);
+            }
+        }
+
+        // --- tạo product certificates ---
+        if (dto.getCertificates() != null) {
+            for (ReqProductCertificateDTO c : dto.getCertificates()) {
+
+                Certificate cert = certificateRepository.findById(c.getCertificateId())
+                        .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
+                ProductCertificate pc = new ProductCertificate();
+
+                ProductCertificateKey key = new ProductCertificateKey();
+                key.setProductId(product.getId());
+                key.setCertificateId(cert.getId());
+
+                pc.setId(key);
+                pc.setProduct(product);
+                pc.setCertificate(cert);
+                pc.setImageUrl(c.getImageUrl());
+                pc.setCertNo(c.getCertNo());
+                pc.setDate(c.getDate());
+
+                productCertificateRepository.save(pc);
+            }
+        }
+
+        return productMapper.toResProductDto(product);
 
     }
 
@@ -75,29 +120,103 @@ public class ProductService {
 
 
 
-    public ResProductDTO handleUpdateProduct(Long id, ReqProductDTO updatedProduct) {
+    @Transactional
+    public ResGetAllProductDTO handleUpdateProduct(Long id, ReqProductDTO dto) {
 
-        Product existingProduct = this.productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
 
+        // Cập nhật thông tin cơ bản
+        product.setName(dto.getName());
+        product.setPrice(dto.getPrice());
+        product.setOrigin_address(dto.getOrigin_address());
+        product.setDescription(dto.getDescription());
+        product.setQuantity(dto.getQuantity());
+        product.setActive(dto.isActive());
+        product.setMfgDate(dto.getMfgDate());
+        product.setExpDate(dto.getExpDate());
+        product.setUpdateAt(Instant.now());
 
-        existingProduct.setName(updatedProduct.getName());
-        existingProduct.setUnit(updatedProduct.getUnit());
-        existingProduct.setPrice(updatedProduct.getPrice());
-        existingProduct.setOrigin_address(updatedProduct.getOrigin_address());
-        existingProduct.setDescription(updatedProduct.getDescription());
-        existingProduct.setActive(updatedProduct.isActive());
-        existingProduct.setUpdateAt(Instant.now());
-
-        if (updatedProduct.getCategoryId() != null) {
-            Category category = this.categoryRepository.findById(updatedProduct.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found with id: " + updatedProduct.getCategoryId()));
-            existingProduct.setCategory(category);
+        // Cập nhật danh mục
+        if (dto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
+            product.setCategory(category);
         }
 
+        // Cập nhật đơn vị
+        if (dto.getUnitId() != null) {
+            Unit unit = unitRepository.findById(dto.getUnitId())
+                    .orElseThrow(() -> new RuntimeException("Đơn vị không tồn tại"));
+            product.setUnit(unit);
+        }
 
-        return this.productMapper.toBaseResProductDto(this.productRepository.save(existingProduct));
+        // Cập nhật ảnh chính
+        if (dto.getImage() != null && !dto.getImage().isBlank()) {
+            product.setImage(dto.getImage());
+        }
+
+        // === CẬP NHẬT ẢNH PHỤ (MERGE) ===
+        List<ProductImage> oldImages = productImageRepository.findByProduct_Id(product.getId());
+        List<String> newImageUrls = dto.getProductImages() != null ? dto.getProductImages() : List.of();
+
+        // Xóa ảnh cũ không còn
+        oldImages.stream()
+                .filter(old -> !newImageUrls.contains(old.getImgUrl()))
+                .forEach(productImageRepository::delete);
+
+        // Thêm ảnh mới
+        newImageUrls.stream()
+                .filter(url -> oldImages.stream().noneMatch(old -> old.getImgUrl().equals(url)))
+                .map(url -> {
+                    ProductImage img = new ProductImage();
+                    img.setImgUrl(url);
+                    img.setProduct(product);
+                    return img;
+                })
+                .forEach(productImageRepository::save);
+
+        // === CẬP NHẬT CHỨNG CHỈ (MERGE + CẬP NHẬT NẾU THAY ĐỔI) ===
+        List<ProductCertificate> oldCerts = productCertificateRepository.findByIdProductId(product.getId());
+        List<ReqProductCertificateDTO> newCerts = dto.getCertificates() != null ? dto.getCertificates() : List.of();
+
+        // Map cũ theo certificateId để dễ so sánh
+        Map<Long, ProductCertificate> oldCertMap = oldCerts.stream()
+                .collect(Collectors.toMap(pc -> pc.getCertificate().getId(), pc -> pc));
+
+        for (ReqProductCertificateDTO nc : newCerts) {
+            Long certId = nc.getCertificateId();
+            Certificate cert = certificateRepository.findById(certId)
+                    .orElseThrow(() -> new RuntimeException("Chứng chỉ không tồn tại: " + certId));
+
+            ProductCertificate pc = oldCertMap.get(certId);
+
+            if (pc == null) {
+                // Thêm mới
+                pc = new ProductCertificate();
+                ProductCertificateKey key = new ProductCertificateKey(product.getId(), certId);
+                pc.setId(key);
+                pc.setProduct(product);
+                pc.setCertificate(cert);
+            }
+
+            // Cập nhật thông tin (dù cũ hay mới đều cập nhật lại)
+            pc.setCertNo(nc.getCertNo());
+            pc.setImageUrl(nc.getImageUrl());
+            pc.setDate(nc.getDate());
+
+            productCertificateRepository.save(pc);
+            oldCertMap.remove(certId); // Đánh dấu đã xử lý
+        }
+
+        // Xóa những chứng chỉ cũ không còn trong danh sách mới
+        oldCertMap.values().forEach(productCertificateRepository::delete);
+
+        // Lưu sản phẩm
+        Product saved = productRepository.save(product);
+        return productMapper.toBaseResProductDTO(saved);
     }
+
     public String handleDeleteProduct(Long id){
         this.productRepository.deleteById(id);
         return "Delete success";

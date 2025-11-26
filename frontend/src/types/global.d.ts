@@ -109,6 +109,11 @@ declare global {
     categoryId: number;
 
     certificates?: ICertificate[];
+    images?: IProductImage[];
+  }
+  interface IProductImage {
+    id: number;
+    imgUrl: string;
   }
 
   interface ICertificate {
@@ -387,6 +392,11 @@ declare global {
     returnType: string;
     processNote: string;
     orderId: number;
+  }
+   interface IUnit {
+    id: number;
+    name: string;
+    
   }
   export interface ICreateCustomerProfile {}
 }

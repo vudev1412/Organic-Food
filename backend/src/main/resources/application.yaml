@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: backend
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/organic_store
+    username: root
+    password: vu070504
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+lhv:
+  jwt:
+    base64-secret: CiltUWryHlnBnlOhZdcn6y496q6H6xF3OQeCP0pij6SJiWgkcrAAYMv32HnYTtktDDdpGT64oDrb1zvQpN7z9A==
+    access-token-validity-in-seconds: 86400       # 1 ngày
+    refresh-token-validity-in-seconds: 864000     # 10 ngày
+
+lehienvu:
+  upload-file:
+    base-path: "file:../upload/"
+    base-uri: "D:/KhoaLuan/E-Commerce_Web/upload/images/"
+payment:
+  vnPay:
+    url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    tmnCode: "58X4B4HP"
+    secretKey: "VRLDWNVWDNPCOEPBZUTWSEDQAGXJCNGZ"
+    returnUrl: "https://your-ngrok-url.ngrok.io/api/v1/payment/vn-pay-callback"
+    version: "2.1.0"
+    command: "pay"
+    orderType: "billpayment"
