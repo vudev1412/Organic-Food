@@ -100,7 +100,7 @@ const TableProduct = () => {
 
     {
       title: "Giá bán",
-      dataIndex: "price",
+dataIndex: "price",
       width: 120,
       sorter: true,
       render: (price) => (
@@ -204,7 +204,7 @@ const TableProduct = () => {
           <Popconfirm
             title="Xóa sản phẩm?"
             description={`Xóa "${record.name}" vĩnh viễn?`}
-            onConfirm={() => handleDelete(record.id)}
+onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -303,7 +303,7 @@ const TableProduct = () => {
         rowClassName={(record) => (!record.active ? "row-disabled" : "")}
         search={{
           labelWidth: "auto",
-          collapseRender: (collapsed) =>
+collapseRender: (collapsed) =>
             collapsed ? "Mở rộng tìm kiếm" : "Thu gọn",
         }}
         options={{ reload: false, density: false, setting: false }}

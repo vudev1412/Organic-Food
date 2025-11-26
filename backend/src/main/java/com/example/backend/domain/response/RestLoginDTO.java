@@ -23,6 +23,14 @@ public class RestLoginDTO {
         private String email;
         private String name;
         private String role;
+        private String phone;
+        private String avatar;
+        public UserLogin(long id, String email, String name, String role) {
+            this.id = id;
+            this.email = email;
+            this.name = name;
+            this.role = role;
+        }
     }
 
     @Getter

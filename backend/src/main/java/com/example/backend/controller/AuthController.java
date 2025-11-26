@@ -139,6 +139,11 @@ public class AuthController {
             userLogin.setName(userCurr.getName());
             userLogin.setEmail(userCurr.getEmail());
             userLogin.setRole(userCurr.getUserRole().name());
+
+            // ===> CẬP NHẬT THÊM TẠI ĐÂY <===
+            userLogin.setPhone(userCurr.getPhone());   // Đảm bảo Entity User có getPhone()
+            userLogin.setAvatar(userCurr.getImage()); // Đảm bảo Entity User có getAvatar()
+
             userGetAccount.setUser(userLogin);
         }
 
