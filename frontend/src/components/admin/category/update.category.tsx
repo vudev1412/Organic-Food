@@ -1,6 +1,11 @@
+// File path: /src/components/admin/category/update.category.tsx
+
 import { App, Divider, Form, Input, Modal, Select, type FormProps } from "antd";
 import { useEffect, useState } from "react";
-import { updateCategoryAPI, getParentCategoriesAPI } from "../../../service/api";
+import {
+  updateCategoryAPI,
+  getParentCategoriesAPI,
+} from "../../../service/api";
 
 interface IProps {
   openModelUpdate: boolean;
@@ -56,9 +61,7 @@ const UpdateCategory = ({
         name: dataUpdate.name,
         slug: dataUpdate.slug,
         parentId:
-          dataUpdate.parentCategoryId ??
-          dataUpdate.parentCategory?.id ??
-          null,
+          dataUpdate.parentCategoryId ?? dataUpdate.parentCategory?.id ?? null,
       });
     }
   }, [dataUpdate, openModelUpdate]);
@@ -128,7 +131,10 @@ const UpdateCategory = ({
           name="name"
           rules={[
             { required: true, message: "Vui lòng nhập tên category" },
-            { whitespace: true, message: "Tên không được chỉ chứa khoảng trắng" },
+            {
+              whitespace: true,
+              message: "Tên không được chỉ chứa khoảng trắng",
+            },
           ]}
         >
           <Input placeholder="Nhập tên category" />
@@ -139,7 +145,10 @@ const UpdateCategory = ({
           name="slug"
           rules={[
             { required: true, message: "Vui lòng nhập slug" },
-            { whitespace: true, message: "Slug không được chỉ chứa khoảng trắng" },
+            {
+              whitespace: true,
+              message: "Slug không được chỉ chứa khoảng trắng",
+            },
           ]}
         >
           <Input placeholder="Nhập slug" />

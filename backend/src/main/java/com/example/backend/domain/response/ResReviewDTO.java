@@ -14,4 +14,6 @@ public class ResReviewDTO {
     private Instant createdAt;
     private Long productId;
     private Long userId;
+    private String userName;   // Thêm trường tên
+    private String userAvatar; // Thêm trường ảnh
 }

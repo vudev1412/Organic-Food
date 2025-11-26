@@ -37,7 +37,17 @@ public class GlobalException {
         res.setMessage("Tài khoản hoặc mật khẩu không chính xác!");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
-
+    @ExceptionHandler(value = {
+            InvalidOtpException.class,
+            UserNotFoundException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleBizException(Exception ex) {
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError(ex.getClass().getSimpleName());
+        res.setMessage(ex.getMessage()); // 🔥 QUAN TRỌNG: Lấy message động
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
     @ExceptionHandler(value = {
             NoResourceFoundException.class
     })

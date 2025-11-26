@@ -18,8 +18,25 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
     private final CustomerAddressMapper customerAddressMapper;
 
     public CustomerAddress handleCreateCustomerAddress(CustomerAddress customerAddress){
-        return this.customerAddressRepository.save(customerAddress);
+        // Nếu địa chỉ mới được đặt mặc định
+        if(customerAddress.isDefaultAddress() && customerAddress.getUser() != null) {
+            // Lấy tất cả địa chỉ cũ của user
+            List<CustomerAddress> existingAddresses = customerAddressRepository
+                    .getCustomerAddressByUser_Id(customerAddress.getUser().getId());
+
+            // Set defaultAddress = false cho tất cả địa chỉ cũ
+            for(CustomerAddress addr : existingAddresses) {
+                addr.setDefaultAddress(false);
+            }
+
+            // Lưu các địa chỉ cũ
+            customerAddressRepository.saveAll(existingAddresses);
+        }
+
+        // Lưu địa chỉ mới
+        return customerAddressRepository.save(customerAddress);
     }
+
 
     public ResCustomerAddress handleGetCustomerAddressById(Long id){
         ResCustomerAddress customerAddress = this.customerAddressRepository.findById(id).map(customerAddressMapper::toResCustomerAddress)
@@ -57,4 +74,21 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
                 .map(this.customerAddressMapper::toResCustomerAddress)
                 .toList();
     }
+    @Override
+    public ResCustomerAddress handleSetDefaultAddress(Long id) {
+        CustomerAddress addr = customerAddressRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found with id: " + id));
+
+        Long userId = addr.getUser().getId();
+
+        // Reset tất cả địa chỉ khác của user
+        customerAddressRepository.resetDefaultAddressByUserId(userId);
+
+        // Set địa chỉ này thành mặc định
+        addr.setDefaultAddress(true);
+        CustomerAddress saved = customerAddressRepository.save(addr);
+
+        return customerAddressMapper.toResCustomerAddress(saved);
+    }
+
 }

@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/product.right.tsx
+
 import { useState, useEffect } from "react";
 import {
   getProductCardListAPI,
@@ -16,7 +18,10 @@ interface ProductRightProps {
   selectedCategoryName: string; // [MỚI] Thêm prop này để nhận tên
 }
 
-const ProductRight = ({ selectedCategoryId, selectedCategoryName }: ProductRightProps) => {
+const ProductRight = ({
+  selectedCategoryId,
+  selectedCategoryName,
+}: ProductRightProps) => {
   const { addToCart } = useCurrentApp();
 
   // --- STATE QUẢN LÝ ---
@@ -145,7 +150,7 @@ const ProductRight = ({ selectedCategoryId, selectedCategoryName }: ProductRight
         onSortChange={handleSortChange}
         // [SỬA ĐỔI] Sử dụng prop name truyền từ cha xuống
         tilte={
-          selectedCategoryId 
+          selectedCategoryId
             ? selectedCategoryName // Hiển thị tên cụ thể (VD: Rau củ)
             : "Tất cả sản phẩm"
         }

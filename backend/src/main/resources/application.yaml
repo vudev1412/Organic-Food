@@ -26,11 +26,24 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: organicfood.hotro@gmail.com
+    password: axqdfabgiutwszbp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
+
 lhv:
   jwt:
     base64-secret: CiltUWryHlnBnlOhZdcn6y496q6H6xF3OQeCP0pij6SJiWgkcrAAYMv32HnYTtktDDdpGT64oDrb1zvQpN7z9A==
-    access-token-validity-in-seconds: 86400       # 1 ngày
-    refresh-token-validity-in-seconds: 864000     # 10 ngày
+    access-token-validity-in-seconds: 86400       # 1 ngï¿½y
+    refresh-token-validity-in-seconds: 864000     # 10 ngï¿½y
 
 lehienvu:
   upload-file:

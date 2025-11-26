@@ -1,3 +1,5 @@
+// File path: /src/components/section/product-detail/ProductImageGallery.tsx
+
 import React from "react";
 
 interface ProductImageGalleryProps {

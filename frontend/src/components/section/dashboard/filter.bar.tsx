@@ -1,3 +1,5 @@
+// File path: /src/components/section/dashboard/filter.bar.tsx
+
 import React from "react";
 import { Search, Plus } from "lucide-react";
 
@@ -32,12 +34,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
       {/* Nút thêm */}
       <div className="bg-green-500 hover:bg-green-900 rounded-xl">
         <button
-        onClick={onButtonClick}
-        className="flex items-center justify-center gap-2 px-2 py-2  text-white    transition-colors duration-150"
-      >
-        <Plus size={18} />
-        <span>{buttonText}</span>
-      </button>
+          onClick={onButtonClick}
+          className="flex items-center justify-center gap-2 px-2 py-2  text-white    transition-colors duration-150"
+        >
+          <Plus size={18} />
+          <span>{buttonText}</span>
+        </button>
       </div>
     </div>
   );

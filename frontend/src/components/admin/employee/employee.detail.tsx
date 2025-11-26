@@ -1,3 +1,5 @@
+// File path: /src/components/admin/employee/employee.detail.tsx
+
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar, Descriptions, Drawer } from "antd";
 import dayjs from "dayjs"; // <-- import dayjs
@@ -10,7 +12,12 @@ interface IProps {
 }
 
 const DetailEmployee = (props: IProps) => {
-  const { openViewDetail, setOpenViewDetail, dataViewDetail, setDataViewDetail } = props;
+  const {
+    openViewDetail,
+    setOpenViewDetail,
+    dataViewDetail,
+    setDataViewDetail,
+  } = props;
 
   const onClose = () => {
     setOpenViewDetail(false);

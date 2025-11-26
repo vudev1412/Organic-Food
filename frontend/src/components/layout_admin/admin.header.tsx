@@ -1,3 +1,5 @@
+// File path: /src/components/layout_admin/admin.header.tsx
+
 import React from "react";
 import { Bell, ChevronDown } from "lucide-react";
 import { Dropdown, Space, type MenuProps } from "antd";
@@ -9,16 +11,16 @@ import { useCurrentApp } from "../context/app.context";
 const AdminHeader: React.FC = () => {
   const { user, setUser, setIsAuthenticated, clearCart } = useCurrentApp();
   const handleLogout = async () => {
-      const res = await logoutAPI();
-      if(res.data){
-        setUser(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("organic_cart_items");
-        clearCart();
-      }
+    const res = await logoutAPI();
+    if (res.data) {
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("organic_cart_items");
+      clearCart();
     }
-   const items: MenuProps["items"] = [
+  };
+  const items: MenuProps["items"] = [
     {
       key: "1",
       label: <Link to="/tai-khoan/thong-tin">Hồ sơ</Link>,
@@ -46,7 +48,6 @@ const AdminHeader: React.FC = () => {
           </button>
 
           <div className="flex items-center space-x-2 cursor-pointer">
-           
             <Dropdown menu={{ items }} placement="bottomRight" arrow>
               <a onClick={(e) => e.preventDefault()}>
                 <Space>

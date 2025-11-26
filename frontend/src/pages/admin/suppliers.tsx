@@ -1,3 +1,5 @@
+// File path: /src/pages/admin/suppliers.tsx
+
 import React from "react";
 import PageCard from "../../components/section/dashboard/page.card";
 import FilterBar from "../../components/section/dashboard/filter.bar";
@@ -19,9 +21,9 @@ interface ISupplier {
 const Suppliers = () => {
   return (
     <>
-      <TableSupplier/>
+      <TableSupplier />
     </>
-  )
-}
+  );
+};
 
 export default Suppliers;

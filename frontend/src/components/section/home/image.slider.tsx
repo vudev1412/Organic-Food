@@ -1,3 +1,5 @@
+// File path: /src/components/section/home/image.slider.tsx
+
 import Carousel from "react-bootstrap/Carousel";
 import slider1 from "../../../assets/jpg/rev-slider_h4-1.jpg";
 import slider2 from "../../../assets/jpg/rev-slider_h4-2.jpg";

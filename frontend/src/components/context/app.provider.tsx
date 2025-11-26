@@ -1,3 +1,5 @@
+// File path: /src/components/context/app.provider.tsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import { CurrentAppContext, type ToastMessage } from "./app.context";
 import {

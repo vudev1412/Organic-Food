@@ -1,3 +1,5 @@
+// File path: /src/components/admin/employee/table.employee.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { deleteUserAPI, getEmployeesAPI } from "../../../service/api";
@@ -101,9 +103,9 @@ const TableEmployee = () => {
     {
       title: "Lương",
       dataIndex: "salary",
-       align: "right",
+      align: "right",
       hideInSearch: true,
-      render: (_, record) => record.salary.toLocaleString("vi-VN") + " VNĐ"
+      render: (_, record) => record.salary.toLocaleString("vi-VN") + " VNĐ",
     },
     {
       title: "Action",

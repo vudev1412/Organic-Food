@@ -1,6 +1,11 @@
+// File path: /src/components/admin/category/create.category.tsx
+
 import { App, Divider, Form, Input, Modal, Select, type FormProps } from "antd";
 import { useEffect, useState } from "react";
-import { createCategoryAPI, getParentCategoriesAPI } from "../../../service/api";
+import {
+  createCategoryAPI,
+  getParentCategoriesAPI,
+} from "../../../service/api";
 
 interface IProps {
   openModelCreate: boolean;
@@ -8,7 +13,11 @@ interface IProps {
   refreshTable: () => void;
 }
 
-const CreateCategory = ({ openModelCreate, setOpenModalCreate, refreshTable }: IProps) => {
+const CreateCategory = ({
+  openModelCreate,
+  setOpenModalCreate,
+  refreshTable,
+}: IProps) => {
   const [form] = Form.useForm();
   const [isSubmit, setIsSubmit] = useState(false);
   const [parentList, setParentList] = useState<ICategory[]>([]);
@@ -39,12 +48,14 @@ const CreateCategory = ({ openModelCreate, setOpenModalCreate, refreshTable }: I
     }
   };
 
-  const onFinish: FormProps<ICreateCategoryDTO>["onFinish"] = async (values) => {
+  const onFinish: FormProps<ICreateCategoryDTO>["onFinish"] = async (
+    values
+  ) => {
     const payload: any = {
       name: values.name,
       slug: values.slug,
     };
-    
+
     // Chỉ gửi parentCategoryId nếu có giá trị
     if (values.parentCategoryId) {
       payload.parentCategoryId = values.parentCategoryId;
@@ -95,41 +106,57 @@ const CreateCategory = ({ openModelCreate, setOpenModalCreate, refreshTable }: I
     >
       <Divider />
 
-      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
-        <Form.Item 
-          label="Tên category" 
-          name="name" 
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        autoComplete="off"
+      >
+        <Form.Item
+          label="Tên category"
+          name="name"
           rules={[
             { required: true, message: "Vui lòng nhập tên category" },
-            { whitespace: true, message: "Tên không được chỉ chứa khoảng trắng" }
+            {
+              whitespace: true,
+              message: "Tên không được chỉ chứa khoảng trắng",
+            },
           ]}
         >
           <Input placeholder="Nhập tên category" />
         </Form.Item>
 
-        <Form.Item 
-          label="Slug" 
-          name="slug" 
+        <Form.Item
+          label="Slug"
+          name="slug"
           rules={[
             { required: true, message: "Vui lòng nhập slug" },
-            { whitespace: true, message: "Slug không được chỉ chứa khoảng trắng" }
+            {
+              whitespace: true,
+              message: "Slug không được chỉ chứa khoảng trắng",
+            },
           ]}
         >
           <Input placeholder="Nhập slug" />
         </Form.Item>
 
         <Form.Item label="Parent Category" name="parentCategoryId">
-          <Select 
-            allowClear 
-            placeholder="Chọn parent category (tùy chọn)" 
+          <Select
+            allowClear
+            placeholder="Chọn parent category (tùy chọn)"
             options={parentOptions}
             loading={loadingParent}
             showSearch
             optionFilterProp="label"
             filterOption={(input, option) =>
-              (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+              (option?.label ?? "")
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
             }
-            notFoundContent={loadingParent ? "Đang tải..." : "Không tìm thấy category"}
+            notFoundContent={
+              loadingParent ? "Đang tải..." : "Không tìm thấy category"
+            }
           />
         </Form.Item>
       </Form>

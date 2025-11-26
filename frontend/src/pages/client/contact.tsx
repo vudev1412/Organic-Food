@@ -1,3 +1,5 @@
+// File path: /src/pages/client/contact.tsx
+
 import {
   EnvironmentOutlined,
   MailOutlined,

@@ -11,4 +11,6 @@ public interface VoucherService {
     ResVoucherDTO handleGetVoucherById(Long id);
     ResVoucherDTO handleUpdateVoucher(Long id, Voucher voucher);
     void handleDeleteVoucher(Long id);
+    ResVoucherDTO handleGetVoucherByCode(String code);
+    List<ResVoucherDTO> handleGetAvailableVouchers();
 }

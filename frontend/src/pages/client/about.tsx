@@ -1,3 +1,5 @@
+// File path: /src/pages/client/about.tsx
+
 import { Link } from "react-router-dom";
 import {
   SafetyCertificateOutlined,

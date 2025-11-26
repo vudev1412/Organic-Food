@@ -23,5 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     """)
     List<Product> findAllWithCertificates();
 
+    List<Product> findByNameStartingWithIgnoreCase(String name, Pageable pageable);
+    List<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
 }

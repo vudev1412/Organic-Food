@@ -1,3 +1,5 @@
+// File path: /src/components/section/dashboard/table.acction.tsx
+
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
 

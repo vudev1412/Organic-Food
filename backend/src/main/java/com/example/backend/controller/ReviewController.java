@@ -2,8 +2,13 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.Review;
 import com.example.backend.domain.response.ResReviewDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.ReviewService;
+import com.example.backend.util.annotation.ApiMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,5 +45,14 @@ public class ReviewController {
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         reviewService.handleDeleteReview(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/product/{productId}")
+    @ApiMessage("fetch reviews by product id")
+    public ResponseEntity<ResultPaginationDTO> getReviewsByProductId(
+            @PathVariable long productId,
+            Pageable pageable
+    ) {
+        // Không cần @RequestParam thủ công nữa, dùng Pageable trực tiếp sẽ chuyên nghiệp hơn
+        return ResponseEntity.ok(reviewService.handleGetReviewsByProductId(productId, pageable));
     }
 }

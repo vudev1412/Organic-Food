@@ -1,3 +1,5 @@
+// File path: /src/pages/admin/employees.tsx
+
 import React from "react";
 import PageCard from "../../components/section/dashboard/page.card";
 import FilterBar from "../../components/section/dashboard/filter.bar";
@@ -19,9 +21,9 @@ interface Employee {
 const Employees = () => {
   return (
     <>
-      <TableEmployee/>
+      <TableEmployee />
     </>
-  )
-}
+  );
+};
 
 export default Employees;

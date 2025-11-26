@@ -1,3 +1,5 @@
+// File path: /src/components/admin/supplier/create.supplier.tsx
+
 import { App, Button, Divider, Form, Input, Modal } from "antd";
 import { useState, useEffect } from "react";
 import { createSupplierAPI } from "../../../service/api";
@@ -78,7 +80,10 @@ const CreateSupplier = ({ open, setOpen, refreshTable }: IProps) => {
           name="phone"
           rules={[
             { required: true, message: "Vui lòng nhập số điện thoại!" },
-            { pattern: /^0\d{9}$/, message: "Số điện thoại không hợp lệ (VD: 0987654321)" },
+            {
+              pattern: /^0\d{9}$/,
+              message: "Số điện thoại không hợp lệ (VD: 0987654321)",
+            },
           ]}
         >
           <Input />

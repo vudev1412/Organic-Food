@@ -48,5 +48,14 @@ public class VoucherController {
         voucherService.handleDeleteVoucher(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/code/{code}")
+    public ResponseEntity<ResVoucherDTO> getVoucherByCode(@PathVariable String code) {
+        return ResponseEntity.ok(voucherService.handleGetVoucherByCode(code));
+    }
+    @GetMapping("/available")
+    public ResponseEntity<List<ResVoucherDTO>> getAvailableVouchers() {
+        List<ResVoucherDTO> vouchers = voucherService.handleGetAvailableVouchers();
+        return ResponseEntity.ok(vouchers);
+    }
 
 }

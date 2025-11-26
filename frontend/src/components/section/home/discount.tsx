@@ -1,3 +1,5 @@
+// File path: /src/components/section/home/discount.tsx
+
 import banner1 from "../../../assets/jpg/h7_banner-1.jpg";
 import banner2 from "../../../assets/jpg/h7_banner-2.jpg";
 const BannerDiscount = () => {

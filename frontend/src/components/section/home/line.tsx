@@ -1,3 +1,5 @@
+// File path: /src/components/section/home/line.tsx
+
 import natural from "../../../assets/svg/natural.svg";
 import organic from "../../../assets/svg/organic.svg";
 import healthy from "../../../assets/svg/healthy.svg";

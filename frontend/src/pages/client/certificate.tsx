@@ -1,3 +1,5 @@
+// File path: /src/pages/client/certificate.tsx
+
 import "./index.scss";
 import cer01 from "../../assets/png/vietgap.png";
 import usda from "../../assets/png/usda.png";

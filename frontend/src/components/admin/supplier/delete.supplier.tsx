@@ -1,12 +1,14 @@
+// File path: /src/components/admin/supplier/delete.supplier.tsx
+
 import { Drawer, Descriptions } from "antd";
 interface IProps {
-   open: boolean;
+  open: boolean;
   setOpen: (v: boolean) => void;
-  
+
   data: ISupplier | null;
   setData: (v: ISupplier | null) => void;
 }
-const DetailSupplier = ({ open, setOpen, data, setData }:IProps) => {
+const DetailSupplier = ({ open, setOpen, data, setData }: IProps) => {
   const formatSupplierId = (entity: ISupplier) => {
     if (!entity?.id) return "Không có ID";
 
@@ -29,7 +31,9 @@ const DetailSupplier = ({ open, setOpen, data, setData }:IProps) => {
       }}
     >
       <Descriptions bordered column={1}>
-        <Descriptions.Item label="Mã">{formatSupplierId(data)}</Descriptions.Item>
+        <Descriptions.Item label="Mã">
+          {formatSupplierId(data)}
+        </Descriptions.Item>
         <Descriptions.Item label="Tên">{data?.name}</Descriptions.Item>
         {/* <Descriptions.Item label="Mã">{data?.code}</Descriptions.Item> */}
         <Descriptions.Item label="Mã số thuế">{data?.taxNo}</Descriptions.Item>

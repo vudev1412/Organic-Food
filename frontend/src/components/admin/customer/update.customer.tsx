@@ -1,3 +1,5 @@
+// File path: /src/components/admin/customer/update.customer.tsx
+
 import { App, Divider, Form, Input, Modal, Switch, type FormProps } from "antd";
 import { useEffect, useState } from "react";
 import { updateUserAPI } from "../../../service/api";

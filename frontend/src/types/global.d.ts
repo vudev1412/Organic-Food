@@ -1,3 +1,6 @@
+// File path: /src/types/global.d.ts
+// Global type definitions for the entire application
+
 export {};
 declare module "*.png";
 declare module "*.jpg";
@@ -305,11 +308,12 @@ declare global {
     description: string;
   }
 
-  // Interface cho Bình luận
   export interface IComment {
+    id: number;
+    userId: number;
     user: string;
-    rating: number;
     content: string;
+    rating: number;
     date?: string;
   }
   export interface IProductImage {
@@ -368,7 +372,8 @@ declare global {
     createdAt: string;
     updatedAt: string;
   }
-  export interface Certificate {
+
+  interface Certificate {
     data: {
       id: number;
       name: string;
@@ -393,10 +398,180 @@ declare global {
     processNote: string;
     orderId: number;
   }
+
    interface IUnit {
     id: number;
     name: string;
-    
+   }
+
+  // Interface hiển thị (Mapping theo JSON response)
+  export interface ICustomerAddress {
+    id: number;
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note?: string; // Có thể null hoặc không có
+    defaultAddress: boolean;
+    user?: IUser; // Có thể chứa thông tin user hoặc không
+  }
+
+  // Interface dùng cho Payload khi Tạo mới (POST)
+  export interface ICreateCustomerAddressDTO {
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note?: string;
+    defaultAddress?: boolean; // Mặc định có thể là false
+    userId?: number; // Tùy logic backend có cần gửi userId hay lấy từ token
+  }
+
+  // Interface dùng cho Payload khi Cập nhật (PATCH/PUT)
+  export interface IUpdateCustomerAddressDTO {
+    receiverName?: string;
+    phone?: string;
+    province?: string;
+    district?: string;
+    ward?: string;
+    street?: string;
+    note?: string;
+    defaultAddress?: boolean;
+  }
+  // src/types/address.ts
+
+  // 1. Kiểu dữ liệu cho Địa chỉ (tương ứng với DB)
+  export interface IAddress {
+    id: number;
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note: string; // hoặc string | null tùy backend
+    defaultAddress: boolean;
+    user?: {
+      id: number;
+    };
+  }
+
+  // 2. Kiểu dữ liệu cho API Hành chính (Tỉnh/Huyện/Xã)
+  export interface IWard {
+    Name: string;
+    Code?: string;
+  }
+
+  export interface IDistrict {
+    Name: string;
+    Wards: IWard[];
+  }
+
+  export interface IProvince {
+    Name: string;
+    Districts: IDistrict[];
+  }
+
+  // 3. Kiểu dữ liệu Form Submit (không có ID và User vì user lấy từ context)
+  export interface IAddressPayload {
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    street: string;
+    note: string;
+    defaultAddress: boolean;
+    user?: { id: number };
+  }
+  export interface IRegisterRequest {
+    name: string;
+    email: string;
+    password: string;
+    phone: string;
+    role?: string; // Optional, backend thường mặc định là USER nếu không truyền
+  }
+
+  export interface IVerifyOtpRequest {
+    email: string;
+    otp: string;
+  }
+  export interface IResetPasswordRequest {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }
+  export interface IResVoucherDTO {
+    id: number;
+    code: string;
+    description?: string;
+    typeVoucher: "PERCENT" | "FIXED_AMOUNT" | "FREESHIP"; // Map từ TypeVoucher enum
+    value: number;
+    maxDiscountAmount: number;
+    minOrderValue: number;
+    startDate: string; // Sử dụng string cho ISO date/Instant
+    endDate: string; // Sử dụng string cho ISO date/Instant
+    quantity: number;
+    usedCount: number;
+    active: boolean;
+  }
+  interface ISpringRawResponse<T> {
+    meta: {
+      page: number;
+      size: number;
+      pages: number;
+      total: number;
+    };
+    result: T[];
+  }
+  export interface IReview {
+    id: number;
+    comment: string;
+    rating: number;
+    createdAt: string;
+    productId: number;
+    userId: number;
+  }
+  export interface IResReviewDTO {
+    id: number;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    userId: number;
+    productId: number;
+    userName: string;
+    userAvatar?: string;
+  }
+
+  /**
+   * DTO để tạo mới Review
+   */
+  export interface ICreateReviewDTO {
+    productId: number;
+    rating: number;
+    comment: string;
+    userId: number;
+  }
+
+  /**
+   * DTO để cập nhật Review
+   */
+  export interface IUpdateReviewDTO {
+    rating: number;
+    comment: string;
+    // Không cần product hay user ở đây vì không ai đổi review từ sản phẩm A sang B
+  }
+  export interface IProductSearchItem {
+    id: number;
+    name: string;
+    price: number;
+    slug: string;
+    image: string;
+    bestPromotion: IBestPromotion | null;
   }
   export interface ICreateCustomerProfile {}
 }

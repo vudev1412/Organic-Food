@@ -1,3 +1,5 @@
+// File path: /src/components/section/dashboard/data.table.tsx
+
 import React from "react";
 
 interface DataTableProps<T> {

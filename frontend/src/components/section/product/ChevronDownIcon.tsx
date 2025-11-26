@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/ChevronDownIcon.tsx
+
 import React from "react";
 
 const ChevronDownIcon = ({ className }: { className: string }) => (

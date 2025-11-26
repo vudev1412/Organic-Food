@@ -1,3 +1,5 @@
+// File path: /src/components/section/product-detail/ProductInfo.tsx
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -215,9 +217,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       </div>
 
       <div>
-        <h3 className="font-semibold text-lg mb-3">
-          Số lượng ({product.unit}):
-        </h3>
+        <h3 className="font-semibold text-lg mb-3">Số lượng:</h3>
         <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden w-fit">
           <button
             onClick={handleDecrease}

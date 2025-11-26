@@ -1,3 +1,5 @@
+// File path: /src/pages/client/home.tsx
+
 import AboutHomePage from "../../components/section/home/about";
 import BestSellerProduct from "../../components/section/home/best.seller.product";
 import BannerDiscount from "../../components/section/home/discount";

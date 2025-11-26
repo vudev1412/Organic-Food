@@ -5,6 +5,7 @@ import com.example.backend.domain.Order;
 import com.example.backend.domain.Return;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqCreateUserDTO;
+import com.example.backend.domain.request.ReqResetPasswordDTO;
 import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
@@ -13,6 +14,9 @@ import com.example.backend.enums.Role;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.repository.*;
 import com.example.backend.service.UserService;
+import com.example.backend.util.error.IdInvalidException;
+import com.example.backend.util.error.InvalidOtpException;
+import com.example.backend.util.error.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -42,7 +47,7 @@ public class UserServiceImpl implements UserService {
     private final CustomerAddressRepository customerAddressRepository;
     private final CustomerProfileRepository customerProfileRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
-
+    private final PasswordEncoder passwordEncoder;
     public boolean isEmailExist(String email){
         return this.userRepository.existsByEmail(email);
     }
@@ -53,18 +58,64 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResUserDTO handleCreateUser(ReqCreateUserDTO user) {
-        User entity = mapper.toUser(user);
+    public ResUserDTO handleCreateUser(ReqCreateUserDTO userDTO) throws IdInvalidException {
 
-        if (entity.getUserRole() == null && user.getRole() != null) {
-            entity.setUserRole(Role.valueOf(user.getRole()));
+        // 1. Tìm xem user đã có trong DB chưa (Thay vì chỉ check exists)
+        User currentUser = userRepository.findByEmail(userDTO.getEmail());
+
+        // 2. XỬ LÝ LOGIC EMAIL TỒN TẠI
+        if (currentUser != null) {
+            // Trường hợp 1: Tài khoản đã tồn tại VÀ Đã xác thực -> Báo lỗi
+            if (currentUser.isEmailVerified()) {
+                throw new IdInvalidException("Email này đã được sử dụng và kích hoạt.");
+            }
+
+            // Trường hợp 2: Tài khoản tồn tại nhưng CHƯA xác thực (User quay lại sửa form)
+            // -> Ta sẽ tái sử dụng (Update) user này thay vì tạo mới hay báo lỗi.
+            // (Code sẽ chạy tiếp xuống dưới để cập nhật thông tin mới)
+        } else {
+            // Trường hợp 3: Chưa có user nào -> Tạo mới hoàn toàn
+            currentUser = new User();
+            currentUser.setEmail(userDTO.getEmail());
         }
 
-        // Save entity
-        User saved = userRepository.save(entity);
+        // 3. KIỂM TRA SỐ ĐIỆN THOẠI (Logic chặt chẽ hơn)
+        User phoneOwner = userRepository.findByPhone(userDTO.getPhone());
+        if (phoneOwner != null) {
+            // Nếu số điện thoại đã có trong DB, nhưng không phải của chính user đang update (ID khác nhau)
+            // Thì mới báo lỗi.
+            if (currentUser.getId() == null || !phoneOwner.getId().equals(currentUser.getId())) {
+                throw new IdInvalidException("Số điện thoại này đã được sử dụng bởi người khác.");
+            }
+        }
 
-        // Nếu muốn trả về DTO
-        // return userMapper.toResUserDTO(saved);
+        // 4. CẬP NHẬT THÔNG TIN (Cho cả User mới hoặc User cũ chưa verify)
+        // Lưu ý: Không dùng mapper.toUser() ở đây vì nó sẽ tạo object mới, làm mất ID của user cũ
+        currentUser.setName(userDTO.getName());
+        currentUser.setPhone(userDTO.getPhone());
+
+        // 5. MÃ HÓA MẬT KHẨU
+        currentUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+
+        // 6. THIẾT LẬP TRẠNG THÁI
+        currentUser.setEmailVerified(false); // Reset lại trạng thái verify để bắt buộc nhập OTP mới
+
+        // 7. Xử lý Role
+        if (userDTO.getRole() != null) {
+            currentUser.setUserRole(Role.valueOf(userDTO.getRole()));
+        } else {
+            // Nếu update mà chưa có role thì set, có rồi thì giữ nguyên hoặc set lại tùy logic
+            if (currentUser.getUserRole() == null) {
+                currentUser.setUserRole(Role.CUSTOMER);
+            }
+        }
+
+        // 8. Lưu xuống DB
+        // Nếu currentUser có ID (cũ) -> Hibernate sẽ UPDATE.
+        // Nếu currentUser không có ID (mới) -> Hibernate sẽ INSERT.
+        User saved = userRepository.save(currentUser);
+
+        // 9. Trả về DTO
         return mapper.toResUserDTO(saved);
     }
 
@@ -253,8 +304,34 @@ public class UserServiceImpl implements UserService {
         rs.setResult(userDTOs); // chỉ cần set DTO, không cần set entity gốc
 
         return rs;
+
     }
 
+    @Override
+    @Transactional //  Thêm cái này để đảm bảo DB và Email đồng bộ
+    public void handleResetPassword(ReqResetPasswordDTO request) throws UserNotFoundException, InvalidOtpException {
+        // 1. Kiểm tra Email
+        User user = userRepository.findByEmail(request.getEmail());
+        if (user == null) {
+            throw new UserNotFoundException("Email không tồn tại trong hệ thống.");
+        }
 
+        // 2. Kiểm tra OTP (SỬA Ở ĐÂY)
+        // Dùng passwordEncoder.matches(rawPassword, encodedPassword)
+        if (user.getEmailOtp() == null ||
+                !passwordEncoder.matches(request.getOtp(), user.getEmailOtp())) {
+            throw new InvalidOtpException("Mã OTP không chính xác.");
+        }
 
+        // 3. Kiểm tra thời hạn
+        if (user.getEmailOtpExpiry() != null && Instant.now().isAfter(user.getEmailOtpExpiry())) {
+            throw new InvalidOtpException("Mã OTP đã hết hạn.");
+        }
+
+        // 4. Update Password & Clear OTP
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setEmailOtp(null);
+        user.setEmailOtpExpiry(null);
+        userRepository.save(user);
+    }
 }

@@ -21,6 +21,7 @@ import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 
+
 interface IProps {
   openViewDetail: boolean;
   setOpenViewDetail: (v: boolean) => void;

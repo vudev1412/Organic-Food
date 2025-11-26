@@ -1,3 +1,5 @@
+// File path: /src/components/common/product.card.tsx
+
 import React from "react";
 import { Link } from "react-router-dom";
 import "./common.scss"; // SCSS đã khai báo .product, .discounted, .original...

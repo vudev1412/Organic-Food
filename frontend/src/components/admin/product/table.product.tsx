@@ -1,3 +1,5 @@
+// File path: /src/components/admin/product/table.product.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {
@@ -30,6 +32,7 @@ const TableProduct = () => {
   const actionRef = useRef<ActionType>(null);
   const [openViewDetail, setOpenViewDetail] = useState(false);
   const [dataViewDetail, setDataViewDetail] = useState<IProduct | null>(null);
+
   const [openModalCreate, setOpenModalCreate] = useState(false);
   const { message, notification } = App.useApp();
   const [openModelUpdate, setOpenModelUpdate] = useState(false);

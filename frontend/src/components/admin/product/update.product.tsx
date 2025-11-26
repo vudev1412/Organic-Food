@@ -1,4 +1,6 @@
+
 import React, { useEffect, useState } from "react";
+
 import {
   Modal,
   Form,
@@ -89,6 +91,7 @@ const UpdateProduct: React.FC<IProps> = ({
       { id: 4, name: "Thực phẩm chế biến" },
       { id: 5, name: "Đồ uống" },
     ]);
+
   }, []);
 
   useEffect(() => {

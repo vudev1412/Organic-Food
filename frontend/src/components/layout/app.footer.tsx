@@ -1,6 +1,8 @@
+// File path: /src/components/layout/app.footer.tsx
+
 import React from "react";
 import { Link } from "react-router-dom";
-// import logo from "../../assets/png/logo.png"; // Đảm bảo đường dẫn logo đúng
+// import logo from "../../assets/png/logo.png"; // Đảm bảo đườ ng dẫn logo đúng
 import {
   FacebookFilled,
   InstagramFilled,

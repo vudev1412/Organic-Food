@@ -1,3 +1,5 @@
+// File path: /src/main.tsx
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -14,8 +16,6 @@ import Profile from "./pages/account/profile";
 import ProfileHeader from "./components/layout/profile/app.header";
 import ProductDetail from "./pages/client/product-detail";
 import Address from "./pages/account/address";
-// import Password from "antd/es/input/Password";
-import ChangePassword from "./pages/account/password";
 import Certificate from "./pages/client/certificate";
 import Contact from "./pages/client/contact";
 import ProductPage from "./pages/client/product";
@@ -38,6 +38,10 @@ import ProtectedRoute from "./components/auth";
 import viVN from "antd/locale/vi_VN";
 import { AppProvider } from "./components/context/app.provider";
 import VnpayPage from "./pages/client/vnpay";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import SalePage from "./pages/client/sale";
+import OrderTrackingPage from "./pages/account/order";
+
 
 const router = createBrowserRouter([
   {
@@ -57,8 +61,16 @@ const router = createBrowserRouter([
         element: <SingIn />,
       },
       {
+        path: "/quen-mat-khau",
+        element: <ForgotPassword />,
+      },
+      {
         path: "/san-pham",
         element: <ProductPage />,
+      },
+      {
+        path: "/khuyen-mai",
+        element: <SalePage />,
       },
       {
         path: "/gioi-thieu",
@@ -106,8 +118,8 @@ const router = createBrowserRouter([
             element: <Address />,
           },
           {
-            path: "mat-khau",
-            element: <ChangePassword />,
+            path: "don-hang",
+            element: <OrderTrackingPage />,
           },
         ],
       },

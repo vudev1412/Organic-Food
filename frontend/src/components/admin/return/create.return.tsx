@@ -1,6 +1,12 @@
+// File path: /src/components/admin/return/create.return.tsx
+
 import { App, Divider, Form, Input, Modal, Select } from "antd";
 import { useEffect, useState } from "react";
-import { createReturnAPI, getCustomersAPI, getOrderAPIByUserId } from "../../../service/api";
+import {
+  createReturnAPI,
+  getCustomersAPI,
+  getOrderAPIByUserId,
+} from "../../../service/api";
 
 const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
   const [form] = Form.useForm();
@@ -59,7 +65,9 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
     const res = await getOrderAPIByUserId(userId);
     if (res?.data?.data) {
       const orderList = res.data.data.map((o: any) => ({
-        label: `${formatORId(o.id)} - ${mapStatus[o.statusOrder] ?? o.statusOrder}`,
+        label: `${formatORId(o.id)} - ${
+          mapStatus[o.statusOrder] ?? o.statusOrder
+        }`,
         value: o.id,
       }));
       setOrders(orderList);
@@ -95,9 +103,12 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
     >
       <Divider />
       <Form layout="vertical" form={form} onFinish={onFinish}>
-
         {/* Step 1 - chọn customer */}
-        <Form.Item label="Khách hàng" name="customerId" rules={[{ required: true }]}>
+        <Form.Item
+          label="Khách hàng"
+          name="customerId"
+          rules={[{ required: true }]}
+        >
           <Select
             placeholder="Chọn khách hàng"
             options={customers}
@@ -108,7 +119,9 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
         {/* Step 2 - chọn order của customer */}
         <Form.Item label="Đơn hàng" name="orderId" rules={[{ required: true }]}>
           <Select
-            placeholder={selectedCustomer ? "Chọn đơn hàng" : "Hãy chọn khách hàng trước"}
+            placeholder={
+              selectedCustomer ? "Chọn đơn hàng" : "Hãy chọn khách hàng trước"
+            }
             options={orders}
             disabled={!selectedCustomer}
           />
@@ -118,7 +131,11 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
           <Input.TextArea rows={3} />
         </Form.Item>
 
-        <Form.Item label="Tình trạng" name="status" rules={[{ required: true }]}>
+        <Form.Item
+          label="Tình trạng"
+          name="status"
+          rules={[{ required: true }]}
+        >
           <Select
             options={[
               { label: "Đang chờ duyệt", value: "PENDING" },
@@ -129,7 +146,11 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
           />
         </Form.Item>
 
-        <Form.Item label="Loại yêu cầu" name="returnType" rules={[{ required: true }]}>
+        <Form.Item
+          label="Loại yêu cầu"
+          name="returnType"
+          rules={[{ required: true }]}
+        >
           <Select
             options={[
               { label: "Hoàn tiền", value: "REFUND" },
@@ -141,7 +162,6 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
         <Form.Item label="Ghi chú quy trình" name="processNote">
           <Input.TextArea rows={3} />
         </Form.Item>
-
       </Form>
     </Modal>
   );

@@ -1,3 +1,5 @@
+// File path: /src/components/admin/return/table.return.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
@@ -39,7 +41,7 @@ const TableReturn = () => {
     }
     setIsDeleting(false);
   };
-   const formatReturnId = (entity: IReturn) => {
+  const formatReturnId = (entity: IReturn) => {
     if (!entity?.id) return "Không có ID";
 
     const id = entity.id;
@@ -51,14 +53,19 @@ const TableReturn = () => {
     return `RT${id}`;
   };
   const formatORId = (orderId: number | undefined) => {
-  if (!orderId) return "Không có ID";
-  if (orderId < 10) return `HD00${orderId}`;
-  if (orderId < 100) return `HD0${orderId}`;
-  return `HD${orderId}`;
-};
+    if (!orderId) return "Không có ID";
+    if (orderId < 10) return `HD00${orderId}`;
+    if (orderId < 100) return `HD0${orderId}`;
+    return `HD${orderId}`;
+  };
 
   const columns: ProColumns<IReturn>[] = [
-    { title: "Mã hoàn trả", dataIndex: "id", hideInSearch: true, render: (_, entity) => <a>{formatReturnId(entity)}</a>, },
+    {
+      title: "Mã hoàn trả",
+      dataIndex: "id",
+      hideInSearch: true,
+      render: (_, entity) => <a>{formatReturnId(entity)}</a>,
+    },
     {
       title: "Mã đơn hàng",
       dataIndex: "orderId",

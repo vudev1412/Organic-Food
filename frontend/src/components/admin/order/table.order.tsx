@@ -1,3 +1,5 @@
+// File path: /src/components/admin/order/table.order.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
@@ -17,11 +19,7 @@ type TSearch = {
   productId?: number;
 };
 
-const TableOrderDetail = ({
-  orders,
-}: {
-  orders: IOrder[];
-}) => {
+const TableOrderDetail = ({ orders }: { orders: IOrder[] }) => {
   const actionRef = useRef<ActionType>(null);
   const [openDetail, setOpenDetail] = useState(false);
   const [dataDetail, setDataDetail] = useState<IOrderDetailFull | null>(null);
@@ -29,7 +27,9 @@ const TableOrderDetail = ({
   const [openUpdate, setOpenUpdate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<IOrderDetailFull | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [productNames, setProductNames] = useState<{ [key: number]: string }>({});
+  const [productNames, setProductNames] = useState<{ [key: number]: string }>(
+    {}
+  );
   const { message, notification } = App.useApp();
 
   const refreshTable = () => actionRef.current?.reload();
@@ -85,8 +85,8 @@ const TableOrderDetail = ({
         return name;
       },
     },
-    { title: "Số lượng", dataIndex: "quantity", align: "right", },
-    { title: "Giá", dataIndex: "price", align: "right", },
+    { title: "Số lượng", dataIndex: "quantity", align: "right" },
+    { title: "Giá", dataIndex: "price", align: "right" },
     {
       title: "Thao tác",
       hideInSearch: true,

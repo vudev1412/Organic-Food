@@ -1,5 +1,6 @@
-import React from "react";
+// File path: /src/components/section/dashboard/page.card.tsx
 
+import React from "react";
 
 interface PageCardProps {
   title: string;

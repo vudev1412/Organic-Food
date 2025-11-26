@@ -1,3 +1,5 @@
+// File path: /src/pages/client/cart.tsx
+
 import { CloseOutlined } from "@ant-design/icons";
 import { useCurrentApp } from "../../components/context/app.context";
 import { useState } from "react";

@@ -1,3 +1,5 @@
+// File path: /src/service/api.ts
+
 import axios from "./axios.customize";
 
 export const loginAPI = (username: string, password: string) => {
@@ -85,15 +87,10 @@ export const getOrderAPI = () => {
   const urlBackend = `/api/v1/orders`;
   return axios.get<IBackendRes<IOrder>>(urlBackend);
 };
-export const getOrderAPIByUserId = (id:number) => {
+export const getOrderAPIByUserId = (id: number) => {
   const urlBackend = `/api/v1/orders/user-order/${id}`;
   return axios.get<IBackendRes<IOrder>>(urlBackend);
 };
-
-
-
-
-
 
 export interface ICreateProductDTO {
   name: string;
@@ -123,7 +120,6 @@ export const deleteProductAPI = (id: number) =>
 
 export const getProductByIdAPI = (id: number) =>
   axios.get(`/api/v1/products/${id}`);
-
 
 export const getCategoriesAPI = (query: string) => {
   return axios.get(`/api/v1/categories?${query}`);
@@ -156,9 +152,10 @@ export const deleteSupplierAPI = (id: number) => {
   return axios.delete(`/api/v1/suppliers/${id}`);
 };
 
-
 export const getReturnsAPI = (query: string) => {
-  return axios.get<IBackendRes<IModelPaginate<IReturn>>>(`/api/v1/returns?${query}`);
+  return axios.get<IBackendRes<IModelPaginate<IReturn>>>(
+    `/api/v1/returns?${query}`
+  );
 };
 
 // Lấy chi tiết 1 return theo id
@@ -184,8 +181,6 @@ export const getAllCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories?size=1000";
   return axios.get<IBackendRes<IModelPaginate<ICategory>>>(urlBackend);
 };
-
-
 
 export const getParentCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories/parents";
@@ -233,8 +228,27 @@ export const getProductCertificateByIdProduct = (id: number) => {
 };
 
 export const searchProductsAPI = (query: string) => {
-  const urlBackend = `/api/v1/products?${query}`;
-  return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+  const urlBackend = `/api/v1/products/search?query=${encodeURIComponent(
+    query
+  )}&size=10`;
+
+  return axios.get<IBackendRes<any[]>>(urlBackend).then((res) => {
+    if (!res.data.data) return [];
+
+    const mapped: IProductSearchItem[] = res.data.data.map((item) => {
+      const p = item.product;
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        slug: p.slug,
+        image: p.image,
+        bestPromotion: item.bestPromotion || null,
+      };
+    });
+
+    return mapped;
+  });
 };
 
 export const getSubImgByProductId = (id: number) => {
@@ -279,7 +293,6 @@ export const clearCartAPI = () => {
   return axios.delete<IBackendRes<void>>(urlBackend);
 };
 
-
 export const getCertificate = () => {
   const urlBackend = `/api/v1/certificates`;
   return axios.get<IBackendRes<ICertificate>>(urlBackend);
@@ -290,7 +303,9 @@ export const getUnits = () => {
 };
 
 export const getOrderDetailsFullAPI = (query: string) => {
-  return axios.get<IBackendRes<IModelPaginate<IOrderDetailFull>>>(`/api/v1/order-details?${query}`);
+  return axios.get<IBackendRes<IModelPaginate<IOrderDetailFull>>>(
+    `/api/v1/order-details?${query}`
+  );
 };
 
 export const deleteOrderDetailAPI = (orderId: number, productId: number) => {
@@ -300,13 +315,19 @@ export const createOrderDetailAPI = (data: ICreateOrderDetailDTO) => {
   return axios.post(`/api/v1/order-details`, data);
 };
 
-export const updateOrderDetailAPI = (orderId: number, productId: number, data: ICreateOrderDetailDTO) => {
+export const updateOrderDetailAPI = (
+  orderId: number,
+  productId: number,
+  data: ICreateOrderDetailDTO
+) => {
   return axios.patch(`/api/v1/order-details/${orderId}/${productId}`, data);
 };
-export const createCustomerProfileAPI  = (data: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createCustomerProfileAPI = (data: any) => {
   return axios.post(`/api/v1/customer/profile`, data);
 };
-export const createEmployeeProfileAPI  = (data: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createEmployeeProfileAPI = (data: any) => {
   return axios.post(`/api/v1/employee/profile`, data);
 };
 
@@ -316,6 +337,7 @@ const uploadFile = (file: File, folder: string) => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("folder", folder);
+
 
   return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/files`, formData, {
     headers: {
@@ -350,3 +372,202 @@ export const uploadMultipleFilesAPI = (files: File[], folder: string = "products
   });
 };
 
+// =============================================================================
+//  CUSTOMER ADDRESS API
+// =============================================================================
+
+/**
+ * Lấy danh sách tất cả địa chỉ (Thường dùng cho Admin)
+ */
+export const getAllAddressesAPI = () => {
+  const urlBackend = "/api/v1/address";
+  return axios.get<IBackendRes<ICustomerAddress[]>>(urlBackend);
+};
+
+/**
+ * Lấy chi tiết một địa chỉ theo ID
+ */
+export const getAddressByIdAPI = (id: number) => {
+  const urlBackend = `/api/v1/address/${id}`;
+  return axios.get<IBackendRes<ICustomerAddress>>(urlBackend);
+};
+
+/**
+ * Lấy danh sách địa chỉ của một User cụ thể
+ */
+export const getAddressesByUserIdAPI = (userId: number) => {
+  const urlBackend = `/api/v1/address/user/${userId}`;
+  return axios.get<IBackendRes<ICustomerAddress[]>>(urlBackend);
+};
+
+/**
+ * Tạo mới một địa chỉ
+ * @param data DTO tạo mới
+ */
+export const createAddressAPI = (data: ICreateCustomerAddressDTO) => {
+  const urlBackend = "/api/v1/address";
+  return axios.post<IBackendRes<ICustomerAddress>>(urlBackend, data);
+};
+
+/**
+ * Cập nhật một địa chỉ
+ * @param id ID của địa chỉ cần sửa
+ * @param data DTO cập nhật (chỉ gửi các trường cần sửa)
+ */
+export const updateAddressAPI = (
+  id: number,
+  data: IUpdateCustomerAddressDTO
+) => {
+  const urlBackend = `/api/v1/address/${id}`;
+  // Controller Java dùng @PatchMapping
+  return axios.patch<IBackendRes<ICustomerAddress>>(urlBackend, data);
+};
+
+/**
+ * Xóa một địa chỉ
+ * @param id ID của địa chỉ cần xóa
+ */
+export const deleteAddressAPI = (id: number) => {
+  const urlBackend = `/api/v1/address/${id}`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
+};
+
+/**
+ * Cập nhật địa chỉ mặc định
+ * @param id ID của địa chỉ muốn đặt làm mặc định
+ */
+export const setDefaultAddressAPI = (id: number) => {
+  const urlBackend = `/api/v1/address/${id}/default`;
+  return axios.patch<IBackendRes<ICustomerAddress>>(urlBackend);
+};
+
+/**
+ * API Đăng ký tài khoản mới
+ * Endpoint: /api/v1/auth/register
+ * Lưu ý: API này sẽ tạo user và tự động kích hoạt gửi OTP trong backend
+ */
+export const registerUserAPI = (data: IRegisterRequest) => {
+  const urlBackend = "/api/v1/auth/register";
+  return axios.post<IBackendRes<void>>(urlBackend, data);
+};
+
+/**
+ * API Xác thực OTP (Dùng sau khi đăng ký xong)
+ * Endpoint: /api/v1/auth/verify-otp
+ */
+export const verifyOtpAPI = (data: IVerifyOtpRequest) => {
+  const urlBackend = "/api/v1/auth/verify-otp";
+  return axios.post<IBackendRes<void>>(urlBackend, data);
+};
+
+/**
+ * API Gửi lại mã OTP (Dùng khi hết hạn hoặc user không nhận được mail)
+ * Endpoint: /api/v1/auth/send-otp
+ */
+export const resendOtpAPI = (email: string) => {
+  const urlBackend = "/api/v1/auth/send-otp";
+  return axios.post<IBackendRes<void>>(urlBackend, { email });
+};
+
+/**
+ * API Gửi yêu cầu lấy lại mật khẩu (Gửi OTP qua email)
+ * Endpoint: /api/v1/auth/forgot-password
+ */
+export const sendForgotPasswordOtpAPI = (email: string) => {
+  const urlBackend = "/api/v1/auth/forgot-password";
+  return axios.post<IBackendRes<string>>(urlBackend, { email });
+};
+
+/**
+ * API Đặt lại mật khẩu mới (Kèm OTP xác thực)
+ * Endpoint: /api/v1/auth/reset-password
+ */
+export const resetPasswordAPI = (data: IResetPasswordRequest) => {
+  const urlBackend = "/api/v1/auth/reset-password";
+  return axios.post<IBackendRes<string>>(urlBackend, data);
+};
+/**
+ * Lấy danh sách các voucher còn sử dụng được.
+ * Endpoint: GET /api/v1/vouchers/available
+ */
+export const getAvailableVouchersAPI = () => {
+  const urlBackend = "/api/v1/vouchers/available";
+  // Giả định backend trả về IBackendRes chứa List<IResVoucherDTO>
+  return axios.get<IBackendRes<IResVoucherDTO[]>>(urlBackend);
+};
+// =============================================================================
+//  REVIEW API
+// =============================================================================
+
+/**
+ * Lấy danh sách reviews theo productId (có phân trang)
+ * @param productId ID của sản phẩm
+ * @param page Trang hiện tại (mặc định 0)
+ * @param size Số lượng items mỗi trang (mặc định 10)
+ */
+export const getReviewsByProductIdAPI = (
+  productId: number,
+  page: number = 0,
+  size: number = 10
+) => {
+  const urlBackend = `/api/v1/reviews/product/${productId}?page=${page}&size=${size}`;
+  return axios.get<IBackendRes<ISpringRawResponse<IResReviewDTO>>>(urlBackend);
+};
+
+/**
+ * Lấy chi tiết một review theo ID
+ * @param id ID của review
+ */
+export const getReviewByIdAPI = (id: number) => {
+  const urlBackend = `/api/v1/reviews/${id}`;
+  return axios.get<IBackendRes<IResReviewDTO>>(urlBackend);
+};
+
+/**
+ * Tạo mới một review
+ * @param data DTO tạo review
+ *
+ * Lưu ý:
+ * - Backend sẽ kiểm tra user đã review sản phẩm này chưa
+ * - Backend sẽ kiểm tra user đã mua, thanh toán và nhận hàng thành công chưa
+ * - Nếu không đủ điều kiện sẽ throw RuntimeException
+ */
+export const createReviewAPI = (data: ICreateReviewDTO) => {
+  const urlBackend = "/api/v1/reviews";
+
+  // --- BƯỚC MAPPING: Chuyển từ phẳng (Flat) sang lồng nhau (Nested) ---
+  const payload = {
+    rating: data.rating,
+    comment: data.comment,
+    product: {
+      id: data.productId,
+    },
+    user: {
+      id: data.userId,
+    },
+  };
+
+  // Gửi payload (đã lồng nhau) đi thay vì data gốc
+  return axios.post<IBackendRes<IResReviewDTO>>(urlBackend, payload);
+};
+/**
+ * Cập nhật một review
+ * @param id ID của review cần sửa
+ * @param data DTO cập nhật (chỉ gửi các trường cần sửa)
+ */
+export const updateReviewAPI = (id: number, data: IUpdateReviewDTO) => {
+  // Nối id vào URL: /api/v1/reviews/10
+  const urlBackend = `/api/v1/reviews/${id}`;
+
+  // Dùng axios.patch tương ứng với @PatchMapping của backend
+  return axios.patch<IBackendRes<IResReviewDTO>>(urlBackend, data);
+};
+
+/**
+ * Xóa một review
+ * @param id ID của review cần xóa
+ */
+export const deleteReviewAPI = (id: number) => {
+  const urlBackend = `/api/v1/reviews/${id}`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
+};

@@ -1,3 +1,5 @@
+// File path: /src/components/section/product-detail/StarRating.tsx
+
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar as faStarSolid } from "@fortawesome/free-solid-svg-icons";
