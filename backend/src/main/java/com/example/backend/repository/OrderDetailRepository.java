@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderDetailKey>, JpaSpecificationExecutor<OrderDetail> {
     @Transactional
     void deleteAllByOrder(Order order);
@@ -31,4 +33,6 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderD
             @Param("invoiceStatus") StatusInvoice invoiceStatus,
             @Param("orderStatus") StatusOrder orderStatus // Thêm tham số này
     );
+    List<OrderDetail> findByOrderId(Long orderId);
+
 }

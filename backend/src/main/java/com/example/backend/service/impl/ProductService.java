@@ -4,14 +4,10 @@ import com.example.backend.domain.*;
 import com.example.backend.domain.key.ProductCertificateKey;
 import com.example.backend.domain.request.ReqProductCertificateDTO;
 import com.example.backend.domain.request.ReqProductDTO;
-import com.example.backend.domain.response.ResGetAllProductDTO;
-import com.example.backend.domain.response.ResultPaginationDTO;
-import com.example.backend.domain.response.ResProductDTO;
+import com.example.backend.domain.response.*;
 import com.example.backend.mapper.ProductMapper;
 import com.example.backend.repository.*;
 import lombok.RequiredArgsConstructor;
-import com.example.backend.domain.response.BestPromotionDTO;
-import com.example.backend.domain.response.ResProductSearchDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import com.example.backend.mapper.ProductMapper;
@@ -43,7 +39,8 @@ public class ProductService {
     private final CertificateRepository certificateRepository;
     private final ProductCertificateRepository productCertificateRepository;
     private final PromotionDetailService promotionDetailService;
-   
+    private final ReceiptDetailRepository receiptDetailRepository;
+
 
 
 
@@ -358,4 +355,95 @@ public class ProductService {
 
         return dtoBuilder.build();
     }
+    public List<ResProductDTO> handleGetNewestImportedProducts(int size) {
+        List<Product> products = receiptDetailRepository
+                .findNewestImportedProducts(PageRequest.of(0, size));
+
+        // loại trùng sản phẩm nếu 1 sản phẩm nhập nhiều lần
+        return products.stream()
+                .distinct()
+                .map(ResProductDTO::new)
+                .toList();
+    }
+    public List<ResProductWithPromotionDTO> handleGetBestPromotionProducts(int size) {
+        List<Object[]> rows = productRepository.findProductsWithPromotion(PageRequest.of(0, size));
+
+        return rows.stream().map(row -> {
+            Product p = (Product) row[0];
+            Promotion promo = (Promotion) row[1];
+            Double discount = (Double) row[2];
+            Instant startDate = (Instant) row[3];
+            Instant endDate = (Instant) row[4];
+
+            ResProductWithPromotionDTO dto = new ResProductWithPromotionDTO();
+
+            // Thông tin sản phẩm
+            dto.setId(p.getId());
+            dto.setName(p.getName());
+            dto.setUnit(p.getUnit() != null ? p.getUnit().getName() : null);
+            dto.setOriginalPrice(p.getPrice());
+            dto.setFinalPrice(p.getPrice() - discount);
+            dto.setOrigin_address(p.getOrigin_address());
+            dto.setDescription(p.getDescription());
+            dto.setRating_avg(p.getRating_avg());
+            dto.setQuantity(p.getQuantity());
+            dto.setSlug(p.getSlug());
+            dto.setImage(p.getImage());
+            dto.setActive(p.isActive());
+            dto.setCategoryId(p.getCategory() != null ? p.getCategory().getId() : null);
+
+            // Thông tin khuyến mãi
+            dto.setPromotionId(promo.getId());
+            dto.setPromotionName(promo.getName());
+            dto.setPromotionType(promo.getType().name());
+            dto.setPromotionValue(promo.getValue());
+            dto.setPromotionStartDate(startDate);
+            dto.setPromotionEndDate(endDate);
+
+            return dto;
+        }).toList();
+    }
+    public List<ResNewArrivalWithPromotionDTO> handleGetNewestImportedProductsWithPromotion(int size) {
+        List<Object[]> rows = receiptDetailRepository.findNewestProductsWithPromotion(PageRequest.of(0, size));
+
+        return rows.stream().map(row -> {
+            Product p = (Product) row[0];
+            Promotion promo = (Promotion) row[1];
+            Double discount = row[2] != null ? (Double) row[2] : 0;
+            Instant startDate = (Instant) row[3];
+            Instant endDate = (Instant) row[4];
+
+            ResNewArrivalWithPromotionDTO dto = new ResNewArrivalWithPromotionDTO();
+
+            dto.setId(p.getId());
+            dto.setName(p.getName());
+            dto.setUnit(p.getUnit() != null ? p.getUnit().getName() : null);
+            dto.setOriginalPrice(p.getPrice());
+            dto.setFinalPrice(p.getPrice() - discount);
+            dto.setOrigin_address(p.getOrigin_address());
+            dto.setDescription(p.getDescription());
+            dto.setRating_avg(p.getRating_avg());
+            dto.setQuantity(p.getQuantity());
+            dto.setSlug(p.getSlug());
+            dto.setImage(p.getImage());
+            dto.setActive(p.isActive());
+            dto.setCategoryId(p.getCategory() != null ? p.getCategory().getId() : null);
+
+            if (promo != null) {
+                dto.setPromotionId(promo.getId());
+                dto.setPromotionName(promo.getName());
+                dto.setPromotionType(promo.getType().name());
+                dto.setPromotionValue(promo.getValue());
+                dto.setPromotionStartDate(startDate);
+                dto.setPromotionEndDate(endDate);
+            }
+
+            return dto;
+        }).toList();
+    }
+
+
+
+
+
 }

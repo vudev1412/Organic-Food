@@ -53,4 +53,16 @@ public class OrderDetailController {
         orderDetailService.deleteOrderDetail(orderId, productId);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/order-details/order/{orderId}")
+    public ResponseEntity<List<ResOrderDetailDTO>> getOrderDetailsByOrderId(
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(orderDetailService.getOrderDetailsByOrderId(orderId));
+    }
+
+    // nếu muốn trả full DTO:
+    @GetMapping("/order-details/order/{orderId}/full")
+    public ResponseEntity<List<ResOrderDetailFullDTO>> getOrderDetailsByOrderIdFull(
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(orderDetailService.getOrderDetailsByOrderIdFull(orderId));
+    }
 }
