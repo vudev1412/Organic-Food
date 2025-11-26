@@ -1,4 +1,4 @@
-// File path: /src/components/admin/product/create.product.tsx
+// src/components/admin/product/create.product.tsx
 
 import {
   Button,
@@ -25,6 +25,7 @@ import {
   UploadOutlined,
   SafetyCertificateOutlined,
   DeleteOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 
 import { useEffect, useState } from "react";
@@ -37,6 +38,7 @@ import {
   getUnits,
   uploadFileProductAPI,
   uploadFileCertsAPI,
+  getAllCategoriesAPI,
 } from "../../../service/api";
 
 import type { UploadFile } from "antd/lib";
@@ -53,7 +55,7 @@ interface IProps {
 
 interface CertificateForm {
   key: number;
-  certificateId: number;
+  certificateId?: number;
   certNo?: string;
   certDate?: dayjs.Dayjs;
   fileList: UploadFile[];
@@ -67,51 +69,42 @@ const CreateProductCertificate = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const [certificates, setCertificates] = useState<
-    { id: number; name: string }[]
-  >([]);
-
+  const [certificates, setCertificates] = useState<{ id: number; name: string }[]>([]);
   const [units, setUnits] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 
   // Upload states
   const [mainImageFileList, setMainImageFileList] = useState<UploadFile[]>([]);
   const [subImageFileList, setSubImageFileList] = useState<UploadFile[]>([]);
 
-  // Dynamic certificate list
+  // Chứng chỉ động
   const [certList, setCertList] = useState<CertificateForm[]>([
     {
       key: Date.now(),
-      certificateId: undefined as any,
+      certificateId: undefined,
       certNo: "",
       certDate: undefined,
       fileList: [],
     },
   ]);
 
-  // Load certificates
+  // Load data
   useEffect(() => {
-    const fetchCertificates = async () => {
+    const fetchData = async () => {
       try {
-        const res = await getCertificate();
-        if (res?.data?.data) setCertificates(res.data.data);
+        const [certRes, unitRes, catRes] = await Promise.all([
+          getCertificate(),
+          getUnits(),
+          getAllCategoriesAPI(),
+        ]);
+        if (certRes?.data?.data) setCertificates(certRes.data.data);
+        if (unitRes?.data?.data) setUnits(unitRes.data.data);
+        if (catRes?.data?.data?.result) setCategories(catRes.data.data.result);
       } catch (error) {
-        console.error("Lỗi tải danh sách chứng chỉ:", error);
+        console.error("Lỗi tải dữ liệu:", error);
       }
     };
-    fetchCertificates();
-  }, []);
-
-  // Load units
-  useEffect(() => {
-    const fetchUnits = async () => {
-      try {
-        const res = await getUnits();
-        if (res?.data?.data) setUnits(res.data.data);
-      } catch (error) {
-        console.error("Lỗi tải đơn vị:", error);
-      }
-    };
-    fetchUnits();
+    fetchData();
   }, []);
 
   const addCertificate = () => {
@@ -119,7 +112,7 @@ const CreateProductCertificate = ({
       ...certList,
       {
         key: Date.now(),
-        certificateId: undefined as any,
+        certificateId: undefined,
         certNo: "",
         certDate: undefined,
         fileList: [],
@@ -131,58 +124,36 @@ const CreateProductCertificate = ({
     setCertList(certList.filter((item) => item.key !== key));
   };
 
-  // Upload file lên server
   const uploadFileToServer = async (file: RcFile, folder: string) => {
-    try {
-      const uploadAPI = folder.includes("certs")
-        ? uploadFileCertsAPI
-        : uploadFileProductAPI;
-
-      const response = await uploadAPI(file, folder);
-      return response.data;
-    } catch (error) {
-      console.error("Upload failed:", error);
-      throw error;
-    }
+    const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI;
+    const res = await api(file, folder);
+    return res.data;
   };
 
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
-      // Upload main image
+      // Upload ảnh chính
       let mainImageUrl = null;
       if (mainImageFileList[0]?.originFileObj) {
-        mainImageUrl = await uploadFileToServer(
-          mainImageFileList[0].originFileObj as RcFile,
-          "products"
-        );
+        mainImageUrl = await uploadFileToServer(mainImageFileList[0].originFileObj as RcFile, "products");
       }
 
-      // Upload sub images
+      // Upload ảnh phụ
       const productImagesUrls = await Promise.all(
-        subImageFileList.map(async (file) => {
-          if (file.originFileObj) {
-            const url = await uploadFileToServer(
-              file.originFileObj as RcFile,
-              "products"
-            );
-            return url;
-          }
-          return null;
-        })
+        subImageFileList
+          .filter((f) => f.originFileObj)
+          .map((f) => uploadFileToServer(f.originFileObj as RcFile, "products"))
       );
 
-      // Certificates
+      // Upload chứng chỉ
       const certificatesPayload = await Promise.all(
         certList
           .filter((c) => c.certificateId && c.fileList.length > 0)
           .map(async (c) => {
             let imageUrl = null;
             if (c.fileList[0]?.originFileObj) {
-              imageUrl = await uploadFileToServer(
-                c.fileList[0].originFileObj as RcFile,
-                "certs"
-              );
+              imageUrl = await uploadFileToServer(c.fileList[0].originFileObj as RcFile, "certs");
             }
             return {
               certificateId: c.certificateId,
@@ -193,29 +164,38 @@ const CreateProductCertificate = ({
           })
       );
 
-      // Final payload
+      // Xử lý mô tả chi tiết từ Form.List → JSON string
+      const rawSections = values.descriptionSections || [];
+      const validSections = rawSections
+        .map((section: any) => ({
+          heading: section.heading?.trim(),
+          items: (section.items || [])
+            .filter((item: any) => item.subtitle?.trim() && item.text?.trim())
+            .map((item: any) => ({
+              subtitle: item.subtitle.trim(),
+              text: item.text.trim(),
+            })),
+        }))
+        .filter((section: any) => section.heading && section.items.length > 0);
+
       const payload = {
         ...values,
         mfgDate: values.mfgDate?.toISOString(),
         expDate: values.expDate?.toISOString(),
         image: mainImageUrl,
-        productImages: productImagesUrls.filter(Boolean),
+        productImages: productImagesUrls,
         certificates: certificatesPayload,
+        description: validSections.length > 0 ? JSON.stringify(validSections) : null,
       };
 
       const res = await createProductAPI(payload);
-
       if (res?.data) {
         message.success("Tạo sản phẩm thành công!");
         form.resetFields();
         setMainImageFileList([]);
         setSubImageFileList([]);
         setCertList([
-          {
-            key: Date.now(),
-            certificateId: undefined as any,
-            fileList: [],
-          },
+          { key: Date.now(), certificateId: undefined, fileList: [] },
         ]);
         setOpenModalCreate(false);
         refreshTable();
@@ -231,8 +211,8 @@ const CreateProductCertificate = ({
     <Modal
       title={
         <Space>
-          <SafetyCertificateOutlined style={{ color: "#1890ff", fontSize: 22 }} />
-          <Title level={4} style={{ margin: 0 }}>
+          <SafetyCertificateOutlined style={{ color: "#1677ff", fontSize: 24 }} />
+          <Title level={4} style={{ margin: 0, color: "#1a1a1a" }}>
             Tạo sản phẩm mới
           </Title>
         </Space>
@@ -244,25 +224,16 @@ const CreateProductCertificate = ({
         setMainImageFileList([]);
         setSubImageFileList([]);
         setCertList([
-          {
-            key: Date.now(),
-            certificateId: undefined as any,
-            fileList: [],
-          },
+          { key: Date.now(), certificateId: undefined, fileList: [] },
         ]);
       }}
       footer={null}
-      width={1000}
+      width={1200}
       destroyOnClose
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        initialValues={{ active: true }}
-      >
+      <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ active: true }}>
+        {/* THÔNG TIN SẢN PHẨM */}
         <Divider orientation="left">Thông tin sản phẩm</Divider>
-
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
@@ -275,15 +246,12 @@ const CreateProductCertificate = ({
                   <InputNumber
                     min={0}
                     style={{ width: "100%" }}
-                    formatter={(v) =>
-                      `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
+                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     parser={(v) => v!.replace(/\$\s?|(,*)/g, "") as any}
                     size="large"
                   />
                 </Form.Item>
               </Col>
-
               <Col span={12}>
                 <Form.Item name="quantity" label="Số lượng tồn" rules={[{ required: true }]}>
                   <InputNumber min={0} style={{ width: "100%" }} size="large" />
@@ -303,14 +271,15 @@ const CreateProductCertificate = ({
                   </Select>
                 </Form.Item>
               </Col>
-
               <Col span={12}>
-                <Form.Item
-                  name="categoryId"
-                  label="Danh mục ID"
-                  rules={[{ required: true }]}
-                >
-                  <InputNumber min={1} style={{ width: "100%" }} size="large" />
+                <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true }]}>
+                  <Select size="large" placeholder="Chọn danh mục">
+                    {categories.map((c) => (
+                      <Select.Option key={c.id} value={c.id}>
+                        {c.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>
@@ -319,20 +288,15 @@ const CreateProductCertificate = ({
               <Input size="large" />
             </Form.Item>
 
-            <Form.Item name="description" label="Mô tả">
-              <TextArea rows={3} />
-            </Form.Item>
-
             <Row gutter={12}>
               <Col span={12}>
                 <Form.Item name="mfgDate" label="Ngày sản xuất">
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" size="large" />
                 </Form.Item>
               </Col>
-
               <Col span={12}>
                 <Form.Item name="expDate" label="Hạn sử dụng">
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" size="large" />
                 </Form.Item>
               </Col>
             </Row>
@@ -342,16 +306,14 @@ const CreateProductCertificate = ({
             </Form.Item>
           </Col>
 
-          {/* IMAGE UPLOAD */}
+          {/* ẢNH */}
           <Col span={12}>
             <Form.Item label="Ảnh đại diện (bắt buộc)" required>
               <ImgCrop rotationSlider quality={0.8}>
                 <Upload
                   listType="picture-card"
                   fileList={mainImageFileList}
-                  onChange={({ fileList }) =>
-                    setMainImageFileList(fileList.slice(-1))
-                  }
+                  onChange={({ fileList }) => setMainImageFileList(fileList.slice(-1))}
                   beforeUpload={() => false}
                   maxCount={1}
                 >
@@ -385,7 +347,105 @@ const CreateProductCertificate = ({
           </Col>
         </Row>
 
-        {/* CERTIFICATES */}
+        {/* MÔ TẢ CHI TIẾT - MỚI THÊM */}
+        <Divider orientation="left">
+          <AppstoreOutlined style={{ color: "#722ed1" }} /> Mô tả chi tiết sản phẩm
+        </Divider>
+
+        <Form.List name="descriptionSections">
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name }, idx) => (
+                <Card
+                  key={key}
+                  style={{ marginBottom: 24, borderRadius: 16, boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}
+                  title={
+                    <Space align="center">
+                      <span style={{ fontSize: 18, fontWeight: 600 }}>Phần {idx + 1}</span>
+                      {fields.length > 1 && (
+                        <Popconfirm title="Xóa phần này?" onConfirm={() => remove(name)}>
+                          <Button danger size="small" icon={<DeleteOutlined />} />
+                        </Popconfirm>
+                      )}
+                    </Space>
+                  }
+                  extra={
+                    <Button
+                      type="link"
+                      onClick={() => add({ subtitle: "", text: "" }, `${name}.items`)}
+                      style={{ color: "#1677ff" }}
+                    >
+                      + Thêm mục con
+                    </Button>
+                  }
+                >
+                  <Form.Item
+                    {...{ name: [name, "heading"] }}
+                    rules={[{ required: true, message: "Nhập tiêu đề phần" }]}
+                  >
+                    <Input size="large" placeholder="VD: Điểm nổi bật của sản phẩm" style={{ fontWeight: 600 }} />
+                  </Form.Item>
+
+                  <Form.List name={[name, "items"]}>
+                    {(subFields, { add: addItem, remove: removeItem }) => (
+                      <Space direction="vertical" size={16} style={{ width: "100%", marginTop: 16 }}>
+                        {subFields.map((subField, subIdx) => (
+                          <Card
+                            key={subField.key}
+                            size="small"
+                            style={{ background: "#f8faff", borderRadius: 12 }}
+                            extra={
+                              subFields.length > 1 && (
+                                <Button danger type="text" size="small" icon={<DeleteOutlined />} onClick={() => removeItem(subIdx)} />
+                              )
+                            }
+                          >
+                            <Row gutter={16}>
+                              <Col span={8}>
+                                <Form.Item
+                                  {...subField}
+                                  name={[subField.name, "subtitle"]}
+                                  rules={[{ required: true, message: "Nhập tiêu đề nhỏ" }]}
+                                >
+                                  <Input placeholder="VD: Nguồn gốc Organic" />
+                                </Form.Item>
+                              </Col>
+                              <Col span={16}>
+                                <Form.Item
+                                  {...subField}
+                                  name={[subField.name, "text"]}
+                                  rules={[{ required: true, message: "Nhập nội dung" }]}
+                                >
+                                  <TextArea rows={3} placeholder="Mô tả chi tiết..." />
+                                </Form.Item>
+                              </Col>
+                            </Row>
+                          </Card>
+                        ))}
+                        <Button type="dashed" onClick={() => addItem()} block icon={<PlusOutlined />}>
+                          Thêm mục con
+                        </Button>
+                      </Space>
+                    )}
+                  </Form.List>
+                </Card>
+              ))}
+
+              <Button
+                type="primary"
+                ghost
+                onClick={() => add({ heading: "", items: [{ subtitle: "", text: "" }] })}
+                block
+                icon={<PlusOutlined />}
+                style={{ height: 48 }}
+              >
+                Thêm phần mô tả mới
+              </Button>
+            </>
+          )}
+        </Form.List>
+
+        {/* CHỨNG CHỈ */}
         <Divider orientation="left">
           <SafetyCertificateOutlined /> Chứng nhận sản phẩm
         </Divider>
@@ -395,19 +455,10 @@ const CreateProductCertificate = ({
             <Card
               key={cert.key}
               size="small"
-              title={
-                <span>
-                  <SafetyCertificateOutlined /> Chứng chỉ {index + 1}
-                </span>
-              }
+              title={<span><SafetyCertificateOutlined /> Chứng chỉ {index + 1}</span>}
               extra={
                 certList.length > 1 && (
-                  <Popconfirm
-                    title="Xóa chứng chỉ này?"
-                    onConfirm={() => removeCertificate(cert.key)}
-                    okText="Xóa"
-                    cancelText="Hủy"
-                  >
+                  <Popconfirm title="Xóa chứng chỉ này?" onConfirm={() => removeCertificate(cert.key)}>
                     <Button danger size="small" icon={<DeleteOutlined />} />
                   </Popconfirm>
                 )
@@ -434,7 +485,6 @@ const CreateProductCertificate = ({
                     ))}
                   </Select>
                 </Col>
-
                 <Col span={6}>
                   <Input
                     size="large"
@@ -447,7 +497,6 @@ const CreateProductCertificate = ({
                     }}
                   />
                 </Col>
-
                 <Col span={5}>
                   <DatePicker
                     size="large"
@@ -462,7 +511,6 @@ const CreateProductCertificate = ({
                     }}
                   />
                 </Col>
-
                 <Col span={5}>
                   <Upload
                     listType="picture-card"
@@ -489,25 +537,23 @@ const CreateProductCertificate = ({
           ))}
         </Space>
 
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          <Button
-            type="dashed"
-            onClick={addCertificate}
-            icon={<PlusOutlined />}
-            style={{ width: "100%" }}
-          >
-            Thêm chứng chỉ khác
-          </Button>
-        </div>
+       <div style={{ marginTop: 16, textAlign: "center" }}>
+  <Button
+    type="dashed"
+    onClick={addCertificate}
+    icon={<PlusOutlined />}
+    style={{ width: "100%" }}   
+  >
+    Thêm chứng chỉ khác
+  </Button>
+</div>
 
         <Divider />
 
-        {/* SUBMIT */}
         <div style={{ textAlign: "right" }}>
           <Button onClick={() => setOpenModalCreate(false)} style={{ marginRight: 12 }}>
             Hủy
           </Button>
-
           <Button type="primary" htmlType="submit" loading={loading} size="large">
             Tạo sản phẩm
           </Button>
