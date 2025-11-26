@@ -105,7 +105,7 @@ const DetailProduct = ({
             {subImages.length > 0 && (
               <div style={{ flex: 1 }}>
                 <Text strong style={{ display: "block", marginBottom: 16, fontSize: 16, color: "#1a1a1a" }}>
-                  Ảnh phụ ({subImages.length})
+Ảnh phụ ({subImages.length})
                 </Text>
                 <Space wrap size={14}>
                   {subImages.map((url, index) => (
@@ -173,7 +173,7 @@ const DetailProduct = ({
             </Descriptions.Item>
 
             <Descriptions.Item label={<Text strong style={{ color: "#595959" }}>Xuất xứ</Text>}>
-              <Text style={{ color: "#262626" }}>
+<Text style={{ color: "#262626" }}>
                 {dataViewDetail.origin_address || "Chưa cập nhật"}
               </Text>
             </Descriptions.Item>
@@ -241,7 +241,7 @@ const DetailProduct = ({
                                   lineHeight: 1.9,
                                   fontSize: 15.2,
                                   color: "#262626",
-                                  boxShadow: "inset 0 2px 10px rgba(22,119,255,0.08)",
+boxShadow: "inset 0 2px 10px rgba(22,119,255,0.08)",
                                   border: "1px solid #d6e4ff",
                                 }}
                               >
@@ -318,8 +318,7 @@ const DetailProduct = ({
               <SafetyCertificateOutlined style={{ marginRight: 10 }} />
               Chứng chỉ & Giấy tờ ({dataViewDetail.certificates.length})
             </Title>
-
-            <Space direction="vertical" size={20} style={{ width: "100%" }}>
+<Space direction="vertical" size={20} style={{ width: "100%" }}>
               {dataViewDetail.certificates.map((c) => {
                 const certImage =
                   (c.image && `${import.meta.env.VITE_BACKEND_CERS_IMAGE_URL}${c.image}`) ||

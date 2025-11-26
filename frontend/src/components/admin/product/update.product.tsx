@@ -129,7 +129,7 @@ const UpdateProduct: React.FC<IProps> = ({
       price: dataUpdate.price,
       quantity: dataUpdate.quantity,
       unitId: dataUpdate.unit,
-      categoryId: dataUpdate.categoryId,
+categoryId: dataUpdate.categoryId,
       origin_address: dataUpdate.origin_address,
       description: dataUpdate.description,
       active: dataUpdate.active,
@@ -231,7 +231,7 @@ const UpdateProduct: React.FC<IProps> = ({
       let mainImageUrl: string | null = null;
 
       if (mainImageList[0]?.originFileObj) {
-        mainImageUrl = await uploadFileToServer(
+mainImageUrl = await uploadFileToServer(
           mainImageList[0].originFileObj,
           "images/products"
         );
@@ -331,7 +331,7 @@ const UpdateProduct: React.FC<IProps> = ({
         form.resetFields();
         setMainImageList([]);
         setSubImageList([]);
-        setCertList([]);
+setCertList([]);
       }}
       footer={null}
       width={1100}
@@ -422,8 +422,7 @@ const UpdateProduct: React.FC<IProps> = ({
             <Form.Item name="origin_address" label="Xuất xứ">
               <Input size="large" />
             </Form.Item>
-
-            <Form.Item name="description" label="Mô tả sản phẩm">
+<Form.Item name="description" label="Mô tả sản phẩm">
               <TextArea rows={3} />
             </Form.Item>
 
@@ -509,7 +508,7 @@ const UpdateProduct: React.FC<IProps> = ({
                 )
               }
             >
-              <Row gutter={16}>
+<Row gutter={16}>
                 <Col span={8}>
                   <Select
                     placeholder="Chọn loại chứng chỉ"
@@ -590,7 +589,7 @@ const UpdateProduct: React.FC<IProps> = ({
                     {cert.fileList.length === 0 && (
                       <div style={{ fontSize: 12 }}>
                         <UploadOutlined />
-                        <div style={{ marginTop: 4 }}>Ảnh/PDF</div>
+<div style={{ marginTop: 4 }}>Ảnh/PDF</div>
                       </div>
                     )}
                   </Upload>

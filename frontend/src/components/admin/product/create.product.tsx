@@ -125,7 +125,7 @@ const CreateProductCertificate = ({
   };
 
   const uploadFileToServer = async (file: RcFile, folder: string) => {
-    const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI;
+const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI;
     const res = await api(file, folder);
     return res.data;
   };
@@ -212,7 +212,7 @@ const CreateProductCertificate = ({
       title={
         <Space>
           <SafetyCertificateOutlined style={{ color: "#1677ff", fontSize: 24 }} />
-          <Title level={4} style={{ margin: 0, color: "#1a1a1a" }}>
+<Title level={4} style={{ margin: 0, color: "#1a1a1a" }}>
             Tạo sản phẩm mới
           </Title>
         </Space>
@@ -290,7 +290,7 @@ const CreateProductCertificate = ({
 
             <Row gutter={12}>
               <Col span={12}>
-                <Form.Item name="mfgDate" label="Ngày sản xuất">
+<Form.Item name="mfgDate" label="Ngày sản xuất">
                   <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" size="large" />
                 </Form.Item>
               </Col>
@@ -364,7 +364,7 @@ const CreateProductCertificate = ({
                       <span style={{ fontSize: 18, fontWeight: 600 }}>Phần {idx + 1}</span>
                       {fields.length > 1 && (
                         <Popconfirm title="Xóa phần này?" onConfirm={() => remove(name)}>
-                          <Button danger size="small" icon={<DeleteOutlined />} />
+<Button danger size="small" icon={<DeleteOutlined />} />
                         </Popconfirm>
                       )}
                     </Space>
@@ -424,7 +424,7 @@ const CreateProductCertificate = ({
                         ))}
                         <Button type="dashed" onClick={() => addItem()} block icon={<PlusOutlined />}>
                           Thêm mục con
-                        </Button>
+</Button>
                       </Space>
                     )}
                   </Form.List>
@@ -507,7 +507,7 @@ const CreateProductCertificate = ({
                     onChange={(date) => {
                       const updated = [...certList];
                       updated[index].certDate = date;
-                      setCertList(updated);
+setCertList(updated);
                     }}
                   />
                 </Col>
