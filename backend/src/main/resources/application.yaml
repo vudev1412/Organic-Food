@@ -41,14 +41,15 @@ spring:
 
 lhv:
   jwt:
-    base64-secret: CiltUWryHlnBnlOhZdcn6y496q6H6xF3OQeCP0pij6SJiWgkcrAAYMv32HnYTtktDDdpGT64oDrb1zvQpN7z9A==
-    access-token-validity-in-seconds: 86400       # 1 ng�y
-    refresh-token-validity-in-seconds: 864000     # 10 ng�y
+    base64-secret: "CiltUWryHlnBnlOhZdcn6y496q6H6xF3OQeCP0pij6SJiWgkcrAAYMv32HnYTtktDDdpGT64oDrb1zvQpN7z9A=="
+    access-token-validity-in-seconds: 86400
+    refresh-token-validity-in-seconds: 864000
 
 lehienvu:
   upload-file:
     base-path: "file:../upload/"
     base-uri: "D:/KhoaLuan/E-Commerce_Web/upload/images/"
+
 payment:
   vnPay:
     url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
