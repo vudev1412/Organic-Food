@@ -1,3 +1,5 @@
+// File path: /src/utils/productHelper.ts
+
 // --- 1. Định nghĩa Types ---
 export interface DescriptionItem {
   subtitle: string;
@@ -29,7 +31,7 @@ export const parseProductDescription = (
     let jsonData;
     try {
       jsonData = JSON.parse(description);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       // Nếu lỗi, thử thay thế dấu nháy đơn ' thành nháy kép " để cứu vãn
       // CHỈ DÙNG KHI BẠN KHÔNG THỂ SỬA DATABASE

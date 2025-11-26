@@ -1,3 +1,5 @@
+// File path: /src/components/section/dashboard/pagination.tsx
+
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

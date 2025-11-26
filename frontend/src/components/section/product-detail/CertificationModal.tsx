@@ -1,7 +1,13 @@
+// File path: /src/components/section/product-detail/CertificationModal.tsx
+
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faCertificate, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "react-router-dom"; 
+import {
+  faTimes,
+  faCertificate,
+  faInfoCircle,
+} from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
 // Giao diện đã được thêm vào đây để Modal hoạt động độc lập hơn
 interface ICertification {
@@ -47,7 +53,7 @@ const CertificationModal: React.FC<CertificationModalProps> = ({
           <FontAwesomeIcon icon={faCertificate} className="text-4xl" />
           {certification.name}
         </h3>
-        
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -55,10 +61,9 @@ const CertificationModal: React.FC<CertificationModalProps> = ({
         >
           <FontAwesomeIcon icon={faTimes} size="lg" />
         </button>
-        
+
         {/* Scrollable Body */}
         <div className="flex flex-col overflow-y-auto pr-2">
-            
           <p className="text-gray-700 leading-relaxed mb-6 italic text-sm">
             {certification.description}
           </p>
@@ -73,9 +78,10 @@ const CertificationModal: React.FC<CertificationModalProps> = ({
               src={certification.imageUrl}
               alt={certification.name}
               // w-auto h-auto và min-w-full cho phép ảnh hiển thị kích thước tự nhiên và tạo scrollbar
-              className="w-auto h-auto min-w-full object-contain" 
+              className="w-auto h-auto min-w-full object-contain"
               onError={(e) => {
-                e.currentTarget.src = "https://placehold.co/800x600/f87171/ffffff?text=Loi+Tai+Anh+Chi+Tiet";
+                e.currentTarget.src =
+                  "https://placehold.co/800x600/f87171/ffffff?text=Loi+Tai+Anh+Chi+Tiet";
                 e.currentTarget.alt = `Lỗi tải ảnh chi tiết ${certification.name}`;
                 e.currentTarget.className = "w-full h-auto object-contain"; // Trở về w-full nếu lỗi
               }}
@@ -90,7 +96,6 @@ const CertificationModal: React.FC<CertificationModalProps> = ({
             <FontAwesomeIcon icon={faInfoCircle} />
             Tìm hiểu thêm về các Chứng chỉ của chúng tôi
           </button>
-          
         </div>
       </div>
     </div>

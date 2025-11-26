@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/Pagination.tsx
+
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

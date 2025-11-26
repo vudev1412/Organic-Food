@@ -1,3 +1,5 @@
+// File path: /src/components/admin/supplier/table.supplier.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
@@ -100,14 +102,11 @@ const TableSupplier = () => {
 
   return (
     <>
-      <h2>
-        Tìm kiếm
-      </h2>
+      <h2>Tìm kiếm</h2>
       <ProTable<ISupplier, TSearch>
         columns={columns}
         actionRef={actionRef}
         cardBordered
-        
         request={async (params, sort, filter) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
 

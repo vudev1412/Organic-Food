@@ -1,3 +1,5 @@
+// File path: /src/components/section/product-detail/ProductDescription.tsx
+
 import React, { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLeaf, faQuoteLeft } from "@fortawesome/free-solid-svg-icons";

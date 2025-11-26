@@ -1,4 +1,16 @@
-import { App, Button, Divider, Form, Input, InputNumber, Modal, DatePicker, type FormProps } from "antd";
+// File path: /src/components/admin/employee/create.employee.tsx
+
+import {
+  App,
+  Button,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  DatePicker,
+  type FormProps,
+} from "antd";
 import { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { createUserAPI, createEmployeeProfileAPI } from "../../../service/api";
@@ -19,7 +31,11 @@ type FieldType = {
   address: string;
 };
 
-const CreateEmployee = ({ openModelCreate, setOpenModalCreate, refreshTable }: IProps) => {
+const CreateEmployee = ({
+  openModelCreate,
+  setOpenModalCreate,
+  refreshTable,
+}: IProps) => {
   const [isSubmit, setIsSubmit] = useState(false);
   const { message, notification } = App.useApp();
   const [form] = Form.useForm<FieldType>();
@@ -129,10 +145,7 @@ const CreateEmployee = ({ openModelCreate, setOpenModalCreate, refreshTable }: I
           name="hireDate"
           rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu!" }]}
         >
-          <DatePicker
-            style={{ width: "100%" }}
-            format="YYYY-MM-DD"
-          />
+          <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
         </Form.Item>
 
         <Form.Item

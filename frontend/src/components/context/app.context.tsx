@@ -1,4 +1,4 @@
-// 📁 src/contexts/app.context.tsx
+// File path: /src/components/context/app.context.tsx
 
 import { createContext, useContext } from "react";
 
@@ -15,7 +15,7 @@ export interface IAppContext {
   removeFromCart: (productId: number) => void;
   updateCartQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
-  
+
   // ✅ THÊM TOAST VÀO CONTEXT
   showToast: (
     message: string,
@@ -48,6 +48,6 @@ export const useCurrentApp = () => {
 export const useToast = () => {
   const ctx = useCurrentApp();
   return {
-    showToast: ctx.showToast,
+  showToast: ctx.showToast,
   };
 };

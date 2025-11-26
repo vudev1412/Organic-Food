@@ -1,3 +1,5 @@
+// File path: /src/components/admin/supplier/update.supplier.tsx
+
 import { App, Divider, Form, Input, Modal } from "antd";
 import { useEffect, useState } from "react";
 import { updateSupplierAPI } from "../../../service/api";

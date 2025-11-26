@@ -1,3 +1,5 @@
+// File path: /src/components/admin/product/update.product.tsx
+
 import {
   App,
   Divider,
@@ -89,9 +91,9 @@ const UpdateProductCertificate = (props: IProps) => {
       try {
         const res = await getCertificate();
         if (res && res.data && Array.isArray(res.data.data)) {
-          setCertificates(res.data.data); 
+          setCertificates(res.data.data);
         } else {
-          setCertificates([]); 
+          setCertificates([]);
         }
       } catch (error) {
         console.error("Lỗi lấy danh sách certificate:", error);

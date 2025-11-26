@@ -1,3 +1,5 @@
+// File path: /src/components/section/product-detail/ProductSubInfo.tsx
+
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {

@@ -1,3 +1,5 @@
+// File path: /src/pages/client/product.tsx
+
 import React, { useEffect, useState } from "react";
 import ProductLeft from "../../components/section/product/product.left";
 import ProductRight from "../../components/section/product/product.right";
@@ -12,13 +14,15 @@ interface ICategory {
 }
 
 const ProductPage = () => {
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null
+  );
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
-  
+
   // State lưu danh sách danh mục để tra cứu ID từ Slug
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
 
-  const { slug } = useParams(); 
+  const { slug } = useParams();
 
   // 1. Gọi API lấy danh sách danh mục khi vào trang
   useEffect(() => {

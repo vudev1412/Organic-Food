@@ -1,3 +1,5 @@
+// File path: /src/components/admin/order/update.order.tsx
+
 import { App, Divider, Form, InputNumber, Modal, Select } from "antd";
 import { useEffect, useState } from "react";
 import { updateOrderDetailAPI } from "../../../service/api";
@@ -12,7 +14,15 @@ interface IProps {
   orders: IOrder[];
 }
 
-const UpdateOrderDetail = ({ open, setOpen, refreshTable, dataUpdate, setDataUpdate, products, orders }: IProps) => {
+const UpdateOrderDetail = ({
+  open,
+  setOpen,
+  refreshTable,
+  dataUpdate,
+  setDataUpdate,
+  products,
+  orders,
+}: IProps) => {
   const [form] = Form.useForm();
   const [isSubmit, setIsSubmit] = useState(false);
   const { message, notification } = App.useApp();
@@ -27,7 +37,11 @@ const UpdateOrderDetail = ({ open, setOpen, refreshTable, dataUpdate, setDataUpd
     if (!dataUpdate) return;
     setIsSubmit(true);
     try {
-      await updateOrderDetailAPI(dataUpdate.orderId, dataUpdate.productId, values);
+      await updateOrderDetailAPI(
+        dataUpdate.orderId,
+        dataUpdate.productId,
+        values
+      );
       message.success("Cập nhật thành công");
       form.resetFields();
       setOpen(false);
@@ -55,7 +69,11 @@ const UpdateOrderDetail = ({ open, setOpen, refreshTable, dataUpdate, setDataUpd
     >
       <Divider />
       <Form layout="vertical" form={form} onFinish={onFinish}>
-        <Form.Item label="Quantity" name="quantity" rules={[{ required: true }]}>
+        <Form.Item
+          label="Quantity"
+          name="quantity"
+          rules={[{ required: true }]}
+        >
           <InputNumber min={1} style={{ width: "100%" }} />
         </Form.Item>
         <Form.Item label="Price" name="price" rules={[{ required: true }]}>

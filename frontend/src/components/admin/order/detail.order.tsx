@@ -1,3 +1,5 @@
+// File path: /src/components/admin/order/detail.order.tsx
+
 import { Drawer, Descriptions } from "antd";
 
 interface IProps {
@@ -46,17 +48,31 @@ const DetailOrderDetail = ({ open, setOpen, data, setData }: IProps) => {
       }}
     >
       <Descriptions bordered column={1}>
-        <Descriptions.Item label="Mã đơn hàng">{formatORId(data)}</Descriptions.Item>
-        <Descriptions.Item label="Mã sản phẩm">{formatPRDId(data)}</Descriptions.Item>
+        <Descriptions.Item label="Mã đơn hàng">
+          {formatORId(data)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Mã sản phẩm">
+          {formatPRDId(data)}
+        </Descriptions.Item>
         <Descriptions.Item label="Số lượng">{data?.quantity}</Descriptions.Item>
         <Descriptions.Item label="Giá">{data?.price}</Descriptions.Item>
 
-        <Descriptions.Item label="Tên sản phẩm">{data?.product?.name}</Descriptions.Item>
-        <Descriptions.Item label="Đơn vị">{data?.product?.unit}</Descriptions.Item>
-        <Descriptions.Item label="Giá sản phẩm">{data?.product?.price}</Descriptions.Item>
+        <Descriptions.Item label="Tên sản phẩm">
+          {data?.product?.name}
+        </Descriptions.Item>
+        <Descriptions.Item label="Đơn vị">
+          {data?.product?.unit}
+        </Descriptions.Item>
+        <Descriptions.Item label="Giá sản phẩm">
+          {data?.product?.price}
+        </Descriptions.Item>
 
-        <Descriptions.Item label="Ghi chú đơn hàng">{data?.order?.note}</Descriptions.Item>
-        <Descriptions.Item label="Địa chỉ giao hàng">{data?.order?.shipAddress}</Descriptions.Item>
+        <Descriptions.Item label="Ghi chú đơn hàng">
+          {data?.order?.note}
+        </Descriptions.Item>
+        <Descriptions.Item label="Địa chỉ giao hàng">
+          {data?.order?.shipAddress}
+        </Descriptions.Item>
         <Descriptions.Item label="Trạng thái đơn hàng">
           {data?.order?.statusOrder ? statusMap[data.order.statusOrder] : ""}
         </Descriptions.Item>

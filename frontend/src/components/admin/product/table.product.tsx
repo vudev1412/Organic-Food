@@ -1,3 +1,5 @@
+// File path: /src/components/admin/product/table.product.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
@@ -19,7 +21,9 @@ const TableProduct = () => {
   const [isDelete, setIsDelete] = useState(false);
 
   const [openViewDetail, setOpenViewDetail] = useState(false);
-  const [dataViewDetail, setDataViewDetail] = useState<IProductTable | null>(null);
+  const [dataViewDetail, setDataViewDetail] = useState<IProductTable | null>(
+    null
+  );
 
   const [openModalCreate, setOpenModalCreate] = useState(false);
   const [openModalUpdate, setOpenModalUpdate] = useState(false);

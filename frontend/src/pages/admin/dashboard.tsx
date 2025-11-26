@@ -1,3 +1,5 @@
+// File path: /src/pages/admin/dashboard.tsx
+
 import React from "react";
 import { Users, DollarSign, ShoppingCart } from "lucide-react";
 import {

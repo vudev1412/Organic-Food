@@ -1,3 +1,5 @@
+// File path: /src/pages/auth/signup.tsx
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -475,7 +477,7 @@ const SignUp = () => {
                         ? `Gửi lại sau ${countdown}s`
                         : "Gửi lại"}
                     </button>
-                  </p>  
+                  </p>
 
                   {/* ✅ NÚT QUAY LẠI ĐÃ ĐƯỢC CHỈNH SỬA */}
                   <button

@@ -1,3 +1,5 @@
+// File path: /src/utils/phone.helper.ts
+
 export const isValidVietnamPhone = (phone: string): boolean => {
   const cleaned = phone.replace(/\s+/g, "");
 

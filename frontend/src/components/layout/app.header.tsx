@@ -1,3 +1,5 @@
+// File path: /src/components/layout/app.header.tsx
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/png/logo.png";
@@ -243,7 +245,7 @@ const AppHeader = () => {
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-40 w-full">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* 1. MOBILE HAMBURGER BUTTON */}
         <div className="lg:hidden flex items-center">
           <Button
@@ -261,7 +263,7 @@ const AppHeader = () => {
         </div>
 
         {/* 3. DESKTOP NAVIGATION */}
-        <nav className="hidden lg:flex items-center gap-8 ml-8 h-full">
+        <nav className="hidden lg:flex items-center gap-3 ml-8 h-full">
           {/* --- MEGA MENU FULL WIDTH (UPDATED) --- */}
           <div
             className="h-full flex items-center static"
@@ -271,7 +273,7 @@ const AppHeader = () => {
             <Link
               to="/san-pham"
               onClick={closeMegaMenu}
-              className="!text-gray-700 font-medium text-[15px] hover:!text-green-600 transition-colors h-full flex items-center px-4 relative z-20"
+              className="!text-gray-700 font-medium text-[15px] hover:!text-green-600 transition-colors h-full flex items-center  relative z-20"
             >
               Sản phẩm
               <svg

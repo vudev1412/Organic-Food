@@ -1,3 +1,5 @@
+// File path: /src/layout.tsx
+
 import { Outlet } from "react-router-dom";
 import AppHeader from "./components/layout/app.header";
 import AppFooter from "./components/layout/app.footer";

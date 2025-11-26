@@ -20,7 +20,7 @@ public class Review {
     private int rating;
 
     private Instant createdAt;
-
+    private Instant updatedAt;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;

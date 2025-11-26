@@ -1,9 +1,11 @@
+// File path: /src/components/section/product/ProductGrid.tsx
+
 import ProductCardWithPromotion from "../../common/product.card.with.promotion";
 // import { IProductCard } from "../../../types";
 
 interface ProductGridProps {
   products: IProductCard[];
-  onAddToCart: (product: IProductCard,discount?: IDiscount) => void;
+  onAddToCart: (product: IProductCard, discount?: IDiscount) => void;
 }
 
 const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {

@@ -1,3 +1,5 @@
+// File path: /src/components/auth/admin.tsx
+
 import PacmanLoader from "react-spinners/PacmanLoader";
 import { useCurrentApp } from "../context/app.context";
 import { Button, Result } from "antd";
@@ -51,7 +53,6 @@ const ProtectedRouter = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-
   if (!isAuthenticated) {
     return (
       <Result
@@ -66,7 +67,6 @@ const ProtectedRouter = ({ children }: { children: React.ReactNode }) => {
       />
     );
   }
-
 
   if (user?.role !== "ADMIN") {
     return (

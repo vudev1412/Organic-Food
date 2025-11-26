@@ -1,3 +1,5 @@
+// File path: /src/components/admin/product/detail.product.tsx
+
 import { Avatar, Descriptions, Drawer, Image } from "antd";
 import { AppstoreOutlined } from "@ant-design/icons";
 

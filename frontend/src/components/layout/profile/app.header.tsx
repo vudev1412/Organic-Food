@@ -1,3 +1,5 @@
+// File path: /src/components/layout/profile/app.header.tsx
+
 import { Menu, type MenuProps } from "antd";
 import { Outlet, useNavigate } from "react-router-dom";
 import "./layout.profile.scss";

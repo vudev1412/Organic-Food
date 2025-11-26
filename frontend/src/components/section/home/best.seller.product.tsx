@@ -1,3 +1,5 @@
+// File path: /src/components/section/home/best.seller.product.tsx
+
 import "./home.scss";
 import cachua from "../../../assets/jpg/ca-chua-beef-huu-co.jpg";
 import ProductCard from "../../common/product.card";

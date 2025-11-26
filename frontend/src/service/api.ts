@@ -1,3 +1,5 @@
+// File path: /src/service/api.ts
+
 import axios from "./axios.customize";
 
 export const loginAPI = (username: string, password: string) => {
@@ -443,4 +445,80 @@ export const getAvailableVouchersAPI = () => {
   const urlBackend = "/api/v1/vouchers/available";
   // Giả định backend trả về IBackendRes chứa List<IResVoucherDTO>
   return axios.get<IBackendRes<IResVoucherDTO[]>>(urlBackend);
+};
+// =============================================================================
+//  REVIEW API
+// =============================================================================
+
+/**
+ * Lấy danh sách reviews theo productId (có phân trang)
+ * @param productId ID của sản phẩm
+ * @param page Trang hiện tại (mặc định 0)
+ * @param size Số lượng items mỗi trang (mặc định 10)
+ */
+export const getReviewsByProductIdAPI = (
+  productId: number,
+  page: number = 0,
+  size: number = 10
+) => {
+  const urlBackend = `/api/v1/reviews/product/${productId}?page=${page}&size=${size}`;
+  return axios.get<IBackendRes<ISpringRawResponse<IResReviewDTO>>>(urlBackend);
+};
+
+/**
+ * Lấy chi tiết một review theo ID
+ * @param id ID của review
+ */
+export const getReviewByIdAPI = (id: number) => {
+  const urlBackend = `/api/v1/reviews/${id}`;
+  return axios.get<IBackendRes<IResReviewDTO>>(urlBackend);
+};
+
+/**
+ * Tạo mới một review
+ * @param data DTO tạo review
+ *
+ * Lưu ý:
+ * - Backend sẽ kiểm tra user đã review sản phẩm này chưa
+ * - Backend sẽ kiểm tra user đã mua, thanh toán và nhận hàng thành công chưa
+ * - Nếu không đủ điều kiện sẽ throw RuntimeException
+ */
+export const createReviewAPI = (data: ICreateReviewDTO) => {
+  const urlBackend = "/api/v1/reviews";
+
+  // --- BƯỚC MAPPING: Chuyển từ phẳng (Flat) sang lồng nhau (Nested) ---
+  const payload = {
+    rating: data.rating,
+    comment: data.comment,
+    product: {
+      id: data.productId,
+    },
+    user: {
+      id: data.userId,
+    },
+  };
+
+  // Gửi payload (đã lồng nhau) đi thay vì data gốc
+  return axios.post<IBackendRes<IResReviewDTO>>(urlBackend, payload);
+};
+/**
+ * Cập nhật một review
+ * @param id ID của review cần sửa
+ * @param data DTO cập nhật (chỉ gửi các trường cần sửa)
+ */
+export const updateReviewAPI = (id: number, data: IUpdateReviewDTO) => {
+  // Nối id vào URL: /api/v1/reviews/10
+  const urlBackend = `/api/v1/reviews/${id}`;
+
+  // Dùng axios.patch tương ứng với @PatchMapping của backend
+  return axios.patch<IBackendRes<IResReviewDTO>>(urlBackend, data);
+};
+
+/**
+ * Xóa một review
+ * @param id ID của review cần xóa
+ */
+export const deleteReviewAPI = (id: number) => {
+  const urlBackend = `/api/v1/reviews/${id}`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
 };

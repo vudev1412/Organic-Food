@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/ProductListHeader.tsx
+
 import React from "react";
 import SortDropdown from "./SortDropdown";
 import { formatCategoryName } from "../../../utils/format";

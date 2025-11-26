@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/SortDropdown.tsx
+
 import React, { useState } from "react";
 import ChevronDownIcon from "./ChevronDownIcon"; // Giả sử icon ở cùng thư mục
 

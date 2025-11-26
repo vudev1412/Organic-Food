@@ -1,3 +1,5 @@
+// File path: /src/components/common/cart.dropdown.tsx
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "../../utils/format";
@@ -85,7 +87,9 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             <i className="fas fa-shopping-basket text-base sm:text-lg text-emerald-600"></i>
           </div>
           <div>
-            <h3 className="font-bold text-base sm:text-lg leading-tight">Giỏ Hàng</h3>
+            <h3 className="font-bold text-base sm:text-lg leading-tight">
+              Giỏ Hàng
+            </h3>
             <p className="text-emerald-100 text-[11px] sm:text-xs font-medium">
               {cartItems.length} sản phẩm tươi ngon
             </p>
@@ -270,7 +274,11 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                               onChange={(e) => {
                                 const val = parseInt(e.target.value);
                                 // Chỉ cập nhật khi giá trị hợp lệ
-                                if (!isNaN(val) && val >= 1 && val <= maxStock) {
+                                if (
+                                  !isNaN(val) &&
+                                  val >= 1 &&
+                                  val <= maxStock
+                                ) {
                                   handleUpdateSafe(item.id, val);
                                 }
                               }}

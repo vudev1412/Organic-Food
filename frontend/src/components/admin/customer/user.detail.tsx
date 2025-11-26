@@ -1,3 +1,5 @@
+// File path: /src/components/admin/customer/user.detail.tsx
+
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar, Descriptions, Drawer } from "antd";
 
@@ -39,11 +41,11 @@ const DetailUser = (props: IProps) => {
           <Descriptions.Item label="Số điện thoại" span={2}>
             {dataViewDetail?.user.phone}
           </Descriptions.Item>
-           <Descriptions.Item label="Thành viên" span={2}>
+          <Descriptions.Item label="Thành viên" span={2}>
             {dataViewDetail?.member === true ? "Đã đăng ký" : "Chưa đăng ký"}
           </Descriptions.Item>
           <Descriptions.Item label="Avatar" span={2}>
-            <Avatar icon={<UserOutlined />}/>
+            <Avatar icon={<UserOutlined />} />
           </Descriptions.Item>
         </Descriptions>
         ;

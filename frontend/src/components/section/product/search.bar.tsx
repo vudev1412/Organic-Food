@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/search.bar.tsx
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProductsAPI } from "../../../service/api";

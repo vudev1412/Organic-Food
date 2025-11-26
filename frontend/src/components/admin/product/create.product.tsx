@@ -1,3 +1,5 @@
+// File path: /src/components/admin/product/create.product.tsx
+
 import {
   App,
   Button,

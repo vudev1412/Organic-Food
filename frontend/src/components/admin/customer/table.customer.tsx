@@ -1,3 +1,5 @@
+// File path: /src/components/admin/customer/table.customer.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {

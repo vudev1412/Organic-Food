@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/QuantityModal.tsx
+
 import { useState, useEffect } from "react";
 
 interface QuantityModalProps {

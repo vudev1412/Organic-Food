@@ -1,3 +1,5 @@
+// File path: /src/layout_admin.tsx
+
 import { Outlet } from "react-router-dom";
 import AdminHeader from "./components/layout_admin/admin.header";
 import AdminFooter from "./components/layout_admin/admin.footer";

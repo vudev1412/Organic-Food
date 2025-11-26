@@ -1,4 +1,5 @@
-// components/common/ConfirmModal.tsx
+// File path: /src/components/common/ConfirmModal.tsx
+
 import React from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
 

@@ -1,3 +1,5 @@
+// File path: /src/components/admin/return/detail.return.tsx
+
 import { Drawer, Descriptions } from "antd";
 import dayjs from "dayjs";
 
@@ -43,21 +45,35 @@ const DetailReturn = ({ open, setOpen, data, setData }: IProps) => {
       }}
     >
       <Descriptions bordered column={1}>
-        <Descriptions.Item label="Mã hoàn trả">{formatReturnId(data)}</Descriptions.Item>
-        <Descriptions.Item label="Mã hóa đơn">{formatORId(data?.orderId)}</Descriptions.Item>
-        <Descriptions.Item label="Khách hàng">{data?.customerName}</Descriptions.Item>
+        <Descriptions.Item label="Mã hoàn trả">
+          {formatReturnId(data)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Mã hóa đơn">
+          {formatORId(data?.orderId)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Khách hàng">
+          {data?.customerName}
+        </Descriptions.Item>
 
         <Descriptions.Item label="Lý do" span={2}>
           {data?.reason}
         </Descriptions.Item>
 
         <Descriptions.Item label="Tình trạng">{data?.status}</Descriptions.Item>
-        <Descriptions.Item label="Loại yêu cầu">{data?.returnType}</Descriptions.Item>
+        <Descriptions.Item label="Loại yêu cầu">
+          {data?.returnType}
+        </Descriptions.Item>
 
-        <Descriptions.Item label="Tạo lúc">{formatDate(data?.createdAt)}</Descriptions.Item>
-        <Descriptions.Item label="Đã được phê duyệt tại">{formatDate(data?.approvedAt)}</Descriptions.Item>
+        <Descriptions.Item label="Tạo lúc">
+          {formatDate(data?.createdAt)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Đã được phê duyệt tại">
+          {formatDate(data?.approvedAt)}
+        </Descriptions.Item>
 
-        <Descriptions.Item label="Được xử lý bởi">{data?.processedBy}</Descriptions.Item>
+        <Descriptions.Item label="Được xử lý bởi">
+          {data?.processedBy}
+        </Descriptions.Item>
 
         <Descriptions.Item label="Ghi chú quy trình" span={2}>
           {data?.processNote}

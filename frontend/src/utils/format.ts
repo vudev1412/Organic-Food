@@ -1,3 +1,5 @@
+// File path: /src/utils/format.ts
+
 export const formatCurrency = (amount: number | undefined | null): string => {
   // Nếu giá trị không hợp lệ, trả về 0 đ
   if (amount === undefined || amount === null || isNaN(amount)) {
@@ -7,7 +9,7 @@ export const formatCurrency = (amount: number | undefined | null): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-    minimumFractionDigits: 0, 
+    minimumFractionDigits: 0,
   }).format(amount);
 };
 

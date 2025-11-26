@@ -1,3 +1,5 @@
+// File path: /src/components/section/dashboard/status.badge.tsx
+
 import React from "react";
 
 interface StatusBadgeProps {

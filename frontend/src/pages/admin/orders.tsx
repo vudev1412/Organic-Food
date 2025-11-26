@@ -1,12 +1,12 @@
+// File path: /src/pages/admin/orders.tsx
+
 import TableOrderDetail from "../../components/admin/order/table.order";
-
-
 
 const CustomerOrders = () => {
   return (
     <>
-      <TableOrderDetail/>
+      <TableOrderDetail />
     </>
-  )
-}
+  );
+};
 export default CustomerOrders;

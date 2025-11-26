@@ -1,3 +1,5 @@
+// File path: /src/components/admin/customer/create.customer.tsx
+
 import { App, Divider, Form, Input, Modal, type FormProps } from "antd";
 import { useState } from "react";
 import { createCustomerProfileAPI, createUserAPI } from "../../../service/api";
@@ -28,11 +30,19 @@ const CreateUser = (props: IProps) => {
 
     try {
       // 1️⃣ Tạo user trước
-      const resUser = await createUserAPI(name, email, password, phone, "CUSTOMER");
+      const resUser = await createUserAPI(
+        name,
+        email,
+        password,
+        phone,
+        "CUSTOMER"
+      );
 
       if (resUser?.data?.success === false || !resUser?.data?.data?.id) {
         const backendError =
-          resUser?.error || resUser?.data?.message || "Tạo user thất bại từ backend";
+          resUser?.error ||
+          resUser?.data?.message ||
+          "Tạo user thất bại từ backend";
 
         // Focus vào field theo keyword trong thông báo
         if (backendError.includes("số điện thoại")) {
@@ -41,12 +51,18 @@ const CreateUser = (props: IProps) => {
         } else if (backendError.includes("email")) {
           form.setFields([{ name: "email", errors: [backendError] }]);
           form.scrollToField("email", { behavior: "smooth", block: "center" });
-        } else if (backendError.includes("họ tên") || backendError.includes("tên")) {
+        } else if (
+          backendError.includes("họ tên") ||
+          backendError.includes("tên")
+        ) {
           form.setFields([{ name: "name", errors: [backendError] }]);
           form.scrollToField("name", { behavior: "smooth", block: "center" });
         } else if (backendError.includes("password")) {
           form.setFields([{ name: "password", errors: [backendError] }]);
-          form.scrollToField("password", { behavior: "smooth", block: "center" });
+          form.scrollToField("password", {
+            behavior: "smooth",
+            block: "center",
+          });
         } else {
           notification.error({
             message: "Xảy ra lỗi",
@@ -68,7 +84,8 @@ const CreateUser = (props: IProps) => {
 
       if (resProfile?.data?.success === false || !resProfile?.data?.data?.id) {
         const backendError =
-          resProfile?.data?.message || "Tạo CustomerProfile thất bại từ backend";
+          resProfile?.data?.message ||
+          "Tạo CustomerProfile thất bại từ backend";
         notification.error({
           message: "Xảy ra lỗi",
           description: backendError,
@@ -95,11 +112,17 @@ const CreateUser = (props: IProps) => {
     }
   };
 
-  const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
+  const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
+    errorInfo
+  ) => {
     console.log("Failed:", errorInfo);
     if (errorInfo?.errorFields && errorInfo.errorFields.length > 0) {
-      const firstErrorField = errorInfo.errorFields[0].name[0] as keyof FieldType;
-      form.scrollToField(firstErrorField, { behavior: "smooth", block: "center" });
+      const firstErrorField = errorInfo.errorFields[0]
+        .name[0] as keyof FieldType;
+      form.scrollToField(firstErrorField, {
+        behavior: "smooth",
+        block: "center",
+      });
       form.setFields([
         {
           name: firstErrorField,

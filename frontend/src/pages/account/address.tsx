@@ -1,3 +1,5 @@
+// File path: /src/pages/account/address.tsx
+
 import { useEffect, useState } from "react";
 import {
   getAddressesByUserIdAPI,

@@ -1,3 +1,5 @@
+// File path: /src/components/section/product/product.left.tsx
+
 import React, { useState, useEffect } from "react";
 import { getAllCategoriesAPI } from "../../../service/api";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -31,7 +33,9 @@ const ProductLeft = ({ onSelectCategory }: ProductLeftProps) => {
   const navigate = useNavigate();
   const { slug } = useParams();
   const location = useLocation();
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
+    {}
+  );
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
 

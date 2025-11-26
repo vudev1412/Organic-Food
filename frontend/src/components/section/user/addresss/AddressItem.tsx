@@ -1,3 +1,5 @@
+// File path: /src/components/section/user/addresss/AddressItem.tsx
+
 import React from "react";
 import { Phone, User, Edit3, Trash2, CheckCircle, MapPin } from "lucide-react";
 

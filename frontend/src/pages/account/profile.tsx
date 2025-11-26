@@ -1,3 +1,5 @@
+// File path: /src/pages/account/profile.tsx
+
 import { useEffect, useState } from "react";
 import { useCurrentApp } from "../../components/context/app.context";
 

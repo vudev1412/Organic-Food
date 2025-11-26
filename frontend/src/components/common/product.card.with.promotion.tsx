@@ -1,3 +1,5 @@
+// File path: /src/components/common/product.card.with.promotion.tsx
+
 import React, { useEffect, useState } from "react";
 import { AxiosError } from "axios";
 // Import ProductCard gốc

@@ -1,13 +1,13 @@
+// File path: /src/pages/admin/products.tsx
 
-import React from 'react';
-import PageCard from '../../components/section/dashboard/page.card';
-import FilterBar from '../../components/section/dashboard/filter.bar';
-import DataTable from '../../components/section/dashboard/data.table';
-import StatusBadge from '../../components/section/dashboard/status.badge';
-import TableActions from '../../components/section/dashboard/table.acction';
-import { Pagination } from 'antd';
-import TableProduct from '../../components/admin/product/table.product';
-
+import React from "react";
+import PageCard from "../../components/section/dashboard/page.card";
+import FilterBar from "../../components/section/dashboard/filter.bar";
+import DataTable from "../../components/section/dashboard/data.table";
+import StatusBadge from "../../components/section/dashboard/status.badge";
+import TableActions from "../../components/section/dashboard/table.acction";
+import { Pagination } from "antd";
+import TableProduct from "../../components/admin/product/table.product";
 
 // --- Kết thúc phần giả lập ---
 
@@ -40,17 +40,12 @@ interface IProduct {
 
 import ProductTable from "../../components/admin/product/table.product";
 
-
 const Products = () => {
   return (
     <>
-
-      <TableProduct/>
+      <TableProduct />
     </>
-  )
-}
+  );
+};
 
 export default Products;
-
-
-

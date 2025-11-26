@@ -1,3 +1,5 @@
+// File path: /src/components/section/dashboard/sidebar.tsx
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {

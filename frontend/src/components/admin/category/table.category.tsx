@@ -1,3 +1,5 @@
+// File path: /src/components/admin/category/table.category.tsx
+
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";

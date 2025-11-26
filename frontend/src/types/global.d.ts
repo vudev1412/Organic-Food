@@ -1,3 +1,6 @@
+// File path: /src/types/global.d.ts
+// Global type definitions for the entire application
+
 export {};
 declare module "*.png";
 declare module "*.jpg";
@@ -295,11 +298,12 @@ declare global {
     description: string;
   }
 
-  // Interface cho Bình luận
   export interface IComment {
+    id: number;
+    userId: number;
     user: string;
-    rating: number;
     content: string;
+    rating: number;
     date?: string;
   }
   export interface IProductImage {
@@ -484,7 +488,7 @@ declare global {
     otp: string;
     newPassword: string;
   }
-  interface IResVoucherDTO {
+  export interface IResVoucherDTO {
     id: number;
     code: string;
     description?: string;
@@ -497,5 +501,51 @@ declare global {
     quantity: number;
     usedCount: number;
     active: boolean;
+  }
+  interface ISpringRawResponse<T> {
+    meta: {
+      page: number;
+      size: number;
+      pages: number;
+      total: number;
+    };
+    result: T[];
+  }
+  export interface IReview {
+    id: number;
+    comment: string;
+    rating: number;
+    createdAt: string;
+    productId: number;
+    userId: number;
+  }
+  export interface IResReviewDTO {
+    id: number;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    userId: number;
+    productId: number;
+    userName: string;
+    userAvatar?: string;
+  }
+
+  /**
+   * DTO để tạo mới Review
+   */
+  export interface ICreateReviewDTO {
+    productId: number;
+    rating: number;
+    comment: string;
+    userId: number;
+  }
+
+  /**
+   * DTO để cập nhật Review
+   */
+  export interface IUpdateReviewDTO {
+    rating: number;
+    comment: string;
+    // Không cần product hay user ở đây vì không ai đổi review từ sản phẩm A sang B
   }
 }

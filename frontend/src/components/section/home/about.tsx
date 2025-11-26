@@ -1,3 +1,5 @@
+// File path: /src/components/section/home/about.tsx
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import image from "../../../assets/jpg/image1-h4.jpg";
 import {

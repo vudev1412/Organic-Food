@@ -1,3 +1,5 @@
+// File path: /src/components/auth/index.tsx
+
 import type React from "react";
 import { useCurrentApp } from "../context/app.context";
 import { Button, Result } from "antd";
@@ -8,7 +10,8 @@ interface IProps {
   children: React.ReactNode;
 }
 const ProtectedRoute = (props: IProps) => {
-  const { isAuthenticated, setUser, setIsAuthenticated, setIsAppLoading } = useCurrentApp();
+  const { isAuthenticated, setUser, setIsAuthenticated, setIsAppLoading } =
+    useCurrentApp();
   useEffect(() => {
     console.log("AdminLayout mounted");
     const fetchAccount = async () => {

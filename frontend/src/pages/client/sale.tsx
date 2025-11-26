@@ -1,3 +1,5 @@
+// File path: /src/pages/client/sale.tsx
+
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -8,12 +10,24 @@ import {
   CheckCircleFilled,
   LoadingOutlined,
   FilterOutlined,
+  CopyOutlined, // Đã thêm icon Copy
 } from "@ant-design/icons";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+// Hãy đảm bảo đường dẫn import API này đúng với dự án của bạn
+import { getAvailableVouchersAPI } from "../../service/api";
+import salebanner from "../../assets/jpg/sale_banner.jpg";
 
-// --- INTERFACE (Giữ nguyên) ---
-type VoucherType = "PERCENT" | "FIXED_AMOUNT" | "FREESHIP";
-interface IResVoucherDTO {
+// --- 1. DEFINITIONS & INTERFACES ---
+
+export interface IBackendRes<T> {
+  data: T;
+  message?: string;
+  status?: number;
+}
+
+export type VoucherType = "PERCENT" | "FIXED_AMOUNT" | "FREESHIP";
+
+export interface IResVoucherDTO {
   id: number;
   code: string;
   description?: string;
@@ -28,86 +42,7 @@ interface IResVoucherDTO {
   active: boolean;
 }
 
-// Giả định Mock API và formatCurrency (Giữ nguyên)
-const getAvailableVouchersAPI = () => {
-  return Promise.resolve({
-    data: {
-      data: [
-        {
-          id: 1,
-          code: "GIAM10PT",
-          description: "Giảm 10% cho tất cả đơn hàng.",
-          typeVoucher: "PERCENT" as VoucherType,
-          value: 10,
-          maxDiscountAmount: 50000,
-          minOrderValue: 200000,
-          startDate: "2023-01-01",
-          endDate: "2023-12-31",
-          quantity: 100,
-          usedCount: 10,
-          active: true,
-        },
-        {
-          id: 2,
-          code: "FREESHIPMAX",
-          description: "Miễn phí vận chuyển cho đơn hàng từ 150k.",
-          typeVoucher: "FREESHIP" as VoucherType,
-          value: 30000,
-          maxDiscountAmount: 0,
-          minOrderValue: 150000,
-          startDate: "2023-01-01",
-          endDate: "2023-11-30",
-          quantity: 50,
-          usedCount: 5,
-          active: true,
-        },
-        {
-          id: 3,
-          code: "FIXED50K",
-          description: "Giảm 50k cho đơn hàng từ 300k.",
-          typeVoucher: "FIXED_AMOUNT" as VoucherType,
-          value: 50000,
-          maxDiscountAmount: 0,
-          minOrderValue: 300000,
-          startDate: "2023-01-01",
-          endDate: "2023-12-25",
-          quantity: 80,
-          usedCount: 20,
-          active: true,
-        },
-        {
-          id: 4,
-          code: "GIAM20PT",
-          description: "Giảm 20% cho đơn hàng đầu tiên.",
-          typeVoucher: "PERCENT" as VoucherType,
-          value: 20,
-          maxDiscountAmount: 80000,
-          minOrderValue: 100000,
-          startDate: "2023-01-01",
-          endDate: "2023-11-20",
-          quantity: 100,
-          usedCount: 10,
-          active: true,
-        },
-        {
-          id: 5,
-          code: "FREESHIPALL",
-          description: "Miễn phí vận chuyển không giới hạn.",
-          typeVoucher: "FREESHIP" as VoucherType,
-          value: 50000,
-          maxDiscountAmount: 0,
-          minOrderValue: 0,
-          startDate: "2023-01-01",
-          endDate: "2024-01-01",
-          quantity: 20,
-          usedCount: 15,
-          active: true,
-        },
-      ],
-    },
-  });
-};
-
+// --- UTILS ---
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -115,7 +50,7 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// --- HOOK CƠ BẢN CHO AUTO-SCROLL (Giữ nguyên) ---
+// --- HOOK: useInterval ---
 const useInterval = (callback: () => void, delay: number | null) => {
   const savedCallback = useRef(callback);
 
@@ -134,7 +69,7 @@ const useInterval = (callback: () => void, delay: number | null) => {
   }, [delay]);
 };
 
-// --- Component Card Sản Phẩm Khuyến Mãi (Giữ nguyên) ---
+// --- COMPONENT: ProductCard (Giữ nguyên) ---
 const ProductCard: React.FC<{ product: any }> = ({ product }) => {
   const savings = product.originalPrice - product.promotionPrice;
   return (
@@ -175,35 +110,18 @@ const ProductCard: React.FC<{ product: any }> = ({ product }) => {
   );
 };
 
-// --- Component Card Voucher (Đã tối ưu chiều rộng) ---
+// --- COMPONENT: VoucherCard (Compact & Icon Copy) ---
 const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
-  // ... (useMemo, renderValue, colorClasses, classes giữ nguyên)
   const { color, icon, name } = useMemo(() => {
     switch (promo.typeVoucher) {
       case "PERCENT":
-        return {
-          color: "red",
-          icon: <TagOutlined />,
-          name: "Giảm Giá Phần Trăm",
-        };
+        return { color: "red", icon: <TagOutlined />, name: "Giảm Giá %" };
       case "FIXED_AMOUNT":
-        return {
-          color: "green",
-          icon: <GiftOutlined />,
-          name: "Giảm Giá Cố Định",
-        };
+        return { color: "green", icon: <GiftOutlined />, name: "Giảm Tiền" };
       case "FREESHIP":
-        return {
-          color: "blue",
-          icon: <FireOutlined />,
-          name: "Miễn Phí Vận Chuyển",
-        };
+        return { color: "blue", icon: <FireOutlined />, name: "FreeShip" };
       default:
-        return {
-          color: "gray",
-          icon: <GiftOutlined />,
-          name: "Ưu Đãi Đặc Biệt",
-        };
+        return { color: "gray", icon: <GiftOutlined />, name: "Ưu Đãi" };
     }
   }, [promo.typeVoucher]);
 
@@ -214,112 +132,116 @@ const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
       case "FIXED_AMOUNT":
         return `Giảm ${formatCurrency(promo.value)}`;
       case "FREESHIP":
-        return "Miễn Phí Vận Chuyển";
+        return "Miễn Phí Ship";
       default:
-        return "Ưu đãi đặc biệt";
+        return "Ưu đãi";
     }
   };
 
-  const colorClasses = {
+  const colorClasses: any = {
     blue: {
       text: "text-blue-700",
-      bgLight: "bg-blue-100",
-      bgDark: "bg-blue-600",
+      bgLight: "bg-blue-50",
       border: "border-blue-200",
+      iconBg: "bg-blue-100",
     },
     red: {
       text: "text-red-700",
-      bgLight: "bg-red-100",
-      bgDark: "bg-red-600",
+      bgLight: "bg-red-50",
       border: "border-red-200",
+      iconBg: "bg-red-100",
     },
     green: {
       text: "text-green-700",
-      bgLight: "bg-green-100",
-      bgDark: "bg-green-600",
+      bgLight: "bg-green-50",
       border: "border-green-200",
+      iconBg: "bg-green-100",
     },
     gray: {
       text: "text-gray-700",
-      bgLight: "bg-gray-100",
-      bgDark: "bg-gray-600",
+      bgLight: "bg-gray-50",
       border: "border-gray-200",
+      iconBg: "bg-gray-100",
     },
   };
 
-  const classes = colorClasses[color as keyof typeof colorClasses];
+  const classes = colorClasses[color] || colorClasses.gray;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(promo.code);
+    alert(`Đã sao chép mã: ${promo.code}`);
+  };
 
   return (
     <div
-      key={promo.id}
-      // Đã loại bỏ lg:w-1/3 để cố định chiều rộng (350px)
-      className={`bg-white rounded-2xl shadow-xl border-l-4 ${classes.border} p-6 flex flex-col justify-between transition-transform hover:shadow-2xl duration-300 flex-shrink-0 w-full snap-center sm:w-[350px]`}
+      className={`bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col justify-between transition-all hover:shadow-xl hover:-translate-y-1 duration-300 flex-shrink-0 w-full snap-center sm:w-[280px]`}
     >
-      <div>
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`text-4xl ${classes.text} flex-shrink-0 mt-1`}>
-            {icon}
-          </div>
-          <div>
-            <h3 className={`text-xl font-bold ${classes.text} mb-1`}>
-              {renderValue()}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {promo.description || `${name} hấp dẫn từ Organic Food.`}
-            </p>
-          </div>
+      {/* Header Compact */}
+      <div className="flex items-center gap-3 mb-2">
+        <div
+          className={`text-xl ${classes.text} ${classes.iconBg} p-2 rounded-lg shrink-0`}
+        >
+          {icon}
+        </div>
+        <div className="overflow-hidden">
+          <h3
+            className={`text-base font-bold ${classes.text} leading-tight truncate`}
+          >
+            {renderValue()}
+          </h3>
+          <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">
+            {promo.description || name}
+          </p>
         </div>
       </div>
-      <div className="mt-6 pt-4 border-t border-dashed border-gray-200">
+
+      {/* Phần Code và Copy Icon */}
+      <div className="mt-1 pt-2 border-t border-dashed border-gray-200">
         <div
-          className={`${classes.bgLight} p-3 rounded-lg flex items-center justify-between mb-4`}
+          className={`${classes.bgLight} p-1.5 px-3 rounded-md flex items-center justify-between mb-2 border ${classes.border}`}
         >
           <span
-            className={`text-xl font-extrabold ${classes.text} tracking-wider`}
+            className={`text-sm font-black ${classes.text} tracking-wider font-mono`}
           >
             {promo.code}
           </span>
+
+          {/* NÚT COPY DẠNG ICON */}
           <button
-            onClick={() =>
-              navigator.clipboard.writeText(promo.code).then(() => {
-                alert(`Đã sao chép mã ${promo.code}!`);
-              })
-            }
-            className={`text-sm ${classes.bgDark} text-white px-4 py-1.5 rounded-full hover:${classes.bgDark}/90 transition-colors shadow-md`}
+            onClick={handleCopy}
+            title="Sao chép mã"
+            className={`p-1.5 rounded-full hover:bg-white hover:shadow-sm transition-all text-gray-500 hover:text-green-600 active:scale-90`}
           >
-            Sao chép
+            <CopyOutlined className="text-lg" />
           </button>
         </div>
-        <ul className="space-y-2 text-sm text-gray-700">
-          <li className="flex items-start gap-2">
-            <CheckCircleFilled className="text-green-500 mt-1 flex-shrink-0 text-base" />
-            <span>
-              Đơn tối thiểu: **{formatCurrency(promo.minOrderValue)}**
-            </span>
-          </li>
 
-          {promo.typeVoucher === "PERCENT" && promo.maxDiscountAmount > 0 && (
-            <li className="flex items-start gap-2">
-              <CheckCircleFilled className="text-green-500 mt-1 flex-shrink-0 text-base" />
-              <span>
-                Giảm tối đa: **{formatCurrency(promo.maxDiscountAmount)}**
-              </span>
-            </li>
-          )}
-
-          <li className="flex items-start gap-2">
-            <ClockCircleOutlined className="text-orange-500 mt-1 flex-shrink-0 text-base" />
-            <span>
-              HSD: **{new Date(promo.endDate).toLocaleDateString("vi-VN")}**
+        {/* Thông tin chi tiết (Font nhỏ, layout gọn) */}
+        <div className="space-y-1 text-[10px] text-gray-500 font-medium">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <CheckCircleFilled className="text-green-500 text-[10px]" /> Đơn
+              tối thiểu:
             </span>
-          </li>
-        </ul>
+            <span className="text-gray-700 font-semibold">
+              {formatCurrency(promo.minOrderValue)}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <ClockCircleOutlined className="text-orange-400 text-[10px]" />{" "}
+              HSD:
+            </span>
+            <span>{new Date(promo.endDate).toLocaleDateString("vi-VN")}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-// --- Component Bộ Lọc Voucher (Giữ nguyên) ---
+// --- COMPONENT: VoucherFilter ---
 interface IVoucherFilterProps {
   currentFilter: VoucherType | "ALL";
   setFilter: (filter: VoucherType | "ALL") => void;
@@ -337,39 +259,40 @@ const VoucherFilter: React.FC<IVoucherFilterProps> = ({
     {
       label: "Tất Cả",
       value: "ALL",
-      colorClass: "bg-gray-200 hover:bg-gray-300 text-gray-800",
+      colorClass: "bg-gray-100 hover:bg-gray-200 text-gray-700",
     },
     {
-      label: "Phần Trăm (%)",
+      label: "Phần Trăm",
       value: "PERCENT",
-      colorClass: "bg-red-100 hover:bg-red-200 text-red-700",
+      colorClass: "bg-red-50 hover:bg-red-100 text-red-600",
     },
     {
-      label: "Cố Định (₫)",
+      label: "Giảm Tiền",
       value: "FIXED_AMOUNT",
-      colorClass: "bg-green-100 hover:bg-green-200 text-green-700",
+      colorClass: "bg-green-50 hover:bg-green-100 text-green-600",
     },
     {
-      label: "Miễn Phí VC",
+      label: "FreeShip",
       value: "FREESHIP",
-      colorClass: "bg-blue-100 hover:bg-blue-200 text-blue-700",
+      colorClass: "bg-blue-50 hover:bg-blue-100 text-blue-600",
     },
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-3 mb-8 p-4 bg-white rounded-xl shadow-inner">
-      <FilterOutlined className="text-xl text-gray-600 flex-shrink-0" />
-      <span className="font-semibold text-gray-700 mr-2">Lọc theo loại:</span>
+    <div className="flex flex-wrap justify-center items-center gap-3 mb-8">
+      <div className="flex items-center gap-2 mr-2 text-gray-500">
+        <FilterOutlined /> <span>Lọc:</span>
+      </div>
       {filters.map((filter) => (
         <button
           key={filter.value}
           onClick={() => setFilter(filter.value)}
-          className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+          className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 border border-transparent ${
             filter.colorClass
           } ${
             currentFilter === filter.value
-              ? "ring-2 ring-offset-2 ring-current transform scale-105 shadow-md"
-              : "opacity-70"
+              ? "ring-2 ring-offset-2 ring-green-500 shadow-md transform scale-105"
+              : "opacity-80 grayscale-[0.3] hover:grayscale-0"
           }`}
         >
           {filter.label}
@@ -379,27 +302,28 @@ const VoucherFilter: React.FC<IVoucherFilterProps> = ({
   );
 };
 
-// --- Component Trang Khuyến Mãi Chính (Tăng cường hiệu ứng mượt mà) ---
+// --- MAIN PAGE: SalePage ---
 const SalePage: React.FC = () => {
   const [availableVouchers, setAvailableVouchers] = useState<IResVoucherDTO[]>(
     []
   );
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<VoucherType | "ALL">("ALL");
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  // State quản lý auto-scroll
-  const [isScrolling, setIsScrolling] = useState(false); // Theo dõi trạng thái cuộn thủ công
-  const [autoScrollDirection, setAutoScrollDirection] = useState<"left" | "right">("right"); // Hướng cuộn tự động
 
-  // FETCH VOUCHERS TỪ API (Giữ nguyên)
+  // Refs & State cho Scroll
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // 1. GỌI API
   useEffect(() => {
     const fetchVouchers = async () => {
       setIsLoading(true);
       try {
         const response = await getAvailableVouchersAPI();
-        if (response.data && Array.isArray(response.data.data)) {
+        if (response.data && response.data.data) {
           setAvailableVouchers(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          setAvailableVouchers(response.data as any);
         } else {
           setAvailableVouchers([]);
         }
@@ -415,278 +339,276 @@ const SalePage: React.FC = () => {
   }, []);
 
   const filteredVouchers = useMemo(() => {
-    if (activeFilter === "ALL") {
-      return availableVouchers;
-    }
-    return availableVouchers.filter(
-      (voucher) => voucher.typeVoucher === activeFilter
-    );
+    if (activeFilter === "ALL") return availableVouchers;
+    return availableVouchers.filter((v) => v.typeVoucher === activeFilter);
   }, [availableVouchers, activeFilter]);
 
-  // HÀM XỬ LÝ TRƯỢT
-  // Đã điều chỉnh SCROLL_AMOUNT để phù hợp hơn với 350px + 1.5rem gap (24px) = 374px
-  const SCROLL_AMOUNT = 374; 
+  // 2. XỬ LÝ SCROLL
+  const ITEM_WIDTH = 300; // Đã điều chỉnh cho phù hợp với card compact mới
+
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      setIsScrolling(true);
-      // Tối ưu: Dùng 'smooth' behavior
       scrollContainerRef.current.scrollBy({
-        left: direction === "left" ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
+        left: direction === "left" ? -ITEM_WIDTH : ITEM_WIDTH,
         behavior: "smooth",
       });
-
-      // Tăng thời gian timeout để phù hợp với độ mượt của smooth scroll, giúp tránh gián đoạn
-      setTimeout(() => setIsScrolling(false), 600); 
     }
   };
-  
-  // LOGIC AUTO-SCROLL (Giữ nguyên)
+
+  // 3. LOGIC LOOP SCROLL
   useInterval(() => {
-    const container = scrollContainerRef.current;
-    if (filteredVouchers.length > 3 && !isScrolling && container) {
-      // Kiểm tra gần cuối/đầu để đảo chiều, tránh lỗi số học float
-      const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 10;
-      const isAtStart = container.scrollLeft <= 10;
-
-      if (autoScrollDirection === "right") {
-        if (isAtEnd) {
-          setAutoScrollDirection("left");
-          scroll("left");
-        } else {
-          scroll("right");
-        }
-      } else { // autoScrollDirection === "left"
-        if (isAtStart) {
-          setAutoScrollDirection("right");
-          scroll("right");
-        } else {
-          scroll("left");
-        }
-      }
+    if (
+      isPaused ||
+      isLoading ||
+      filteredVouchers.length <= 3 ||
+      !scrollContainerRef.current
+    ) {
+      return;
     }
-  }, 4500); // Tăng thời gian chờ lên 4.5 giây để chuyển động mượt hơn (cho thời gian xem voucher)
 
-  const mockPromotionsForBanner = [
-    {
-      id: 1,
-      name: "Ưu Đãi Đặc Biệt Tháng 12",
-      shortDesc: "Giảm giá sâu các sản phẩm hữu cơ tươi mới.",
-      imageUrl:
-        "https://placehold.co/800x400/e0f2f1/065f46?text=Promotion+Banner+1",
-    },
-  ];
+    const container = scrollContainerRef.current;
+    const isAtEnd =
+      container.scrollLeft + container.clientWidth >=
+      container.scrollWidth - 10;
+
+    if (isAtEnd) {
+      container.scrollTo({ left: 0, behavior: "smooth" });
+    } else {
+      scroll("right");
+    }
+  }, 3500);
+
+  const handleMouseEnter = () => setIsPaused(true);
+  const handleMouseLeave = () => setIsPaused(false);
+
+  const mockBanner = {
+    name: "Siêu Sale Giữa Tháng",
+    desc: "Săn mã giảm giá độc quyền ngay hôm nay!",
+    image: salebanner,
+  };
 
   return (
-    <div className="bg-gray-50/50 min-h-screen">
-      {/* ================= 1. HERO BANNER SLIDER (Giữ nguyên) ================= */}
-      <div className="relative w-full h-[450px] overflow-hidden">
-        <div
-          className="w-full h-full bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${mockPromotionsForBanner[0].imageUrl})`,
-            transition: "all 0.5s ease-in-out",
-          }}
-        >
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <div className="text-center text-white px-4 max-w-4xl animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 bg-red-600/80 backdrop-blur-sm px-4 py-2 rounded-full mb-3 shadow-xl">
-                <FireOutlined className="text-xl" />
-                <span className="font-bold uppercase tracking-widest text-sm">
-                  Ưu Đãi SỐC Hôm Nay
-                </span>
-              </div>
-              <h1 className="text-5xl md:text-7xl font-extrabold mb-4 leading-tight">
-                {mockPromotionsForBanner[0].name}
-              </h1>
-              <p className="text-xl text-gray-200 font-light mb-8">
-                {mockPromotionsForBanner[0].shortDesc}
-              </p>
-              <Link
-                to="#voucher-section"
-                className="inline-block px-10 py-4 bg-green-600 text-white font-bold rounded-full text-lg shadow-lg shadow-green-400/50 hover:bg-green-700 transition-all transform hover:-translate-y-1"
-              >
-                Khám phá ngay &darr;
-              </Link>
-            </div>
+    <div className="bg-gray-50 min-h-screen font-sans">
+      {/* --- HERO BANNER --- */}
+      <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
+        <img
+          src={mockBanner.image}
+          alt="Banner"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
+          <div className="text-center text-white px-4 animate-fade-in-up">
+            <span className="inline-block py-1 px-4 rounded-full bg-red-600 text-xs font-bold uppercase tracking-widest mb-4 shadow-lg animate-pulse">
+              <FireOutlined className="mr-1" /> Hot Deal
+            </span>
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-md">
+              {mockBanner.name}
+            </h1>
+            <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
+              {mockBanner.desc}
+            </p>
+            <button
+              onClick={() =>
+                document
+                  .getElementById("voucher-container")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="px-8 py-3 bg-white text-green-700 font-bold rounded-full shadow-lg hover:bg-green-50 hover:scale-105 transition-all"
+            >
+              Săn Voucher Ngay
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 md:px-8 lg:px-16 pt-16 pb-20">
-        {/* ================= 2. VOUCHER SECTION ================= */}
-        <section id="voucher-section" className="mb-20">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-              <TagOutlined className="text-green-600 mr-2" />
-              Mã Giảm Giá Độc Quyền
+      <div className="container mx-auto px-4 py-12">
+        {/* --- SECTION VOUCHER --- */}
+        <section id="voucher-container" className="mb-20 scroll-mt-24">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2">
+              <TagOutlined className="text-green-600" /> Kho Voucher Của Bạn
             </h2>
-            <p className="text-gray-600 text-lg">
-              Sử dụng các mã này tại bước thanh toán để nhận ưu đãi!
+            <p className="text-gray-500 mt-2">
+              Lưu mã và sử dụng tại bước thanh toán
             </p>
           </div>
 
-          {/* Bộ lọc Voucher */}
           <VoucherFilter
             currentFilter={activeFilter}
             setFilter={setActiveFilter}
           />
 
           {isLoading ? (
-            <div className="text-center p-10 bg-white rounded-xl shadow-lg">
-              <LoadingOutlined className="text-3xl text-green-600" />
-              <p className="mt-3 text-gray-600">Đang tải mã giảm giá...</p>
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-sm">
+              <LoadingOutlined className="text-4xl text-green-600 mb-4" />
+              <p className="text-gray-500">Đang tìm kiếm ưu đãi tốt nhất...</p>
             </div>
           ) : filteredVouchers.length === 0 ? (
-            <div className="text-center p-10 bg-white rounded-xl shadow-lg">
-              <p className="text-gray-600">
-                Hiện chưa có mã giảm giá nào thuộc loại **{activeFilter}** còn
-                hiệu lực.
+            <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+              <img
+                src="https://placehold.co/200x200?text=No+Voucher"
+                alt="Empty"
+                className="mx-auto mb-4 opacity-50 h-32 w-32 object-contain"
+              />
+              <p className="text-gray-500 font-medium">
+                Hiện chưa có voucher nào cho mục này.
               </p>
+              <button
+                onClick={() => setActiveFilter("ALL")}
+                className="mt-4 text-green-600 font-semibold hover:underline"
+              >
+                Xem tất cả voucher
+              </button>
             </div>
           ) : (
-            // FIX LỖI: Cập nhật padding ngang từ px-4 lên px-8 để tạo khoảng trống cho nút
-            <div className="relative px-8 lg:px-16">
-              {/* Nút Trái (Chỉ hiển thị nếu có thể cuộn) */}
-              {filteredVouchers.length > 3 && (
-                <button
-                  onClick={() => scroll("left")}
-                  className="
-                    absolute left-1 top-1/2 -translate-y-1/2
-                    z-20 p-2 bg-white shadow-lg rounded-full
-                    transition-all duration-300
-                    hover:bg-gray-100 hover:scale-110
-                    lg:-left-3
-                    hidden md:block 
-                  "
-                  aria-label="Scroll Left"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-              )}
+            <div
+              className="relative group px-1"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              {/* --- NÚT PREV (LUÔN HIỆN) --- */}
+              <button
+                onClick={() => scroll("left")}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white text-gray-600 shadow-lg rounded-full flex items-center justify-center border border-gray-100 hover:text-green-600 hover:scale-110 active:scale-95 transition-all duration-300"
+                aria-label="Previous"
+              >
+                <ChevronLeft size={24} />
+              </button>
 
-              {/* Danh sách Voucher (Ref Container) */}
+              {/* --- SLIDER CONTAINER --- */}
               <div
                 ref={scrollContainerRef}
-                // Thêm transition-all duration-500 để tăng cường hiệu ứng cuộn mượt (nếu trình duyệt hỗ trợ)
-                className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide transition-all duration-500"
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-6 pt-2 px-4 scrollbar-hide scroll-smooth"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {filteredVouchers.map((promo) => (
                   <VoucherCard key={promo.id} promo={promo} />
                 ))}
               </div>
 
-              {/* Nút Phải (Chỉ hiển thị nếu có thể cuộn) */}
-              {filteredVouchers.length > 3 && (
-                <button
-                  onClick={() => scroll("right")}
-                  className="
-                    absolute right-1 top-1/2 -translate-y-1/2 
-                    z-20 p-2 bg-white shadow-lg rounded-full
-                    transition-all duration-300
-                    hover:bg-gray-100 hover:scale-110
-                    lg:right-1
-                    hidden md:block
-                  "
-                  aria-label="Scroll Right"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              )}
+              {/* --- NÚT NEXT (LUÔN HIỆN) --- */}
+              <button
+                onClick={() => scroll("right")}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white text-gray-600 shadow-lg rounded-full flex items-center justify-center border border-gray-100 hover:text-green-600 hover:scale-110 active:scale-95 transition-all duration-300"
+                aria-label="Next"
+              >
+                <ChevronRight size={24} />
+              </button>
             </div>
           )}
         </section>
 
-        {/* ================= 3 & 4. SẢN PHẨM THEO TỪNG KHUYẾN MÃI (Giữ nguyên mock) ================= */}
-        {Object.entries({
-          // Giả định voucher ID 1, 3 (FIXED_AMOUNT), 2 (FREESHIP) có sản phẩm áp dụng
-          1: [
-            {
-              id: 101,
-              name: "Trứng Gà Hữu Cơ",
-              slug: "trung-ga",
-              image: "https://placehold.co/250x250/fff/333?text=Egg",
-              originalPrice: 75000,
-              promotionPrice: 63750,
-            },
-            {
-              id: 102,
-              name: "Gạo Lứt ST25",
-              slug: "gao-lut",
-              image: "https://placehold.co/250x250/fff/333?text=Rice",
-              originalPrice: 120000,
-              promotionPrice: 102000,
-            },
-          ],
-          3: [
-            {
-              id: 301,
-              name: "Rau Cải Kale",
-              slug: "rau-kale",
-              image: "https://placehold.co/250x250/fff/333?text=Kale",
-              originalPrice: 45000,
-              promotionPrice: 35000,
-            },
-            {
-              id: 302,
-              name: "Cà Rốt Đà Lạt",
-              slug: "ca-rot",
-              image: "https://placehold.co/250x250/fff/333?text=Carrot",
-              originalPrice: 60000,
-              promotionPrice: 50000,
-            },
-          ],
-        }).map(([promoId, products]) => {
-          const promotion = availableVouchers.find(
-            (p) => p.id === parseInt(promoId)
+        {/* --- PRODUCT SUGGESTIONS --- */}
+        {[
+          {
+            vId: 1,
+            title: "Rau Củ Tươi",
+            prods: [
+              {
+                id: 301,
+                name: "Cải Kale Hữu Cơ",
+                slug: "cai-kale",
+                image: "https://placehold.co/300x300?text=Kale",
+                originalPrice: 45000,
+                promotionPrice: 35000,
+              },
+              {
+                id: 302,
+                name: "Cà Rốt Baby",
+                slug: "ca-rot",
+                image: "https://placehold.co/300x300?text=Carrot",
+                originalPrice: 60000,
+                promotionPrice: 50000,
+              },
+            ],
+          },
+          {
+            vId: 2,
+            title: "Thực Phẩm Khô",
+            prods: [
+              {
+                id: 101,
+                name: "Gạo Lứt ST25",
+                slug: "gao-lut",
+                image: "https://placehold.co/300x300?text=Rice",
+                originalPrice: 120000,
+                promotionPrice: 102000,
+              },
+              {
+                id: 102,
+                name: "Hạt Chia Úc",
+                slug: "hat-chia",
+                image: "https://placehold.co/300x300?text=Chia",
+                originalPrice: 150000,
+                promotionPrice: 135000,
+              },
+            ],
+          },
+        ].map((section) => {
+          const relatedVoucher = availableVouchers.find(
+            (v) => v.id === section.vId
           );
-
-          if (!promotion || products.length === 0) return null;
-
-          if (activeFilter !== "ALL" && promotion.typeVoucher !== activeFilter)
+          if (
+            !relatedVoucher ||
+            (activeFilter !== "ALL" &&
+              relatedVoucher.typeVoucher !== activeFilter)
+          )
             return null;
 
           return (
-            <section key={promoId} className="mb-16">
-              <div className="bg-green-800 text-white p-6 rounded-t-2xl flex items-center justify-between">
-                <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FireOutlined />
-                  Sản phẩm áp dụng: {promotion.code}
-                </h2>
+            <section key={section.vId} className="mb-16 animate-fade-in">
+              <div className="flex items-center justify-between mb-6 px-2">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 p-2 rounded-lg text-green-700">
+                    <GiftOutlined className="text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      {section.title}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Áp dụng mã:{" "}
+                      <span className="font-bold text-red-500">
+                        {relatedVoucher.code}
+                      </span>
+                    </p>
+                  </div>
+                </div>
                 <Link
                   to="/san-pham"
-                  className="text-sm font-semibold border-b border-green-400 hover:text-green-200 transition-colors"
+                  className="text-green-600 font-medium hover:underline text-sm"
                 >
-                  Xem tất cả &rarr;
+                  Xem thêm &rarr;
                 </Link>
               </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 bg-white p-6 rounded-b-2xl shadow-xl">
-                {products.map((product: any) => (
-                  <ProductCard key={product.id} product={product} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {section.prods.map((p) => (
+                  <ProductCard key={p.id} product={p} />
                 ))}
               </div>
             </section>
           );
         })}
 
-        {/* ================= BOTTOM ACTION (Giữ nguyên) ================= */}
-        <div className="text-center mt-20 p-8 bg-green-600 rounded-2xl shadow-lg">
-          <h3 className="text-3xl font-bold text-white mb-3">
-            Đừng bỏ lỡ bất kỳ ưu đãi nào!
-          </h3>
-          <p className="text-green-100 mb-6">
-            Đăng ký nhận bản tin để được thông báo về các chương trình giảm giá
-            mới nhất.
-          </p>
-          <div className="max-w-xl mx-auto flex gap-3">
-            <input
-              type="email"
-              placeholder="Nhập email của bạn..."
-              className="flex-1 px-5 py-3 rounded-full border-0 focus:ring-2 focus:ring-green-300 transition-all"
-            />
-            <button className="bg-white text-green-700 font-bold px-6 py-3 rounded-full hover:bg-gray-100 transition-colors">
-              Đăng ký
-            </button>
+        {/* --- NEWSLETTER --- */}
+        <div className="mt-20 bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <h3 className="text-3xl font-bold mb-4">Đừng Bỏ Lỡ Ưu Đãi!</h3>
+            <p className="mb-8 text-green-100">
+              Đăng ký nhận tin để nhận mã giảm giá mới nhất gửi thẳng vào email
+              của bạn hàng tuần.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                placeholder="Nhập email của bạn..."
+                className="flex-1 px-6 py-3 rounded-full text-gray-800 outline-none focus:ring-4 focus:ring-green-400/50"
+              />
+              <button className="bg-yellow-400 text-green-900 font-bold px-8 py-3 rounded-full hover:bg-yellow-300 transition-colors shadow-lg">
+                Đăng Ký
+              </button>
+            </div>
           </div>
         </div>
       </div>
