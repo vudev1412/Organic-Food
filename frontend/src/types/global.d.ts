@@ -548,4 +548,12 @@ declare global {
     comment: string;
     // Không cần product hay user ở đây vì không ai đổi review từ sản phẩm A sang B
   }
+  export interface IProductSearchItem {
+    id: number;
+    name: string;
+    price: number;
+    slug: string;
+    image: string;
+    bestPromotion: IBestPromotion | null;
+  }
 }

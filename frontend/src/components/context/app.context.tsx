@@ -11,7 +11,7 @@ export interface IAppContext {
   isAppLoading: boolean;
   setIsAppLoading: (v: boolean) => void;
   cartItems: ICartItem[];
-  addToCart: (product: IProductCard, quantity: number) => void;
+  addToCart: (product: IProductCard, quantity: number) => boolean;
   removeFromCart: (productId: number) => void;
   updateCartQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
@@ -48,6 +48,6 @@ export const useCurrentApp = () => {
 export const useToast = () => {
   const ctx = useCurrentApp();
   return {
-  showToast: ctx.showToast,
+    showToast: ctx.showToast,
   };
 };

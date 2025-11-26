@@ -228,8 +228,27 @@ export const getProductCertificateByIdProduct = (id: number) => {
 };
 
 export const searchProductsAPI = (query: string) => {
-  const urlBackend = `/api/v1/products?${query}`;
-  return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+  const urlBackend = `/api/v1/products/search?query=${encodeURIComponent(
+    query
+  )}&size=10`;
+
+  return axios.get<IBackendRes<any[]>>(urlBackend).then((res) => {
+    if (!res.data.data) return [];
+
+    const mapped: IProductSearchItem[] = res.data.data.map((item) => {
+      const p = item.product;
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        slug: p.slug,
+        image: p.image,
+        bestPromotion: item.bestPromotion || null,
+      };
+    });
+
+    return mapped;
+  });
 };
 
 export const getSubImgByProductId = (id: number) => {

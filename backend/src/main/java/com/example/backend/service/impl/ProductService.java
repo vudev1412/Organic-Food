@@ -3,12 +3,16 @@ package com.example.backend.service.impl;
 import com.example.backend.domain.Category;
 import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqProductDTO;
+import com.example.backend.domain.response.BestPromotionDTO;
+import com.example.backend.domain.response.ResProductSearchDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import com.example.backend.mapper.ProductMapper;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.ProductRepository;
+import com.example.backend.service.PromotionDetailService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -23,12 +27,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
+    private final PromotionDetailService promotionDetailService;
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository,
-                          ProductMapper productMapper){
+                          ProductMapper productMapper,PromotionDetailService promotionDetailService){
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productMapper = productMapper;
+        this.promotionDetailService = promotionDetailService;
     }
 
 
@@ -157,5 +163,71 @@ public class ProductService {
         rs.setResult(pageProduct.getContent());
 
         return rs;
+    }
+    public List<ResProductSearchDTO> handleSearchProductWithPromotion(String query, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+
+        // 1. Lấy danh sách startsWith
+        List<Product> startsWith = productRepository
+                .findByNameStartingWithIgnoreCase(query, pageable);
+
+        // 2. Lấy danh sách contains
+        List<Product> contains = productRepository
+                .findByNameContainingIgnoreCase(query, pageable);
+
+        // 3. Loại bỏ những sản phẩm đã nằm trong startsWith
+        contains.removeIf(p ->
+                startsWith.stream()
+                        .anyMatch(s -> s.getId() == p.getId())
+        );
+
+
+        // 4. Ghép 2 danh sách (StartsWith ưu tiên → đứng trước)
+        List<Product> finalProducts = new ArrayList<>();
+        finalProducts.addAll(startsWith);
+        finalProducts.addAll(contains);
+
+        // 5. Map sang DTO + Khuyến mãi
+        return finalProducts.stream().map(product -> {
+            ResProductDTO productDTO = this.convertToResProductDTO(product);
+
+            BestPromotionDTO bestPromotion = promotionDetailService
+                    .findBestActivePromotion(product.getId())
+                    .orElse(null);
+
+            return new ResProductSearchDTO(productDTO, bestPromotion);
+        }).collect(Collectors.toList());
+    }
+
+    public ResProductDTO convertToResProductDTO(Product product) {
+        ResProductDTO.ResProductDTOBuilder dtoBuilder = ResProductDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .price(product.getPrice())
+                .origin_address(product.getOrigin_address())
+                .description(product.getDescription())
+                .rating_avg(product.getRating_avg())
+                .quantity(product.getQuantity())
+                .slug(product.getSlug())
+                .image(product.getImage())
+                .active(product.isActive())
+                .mfgDate(product.getMfgDate())
+                .expDate(product.getExpDate())
+                .createAt(product.getCreateAt())
+                .updateAt(product.getUpdateAt())
+                .createBy(product.getCreateBy())
+                .updateBy(product.getUpdateBy());
+
+        // Xử lý Category: Lấy ID nếu category không null
+        if (product.getCategory() != null) {
+            dtoBuilder.categoryId(product.getCategory().getId());
+        }
+
+        // Xử lý Unit: Lấy tên Unit (String) nếu unit không null
+        if (product.getUnit() != null) {
+            dtoBuilder.unit(product.getUnit().getName());
+        }
+
+        return dtoBuilder.build();
     }
 }

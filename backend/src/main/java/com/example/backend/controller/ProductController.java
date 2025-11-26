@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqProductDTO;
+import com.example.backend.domain.response.ResProductSearchDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResProductDTO;
 import com.example.backend.service.impl.ProductService;
@@ -66,5 +67,15 @@ public class ProductController {
             Pageable pageable
     ) {
         return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id, spec, pageable));
+    }
+    @GetMapping("/products/search")
+    @ApiMessage("Search products by name startWith and get best promotion")
+    public ResponseEntity<List<ResProductSearchDTO>> searchProductPreview(
+            @RequestParam("query") String query,
+            @RequestParam(value = "size", defaultValue = "5") int size
+    ) {
+        // Gọi service xử lý
+        return ResponseEntity.ok()
+                .body(this.productService.handleSearchProductWithPromotion(query, size));
     }
 }

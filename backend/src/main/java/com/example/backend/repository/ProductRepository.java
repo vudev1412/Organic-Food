@@ -13,4 +13,6 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     List<Product> getProductByCategory_Id(Long categoryId);
     Page<Product> findAllByCategoryIdIn(List<Long> categoryId, Pageable pageable);
+    List<Product> findByNameStartingWithIgnoreCase(String name, Pageable pageable);
+    List<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }
