@@ -23,24 +23,31 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             "LEFT JOIN FETCH o.user u")
     List<Order> findAllWithDetailsAndProducts();
 
-    // ✅ Lấy orders với orderDetails và product (PAGEABLE) - Cách 1: Query 2 lần
     @Query(value = "SELECT DISTINCT o FROM Order o " +
             "LEFT JOIN FETCH o.user u",
             countQuery = "SELECT COUNT(DISTINCT o) FROM Order o")
     Page<Order> findAllOrders(Pageable pageable);
 
-    // ✅ Sau đó fetch orderDetails cho từng order
     @Query("SELECT DISTINCT o FROM Order o " +
             "LEFT JOIN FETCH o.orderDetails od " +
             "LEFT JOIN FETCH od.product p " +
             "WHERE o.id IN :orderIds")
     List<Order> findOrdersWithDetails(List<Long> orderIds);
 
-    // ✅ Lấy 1 order cụ thể với đầy đủ thông tin
+
     @Query("SELECT DISTINCT o FROM Order o " +
             "LEFT JOIN FETCH o.orderDetails od " +
             "LEFT JOIN FETCH od.product p " +
             "LEFT JOIN FETCH o.user u " +
             "WHERE o.id = :orderId")
     Optional<Order> findOrderWithDetailsAndProduct(Long orderId);
+
+
+    @Query("SELECT DISTINCT o FROM Order o " +
+            "LEFT JOIN FETCH o.orderDetails od " +
+            "LEFT JOIN FETCH od.product p " +
+            "LEFT JOIN FETCH o.user u " +
+            "WHERE o.user.id = :userId " +
+            "ORDER BY o.orderAt DESC")
+    List<Order> findByUserIdWithDetails(@Param("userId") Long userId);
 }

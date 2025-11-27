@@ -17,5 +17,5 @@ public interface OrderService {
     Order handleGetOrderById(Long id);
     ResOrderDTO handleUpdateOrder(Long orderId, ReqUpdateOrderDTO reqDTO);
     void handleDeleteOrder(Long orderId, boolean hardDelete);
-    List<ResOrdersDTO> handleGetOrderByUserId(Long id);
+    List<ResOrderDTO> getOrdersByUserId(Long id);
 }

@@ -596,4 +596,8 @@ export const deleteOrder = (orderId: number, hardDelete = false) => {
   const urlBackend = `/api/v1/orders/${orderId}?hardDelete=${hardDelete}`;
   return axios.delete<IBackendRes<void>>(urlBackend);
 };
+export const getOrderByUserId = (userId: number) => {
+  const urlBackend = `/api/v1/orders/user-order/${userId}`;
+  return axios.get<IBackendRes<IOrder>>(urlBackend);
+};
 

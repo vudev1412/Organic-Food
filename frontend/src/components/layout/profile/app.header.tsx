@@ -13,6 +13,11 @@ const items: MenuItem[] = [
     key: "/tai-khoan/dia-chi",
     label: "Địa chỉ",
   },
+  {
+    key: "/tai-khoan/don-hang",
+    label: "Đơn hàng",
+  },
+
 ];
 const ProfileHeader = () => {
   const navigate = useNavigate();

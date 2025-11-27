@@ -398,8 +398,15 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
-    @Override
-    public List<ResOrdersDTO> handleGetOrderByUserId(Long id) {
-        return this.orderRepository.findByUser_Id(id).stream().map(this.orderMapper::toResOrderDTO).toList();
+    @Transactional(readOnly = true)
+    public List<ResOrderDTO> getOrdersByUserId(Long userId) {
+        // Lấy orders với đầy đủ orderDetails và product
+        List<Order> orders = orderRepository.findByUserIdWithDetails(userId);
+
+        // Convert sang DTO
+        return orders.stream()
+                .map(this::convertToResOrderDTO)
+                .collect(Collectors.toList());
     }
+
 }

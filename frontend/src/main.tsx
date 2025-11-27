@@ -42,7 +42,10 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import SalePage from "./pages/client/sale";
 import OrderTrackingPage from "./pages/account/order";
 import RegisterMemBerPage from "./pages/client/register.member";
-
+import OrderHistoryPage from "./pages/account/order.history";
+import PaymentSuccess from "./pages/client/payment.success";
+import PaymentFailure from "./pages/client/payment.fail";
+import BackupRestorePage from "./pages/admin/backup.restore";
 
 const router = createBrowserRouter([
   {
@@ -107,6 +110,15 @@ const router = createBrowserRouter([
         element: <RegisterMemBerPage />,
       },
       {
+        path: "/thanh-toan-thanh-cong",
+        element: <PaymentSuccess />,
+      },
+       {
+        path: "/thanh-toan-that-bai",
+        element: <PaymentFailure />,
+      },
+
+      {
         path: "/tai-khoan",
         element: <ProfileHeader />,
         children: [
@@ -125,6 +137,10 @@ const router = createBrowserRouter([
           {
             path: "don-hang",
             element: <OrderTrackingPage />,
+          },
+          {
+            path: "lich-su-don-hang",
+            element: <OrderHistoryPage />,
           },
         ],
       },
@@ -150,7 +166,9 @@ const router = createBrowserRouter([
       { path: "categories", element: <Categories /> }, // Trang /admin
       { path: "suppliers", element: <Suppliers /> }, // Trang /admin
       { path: "orders", element: <CustomerOrders /> }, // Trang /admin
-      { path: "complaints", element: <ReturnRequests /> }, // Trang /admin
+      { path: "complaints", element: <ReturnRequests /> },
+      
+       { path: "backup", element: <BackupRestorePage /> },// Trang /admin
       // { path: "users", element: <ManageUsers /> }, // Trang /admin/users
       // { path: "products", element: <ManageProducts /> }, // Trang /admin/products
     ],

@@ -1,25 +1,17 @@
 // File path: /src/components/admin/order/detail.order.tsx
 
 import { Drawer, Descriptions, Table, Image, Tag, Space, Typography, Divider } from "antd";
-import { IOrder } from "../../../service/api";
+import { ClockCircleOutlined, CarOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
-// Cập nhật trạng thái mới + màu sắc chuẩn
-const statusColors: Record<string, string> = {
-  PENDING: "orange",
-  PROCESSING: "cyan",
-  SHIPPING: "purple",
-  DELIVERED: "green",
-  CANCELLED: "red",
-};
-
-const statusTexts: Record<string, string> = {
-  PENDING: "Chờ xác nhận",
-  PROCESSING: "Đang xử lý",
-  SHIPPING: "Đang giao",
-  DELIVERED: "Đã giao",
-  CANCELLED: "Đã hủy",
+// Trạng thái: chỉ dùng tông XANH & XÁM – không đỏ chói
+const statusInfo: Record<string, { color: string; text: string; icon: React.ReactNode }> = {
+  PENDING:     { color: "bg-amber-50 text-amber-700 border-amber-200",      text: "Chờ xác nhận",    icon: <ClockCircleOutlined className="text-amber-600" /> },
+  PROCESSING:  { color: "bg-blue-50 text-blue-700 border-blue-200",         text: "Đang xử lý",      icon: <ClockCircleOutlined className="text-blue-600" /> },
+  SHIPPING:    { color: "bg-indigo-50 text-indigo-700 border-indigo-200",  text: "Đang giao",       icon: <CarOutlined className="text-indigo-600" /> },
+  DELIVERED:   { color: "bg-emerald-50 text-emerald-700 border-emerald-200", text: "Đã giao",       icon: <CheckCircleOutlined className="text-emerald-600" /> },
+  CANCELLED:   { color: "bg-gray-100 text-gray-600 border-gray-300",       text: "Đã hủy",          icon: <CloseCircleOutlined className="text-gray-500" /> },
 };
 
 interface IProps {
@@ -30,13 +22,8 @@ interface IProps {
 
 const DetailOrder = ({ open, onClose, data }: IProps) => {
   if (!data) return null;
-    const formatOrderId = (id: number) => {
-    if (id < 10) return `DH000${id}`;
-    if (id < 100) return `DH00${id}`;
-    if (id < 1000) return `DH0${id}`;
-    return `DH${id}`;
-  };
-  const orderCode = formatOrderId(data.id);
+
+  const orderCode = `DH${String(data.id).padStart(6, "0")}`;
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -50,54 +37,49 @@ const DetailOrder = ({ open, onClose, data }: IProps) => {
       minute: "2-digit",
     });
 
-  // TỔNG TIỀN CHÍNH XÁC: Dùng item.price (backend đã tính sẵn thành tiền)
   const totalAmount = data.orderDetails?.reduce((sum, item) => sum + item.price, 0) || 0;
+  const status = statusInfo[data.statusOrder] || statusInfo.PENDING;
 
   const productColumns = [
     {
       title: "Hình ảnh",
       dataIndex: "productImage",
       key: "image",
-      width: 90,
+      width: 100,
       render: (image: string) => (
         <Image
-          width={68}
-          height={68}
-          src={
-            image?.startsWith("http")
-              ? image
-              : `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${image}`
-          }
-          style={{ objectFit: "cover", borderRadius: 10 }}
+          width={80}
+          height={80}
+          src={image?.startsWith("http") ? image : `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${image}`}
+          className="rounded-xl object-cover border-4 border-white shadow-lg"
           preview={true}
           fallback="/default-product.png"
-          className="border-2 border-white shadow-sm"
         />
       ),
     },
     {
       title: "Sản phẩm",
-      key: "name",
+      key: "product",
       render: (_: any, record: any) => {
         const actualPrice = record.price / record.quantity;
         const hasDiscount = actualPrice < record.productPrice;
 
         return (
-          <div className="py-2">
-            <Text strong className="block text-base text-gray-800">
+          <div className="py-3">
+            <Text strong className="block text-lg text-gray-800 mb-2">
               {record.productName}
             </Text>
-            <Space size={12} className="mt-2 text-sm">
+            <Space size={16} className="text-sm">
               <Text type="secondary">
                 SL: <strong className="text-gray-700">{record.quantity}</strong>
               </Text>
-              <div>
-                <Text type="secondary">Giá bán:</Text>{" "}
-                <Text strong type="danger" className="text-base">
+              <div className="flex items-center gap-3">
+                <Text type="secondary">Giá bán:</Text>
+                <Text strong className="text-xl text-emerald-600">
                   {formatPrice(actualPrice)}
                 </Text>
                 {hasDiscount && (
-                  <del className="ml-2 text-gray-400 text-xs">
+                  <del className="text-gray-400 text-sm">
                     {formatPrice(record.productPrice)}
                   </del>
                 )}
@@ -110,10 +92,10 @@ const DetailOrder = ({ open, onClose, data }: IProps) => {
     {
       title: "Thành tiền",
       key: "total",
-      width: 160,
+      width: 180,
       align: "right" as const,
       render: (_: any, record: any) => (
-        <Text strong type="danger" className="text-lg font-bold">
+        <Text strong className="text-2xl font-bold text-emerald-600">
           {formatPrice(record.price)}
         </Text>
       ),
@@ -123,79 +105,93 @@ const DetailOrder = ({ open, onClose, data }: IProps) => {
   return (
     <Drawer
       title={
-        <Space align="center">
-          <Text strong className="text-2xl text-blue-600">
-            Chi tiết đơn hàng
-          </Text>
-          <Tag color="blue" className="text-xl px-5 py-2 font-bold">
-            {orderCode}
-          </Tag>
-        </Space>
+        <div className="flex items-center justify-between">
+          <Space align="center">
+            <Text strong className="text-3xl text-blue-700">
+              Chi tiết đơn hàng
+            </Text>
+            <Tag color="blue" className="text-2xl px-8 py-3 font-bold rounded-full shadow-lg">
+              {orderCode}
+            </Tag>
+          </Space>
+        </div>
       }
-      width={1000}
+      width={1100}
       open={open}
       onClose={onClose}
+      closeIcon={null}
       extra={
         <Tag
-          color={statusColors[data.statusOrder] || "default"}
-          className="text-lg px-6 py-3 font-bold rounded-full shadow-md"
+          className={`text-xl px-8 py-4 font-bold rounded-full shadow-xl border-4 ${status.color}`}
         >
-          {statusTexts[data.statusOrder] || data.statusOrder}
+          <Space size={12}>
+            <span className="text-2xl">{status.icon}</span>
+            {status.text}
+          </Space>
         </Tag>
       }
-      className="ant-drawer-content"
     >
-      {/* Header đẹp */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8 rounded-2xl mb-8 shadow-xl">
-        <Space direction="vertical" size="middle" className="w-full">
-          <div className="flex justify-between items-center">
-            <div>
-              <Text className="text-xl font-medium opacity-90">Thời gian đặt hàng</Text>
-              <Text strong className="block text-2xl mt-2">
-                {formatDate(data.orderAt)}
-              </Text>
-            </div>
-            <div className="text-right">
-              <Text className="text-xl font-medium opacity-90">Tổng tiền đơn hàng</Text>
-              <Text strong className="block text-4xl font-bold mt-2">
-                {formatPrice(totalAmount)}
-              </Text>
-            </div>
+      {/* Header: Xanh dương nhạt – sang trọng */}
+      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-10 rounded-3xl mb-8 shadow-2xl -mx-6 -mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <Text className="text-xl opacity-90">Thời gian đặt hàng</Text>
+            <Text strong className="block text-3xl mt-3 font-bold">
+              {formatDate(data.orderAt)}
+            </Text>
           </div>
-        </Space>
+          <div className="text-right">
+            <Text className="text-xl opacity-90">Tổng tiền đơn hàng</Text>
+            <Text strong className="block text-5xl mt-3 font-bold">
+              {formatPrice(totalAmount)}
+            </Text>
+          </div>
+        </div>
       </div>
 
-      {/* Thông tin khách hàng & giao hàng */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-200 mb-6 shadow-md">
-        <Descriptions column={2} bordered size="middle">
-          <Descriptions.Item label={<Text strong className="text-gray-700">Khách hàng</Text>}>
-            <Text strong>ID: {data.userId || "Khách lẻ"}</Text>
-          </Descriptions.Item>
-          <Descriptions.Item label={<Text strong className="text-gray-700">Địa chỉ giao</Text>}>
-            <Text className="text-gray-800">{data.shipAddress}</Text>
-          </Descriptions.Item>
-          <Descriptions.Item label={<Text strong className="text-gray-700">Ghi chú</Text>} span={2}>
-            <Text italic type="secondary" className="text-gray-600">
-              {data.note || "Không có ghi chú"}
-            </Text>
-          </Descriptions.Item>
-          {data.estimatedDate && (
-            <Descriptions.Item label={<Text strong className="text-gray-700">Dự kiến giao</Text>}>
-              {formatDate(data.estimatedDate)}
-            </Descriptions.Item>
-          )}
-          {data.actualDate && (
-            <Descriptions.Item label={<Text strong className="text-green-600">Đã giao lúc</Text>}>
-              <Text strong type="success" className="text-lg">
-                {formatDate(data.actualDate)}
+      {/* Thông tin khách hàng */}
+      <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 mb-8">
+        <h3 className="text-2xl font-bold text-gray-800 mb-6">Thông tin giao hàng</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-lg">
+          <div className="space-y-6">
+            <div>
+              <Text type="secondary" className="text-base">Khách hàng</Text>
+              <Text strong className="block text-xl mt-1">ID: {data.userId || "Khách lẻ"}</Text>
+            </div>
+            <div>
+              <Text type="secondary" className="text-base">Địa chỉ giao</Text>
+              <Text className="block text-xl mt-1 text-gray-700">{data.shipAddress}</Text>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div>
+              <Text type="secondary" className="text-base">Ghi chú</Text>
+              <Text italic className="block text-xl mt-1 text-gray-600">
+                {data.note || "Không có ghi chú"}
               </Text>
-            </Descriptions.Item>
-          )}
-        </Descriptions>
+            </div>
+            {data.estimatedDate && (
+              <div>
+                <Text type="secondary" className="text-base">Dự kiến giao</Text>
+                <Text strong className="block text-xl mt-1 text-blue-600">
+                  {formatDate(data.estimatedDate)}
+                </Text>
+              </div>
+            )}
+            {data.actualDate && (
+              <div>
+                <Text type="secondary" className="text-base">Đã giao lúc</Text>
+                <Text strong className="block text-2xl mt-1 text-emerald-600 font-bold">
+                  {formatDate(data.actualDate)}
+                </Text>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <Divider>
-        <Text strong className="text-xl text-gray-800">
+        <Text strong className="text-2xl text-gray-800">
           Danh sách sản phẩm ({data.orderDetails?.length || 0} món)
         </Text>
       </Divider>
@@ -207,17 +203,16 @@ const DetailOrder = ({ open, onClose, data }: IProps) => {
         rowKey={(record) => `${record.productId}-${record.id}`}
         pagination={false}
         size="large"
-        bordered
-        className="rounded-xl overflow-hidden shadow-lg"
-        locale={{ emptyText: "Không có sản phẩm" }}
+        className="rounded-2xl overflow-hidden shadow-2xl"
+        locale={{ emptyText: <div className="py-20 text-gray-400 text-center text-lg">Không có sản phẩm</div> }}
         summary={() => (
           <Table.Summary fixed="bottom">
-            <Table.Summary.Row className="bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold">
+            <Table.Summary.Row className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
               <Table.Summary.Cell index={0} colSpan={2}>
-                <Text strong className="text-2xl">TỔNG CỘNG</Text>
+                <Text strong className="text-3xl font-bold">TỔNG CỘNG</Text>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={1} align="right">
-                <Text strong className="text-3xl">
+                <Text strong className="text-4xl font-bold">
                   {formatPrice(totalAmount)}
                 </Text>
               </Table.Summary.Cell>
