@@ -105,6 +105,23 @@ public class OrderDetailServiceImpl implements OrderDetailService {
         OrderDetailKey key = new OrderDetailKey(orderId, productId);
         orderDetailRepository.deleteById(key);
     }
+    @Override
+    public List<ResOrderDetailDTO> getOrderDetailsByOrderId(Long orderId) {
+        List<OrderDetail> list = orderDetailRepository.findByOrderId(orderId);
+        // Sử dụng MapStruct mapping cho từng phần tử
+        return list.stream()
+                .map(orderDetailMapper::toResOrderDetailDTO) // <- đúng tên method của bạn
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ResOrderDetailFullDTO> getOrderDetailsByOrderIdFull(Long orderId) {
+        List<OrderDetail> list = orderDetailRepository.findByOrderId(orderId);
+        return list.stream()
+                .map(OrderDetailMapper::toFullDTO) // static method bạn đã định nghĩa
+                .collect(Collectors.toList());
+    }
+
 
 
 }

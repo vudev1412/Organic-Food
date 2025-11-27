@@ -2,10 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqProductDTO;
-import com.example.backend.domain.response.ResGetAllProductDTO;
-import com.example.backend.domain.response.ResProductSearchDTO;
-import com.example.backend.domain.response.ResultPaginationDTO;
-import com.example.backend.domain.response.ResProductDTO;
+import com.example.backend.domain.response.*;
 import com.example.backend.service.impl.ProductService;
 import com.example.backend.util.annotation.ApiMessage;
 import com.turkraft.springfilter.boot.Filter;
@@ -79,4 +76,28 @@ public class ProductController {
         return ResponseEntity.ok()
                 .body(this.productService.handleSearchProductWithPromotion(query, size));
     }
+    @GetMapping("/products/new-arrivals")
+    @ApiMessage("Fetch newest imported products with best promotion")
+    public ResponseEntity<ResultPaginationDTO> getNewestImportedWithPromotion(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok()
+                .body(productService.handleGetNewestImportedProductsWithPromotion(page, size));
+    }
+
+
+    @GetMapping("/products/best-promotion")
+    @ApiMessage("Fetch products with the best active promotion")
+    public ResponseEntity<ResultPaginationDTO> getBestPromotionProducts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok()
+                .body(productService.handleGetBestPromotionProducts(page, size));
+    }
+
+
+
+
 }

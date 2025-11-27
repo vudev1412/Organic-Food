@@ -22,4 +22,7 @@ public interface OrderDetailService {
     ResOrderDetailDTO updateOrderDetail(Long orderId, Long productId, OrderDetail orderDetail);
 
     void deleteOrderDetail(Long orderId, Long productId);
+    List<ResOrderDetailDTO> getOrderDetailsByOrderId(Long orderId);
+    // nếu muốn trả ResOrderDetailFullDTO (có product + order)
+    List<ResOrderDetailFullDTO> getOrderDetailsByOrderIdFull(Long orderId);
 }
