@@ -3,6 +3,7 @@ package com.example.backend.repository;
 import com.example.backend.domain.Product;
 import com.example.backend.domain.ReceiptDetail;
 import com.example.backend.domain.key.ReceiptDetailKey;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,7 +31,8 @@ public interface ReceiptDetailRepository extends JpaRepository<ReceiptDetail, Re
                     THEN promo.value
                ELSE 0
            END AS discountValue,
-           pd.startDate, pd.endDate
+           pd.startDate,
+           pd.endDate
     FROM ReceiptDetail rd
     LEFT JOIN rd.product p
     LEFT JOIN p.promotionDetails pd
@@ -40,6 +42,7 @@ public interface ReceiptDetailRepository extends JpaRepository<ReceiptDetail, Re
         AND pd.endDate >= CURRENT_TIMESTAMP
     ORDER BY rd.receipt.createdAt DESC, discountValue DESC
 """)
-    List<Object[]> findNewestProductsWithPromotion(Pageable pageable);
+    Page<Object[]> findNewestProductsWithPromotion(Pageable pageable);
+
 
 }

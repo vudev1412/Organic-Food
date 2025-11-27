@@ -26,24 +26,26 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> findByNameStartingWithIgnoreCase(String name, Pageable pageable);
     List<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
     @Query("""
-    SELECT p, promo,
+    SELECT pd.product,
+           promo,
            CASE 
                WHEN promo.type = com.example.backend.enums.TypePromotion.PERCENT
-                    THEN (p.price * promo.value / 100)
+                    THEN (pd.product.price * promo.value / 100)
                WHEN promo.type = com.example.backend.enums.TypePromotion.FIXED_AMOUNT
                     THEN promo.value
                ELSE 0
            END AS discountValue,
-           pd.startDate, pd.endDate
+           pd.startDate,
+           pd.endDate
     FROM PromotionDetail pd
-    JOIN pd.product p
     JOIN pd.promotion promo
     WHERE promo.active = true
       AND pd.startDate <= CURRENT_TIMESTAMP
       AND pd.endDate >= CURRENT_TIMESTAMP
     ORDER BY discountValue DESC
 """)
-    List<Object[]> findProductsWithPromotion(Pageable pageable);
+    Page<Object[]> findProductsWithBestPromotion(Pageable pageable);
+
 
 
 

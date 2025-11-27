@@ -365,19 +365,21 @@ public class ProductService {
                 .map(ResProductDTO::new)
                 .toList();
     }
-    public List<ResProductWithPromotionDTO> handleGetBestPromotionProducts(int size) {
-        List<Object[]> rows = productRepository.findProductsWithPromotion(PageRequest.of(0, size));
+    public ResultPaginationDTO handleGetBestPromotionProducts(int page, int size) {
 
-        return rows.stream().map(row -> {
+        Page<Object[]> result = productRepository.findProductsWithBestPromotion(
+                PageRequest.of(page - 1, size)
+        );
+
+        List<ResNewArrivalWithPromotionDTO> list = result.getContent().stream().map(row -> {
             Product p = (Product) row[0];
             Promotion promo = (Promotion) row[1];
-            Double discount = (Double) row[2];
-            Instant startDate = (Instant) row[3];
-            Instant endDate = (Instant) row[4];
+            Double discount = row[2] != null ? (Double) row[2] : 0;
+            Instant start = (Instant) row[3];
+            Instant end = (Instant) row[4];
 
-            ResProductWithPromotionDTO dto = new ResProductWithPromotionDTO();
+            ResNewArrivalWithPromotionDTO dto = new ResNewArrivalWithPromotionDTO();
 
-            // Thông tin sản phẩm
             dto.setId(p.getId());
             dto.setName(p.getName());
             dto.setUnit(p.getUnit() != null ? p.getUnit().getName() : null);
@@ -392,26 +394,41 @@ public class ProductService {
             dto.setActive(p.isActive());
             dto.setCategoryId(p.getCategory() != null ? p.getCategory().getId() : null);
 
-            // Thông tin khuyến mãi
             dto.setPromotionId(promo.getId());
             dto.setPromotionName(promo.getName());
             dto.setPromotionType(promo.getType().name());
             dto.setPromotionValue(promo.getValue());
-            dto.setPromotionStartDate(startDate);
-            dto.setPromotionEndDate(endDate);
+            dto.setPromotionStartDate(start);
+            dto.setPromotionEndDate(end);
 
             return dto;
         }).toList();
-    }
-    public List<ResNewArrivalWithPromotionDTO> handleGetNewestImportedProductsWithPromotion(int size) {
-        List<Object[]> rows = receiptDetailRepository.findNewestProductsWithPromotion(PageRequest.of(0, size));
 
-        return rows.stream().map(row -> {
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        meta.setPage(page);
+        meta.setPageSize(size);
+        meta.setPages(result.getTotalPages());
+        meta.setTotal(result.getTotalElements());
+
+        ResultPaginationDTO response = new ResultPaginationDTO();
+        response.setMeta(meta);
+        response.setResult(list);
+
+        return response;
+    }
+
+    public ResultPaginationDTO handleGetNewestImportedProductsWithPromotion(int page, int size) {
+
+        Page<Object[]> result = receiptDetailRepository.findNewestProductsWithPromotion(
+                PageRequest.of(page - 1, size)
+        );
+
+        List<ResNewArrivalWithPromotionDTO> list = result.getContent().stream().map(row -> {
             Product p = (Product) row[0];
             Promotion promo = (Promotion) row[1];
             Double discount = row[2] != null ? (Double) row[2] : 0;
-            Instant startDate = (Instant) row[3];
-            Instant endDate = (Instant) row[4];
+            Instant start = (Instant) row[3];
+            Instant end = (Instant) row[4];
 
             ResNewArrivalWithPromotionDTO dto = new ResNewArrivalWithPromotionDTO();
 
@@ -434,13 +451,28 @@ public class ProductService {
                 dto.setPromotionName(promo.getName());
                 dto.setPromotionType(promo.getType().name());
                 dto.setPromotionValue(promo.getValue());
-                dto.setPromotionStartDate(startDate);
-                dto.setPromotionEndDate(endDate);
+                dto.setPromotionStartDate(start);
+                dto.setPromotionEndDate(end);
             }
 
             return dto;
         }).toList();
+
+        // Build Meta
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        meta.setPage(page);
+        meta.setPageSize(size);
+        meta.setPages(result.getTotalPages());
+        meta.setTotal(result.getTotalElements());
+
+        // Final Response
+        ResultPaginationDTO response = new ResultPaginationDTO();
+        response.setMeta(meta);
+        response.setResult(list);
+
+        return response;
     }
+
 
 
 

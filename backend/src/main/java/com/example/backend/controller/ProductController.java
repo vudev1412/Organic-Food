@@ -78,21 +78,25 @@ public class ProductController {
     }
     @GetMapping("/products/new-arrivals")
     @ApiMessage("Fetch newest imported products with best promotion")
-    public ResponseEntity<List<ResNewArrivalWithPromotionDTO>> getNewestImportedWithPromotion(
+    public ResponseEntity<ResultPaginationDTO> getNewestImportedWithPromotion(
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok()
-                .body(productService.handleGetNewestImportedProductsWithPromotion(size));
+                .body(productService.handleGetNewestImportedProductsWithPromotion(page, size));
     }
 
+
     @GetMapping("/products/best-promotion")
-    @ApiMessage("Fetch best promotion products with promotion info")
-    public ResponseEntity<List<ResProductWithPromotionDTO>> getBestPromotion(
+    @ApiMessage("Fetch products with the best active promotion")
+    public ResponseEntity<ResultPaginationDTO> getBestPromotionProducts(
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok()
-                .body(productService.handleGetBestPromotionProducts(size));
+                .body(productService.handleGetBestPromotionProducts(page, size));
     }
+
 
 
 
