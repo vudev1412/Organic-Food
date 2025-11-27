@@ -6,12 +6,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.List;
 
 @Getter
 @Setter
 @Builder
-public class ResOrderDTO {
+public class ResOrdersDTO {
     private Long id;
     private Instant orderAt;
     private String note;
@@ -20,10 +19,4 @@ public class ResOrderDTO {
     private Instant estimatedDate;
     private Instant actualDate;
     private Long userId;
-
-
-    private List<ResOrderDetalDTO> orderDetails;
-
-
-
 }

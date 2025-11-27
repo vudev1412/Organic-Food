@@ -41,6 +41,7 @@ import VnpayPage from "./pages/client/vnpay";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import SalePage from "./pages/client/sale";
 import OrderTrackingPage from "./pages/account/order";
+import RegisterMemBerPage from "./pages/client/register.member";
 
 
 const router = createBrowserRouter([
@@ -100,6 +101,10 @@ const router = createBrowserRouter([
       {
         path: "/thanh-toan",
         element: <VnpayPage />,
+      },
+      {
+        path: "/dang-ky-thanh-vien",
+        element: <RegisterMemBerPage />,
       },
       {
         path: "/tai-khoan",

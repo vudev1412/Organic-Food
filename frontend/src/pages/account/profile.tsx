@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useCurrentApp } from "../../components/context/app.context";
+import {
+  getUserByIdAPI,
+  updateUserDTOAPI,
+  uploadFileAvatarAPI,
+} from "../../service/api";
 
-// --- 1. COMPONENT PASSWORD INPUT (Custom) ---
+// --- 1. COMPONENT PASSWORD INPUT ---
 const PasswordInput = ({
   label,
   value,
@@ -105,7 +110,6 @@ const VerifyPasswordModal = ({
       setError("Vui lòng nhập mật khẩu");
       return;
     }
-    // Reset và gửi password ra ngoài để xử lý
     onConfirm(password);
     setPassword("");
     setError("");
@@ -166,124 +170,177 @@ const VerifyPasswordModal = ({
 const Profile = () => {
   const { user, showToast } = useCurrentApp();
 
-  // --- States Dữ liệu ---
+  const [id, setId] = useState<number>(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [newPassword, setNewPassword] = useState(""); // Chỉ dùng khi Edit
-
+  const [newPassword, setNewPassword] = useState("");
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-
-  // --- States UI Control ---
-  const [isEditing, setIsEditing] = useState(false); // Trạng thái: false = Locked, true = Unlocked
-  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false); // Modal xác thực
-
-  // Sync Data
+  const [userById, setUserById] = useState<IResUserById | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Thêm trạng thái loading khi lưu
+  const [userData, setUserData] = useState<IResUserById | null>(null);
+  const [loading, setLoading] = useState(false);
+  // Sync dữ liệu từ user
   useEffect(() => {
     if (user) {
+      setId(user.id || 0);
       setName(user.name || "");
       setEmail(user.email || "");
       setPhone(user.phone || "");
       setAvatar(user.image || null);
-      setCreatedAt(user.createdAt || new Date().toISOString());
-      setUpdatedAt(user.updatedAt || new Date().toISOString());
+      setCreatedAt(user.createdAt || null);
+      setUpdatedAt(user.updatedAt || null);
     }
   }, [user]);
+  console.log(user?.avatar)
+  // Upload Avatar
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  // --- Actions ---
+    if (file.size > 1024 * 1024) {
+      showToast("Dung lượng ảnh tối đa 1MB!", "warning");
+      return;
+    }
 
-  // 1. Mở Modal xác thực
-  const handleRequestEdit = () => {
-    setIsVerifyModalOpen(true);
-  };
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      showToast("Chỉ hỗ trợ định dạng: JPG, PNG, WebP!", "warning");
+      return;
+    }
 
-  // 2. Xử lý xác thực (Gọi API kiểm tra pass)
-  const handleVerifySuccess = async (passwordInput: string) => {
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+
     try {
-      // GIẢ LẬP GỌI API VERIFY PASSWORD
-      // const res = await verifyPasswordAPI(passwordInput);
-      const isPasswordCorrect = passwordInput === "123456"; // Demo: pass là 123456
-
-      if (isPasswordCorrect) {
-        setIsVerifyModalOpen(false);
-        setIsEditing(true); // Mở khóa form
-        showToast("Xác thực thành công! Bạn có thể chỉnh sửa.", "success");
-      } else {
-        showToast("Mật khẩu không chính xác!", "error");
-      }
-    } catch (error) {
-      showToast("Lỗi xác thực, vui lòng thử lại", "error");
+      showToast("Đang tải ảnh lên...", "loading");
+      const uploadedUrl = await uploadFileAvatarAPI(file, "avatar");
+      console.log(uploadedUrl);
+      setAvatar(uploadedUrl.data);
+      showToast("Cập nhật ảnh đại diện thành công!", "success");
+    } catch (error: any) {
+      showToast(error.message || "Tải ảnh thất bại!", "error");
+      if (user?.image) setAvatar(user.image);
     }
   };
 
-  // 3. Hủy chỉnh sửa (Revert)
+  // Xác thực mở khóa chỉnh sửa
+  const handleRequestEdit = () => setIsVerifyModalOpen(true);
+
+  const handleVerifySuccess = async (passwordInput: string) => {
+    // TODO: Thay bằng API thật kiểm tra mật khẩu
+    const isCorrect = passwordInput === "123456"; // Demo
+
+    if (isCorrect) {
+      setIsVerifyModalOpen(false);
+      setIsEditing(true);
+      showToast("Xác thực thành công! Bạn có thể chỉnh sửa.", "success");
+    } else {
+      showToast("Mật khẩu không chính xác!", "error");
+    }
+  };
+
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setNewPassword(""); // Reset mật khẩu mới
-    // Reset lại data từ user gốc nếu muốn (optional)
+    setNewPassword("");
     if (user) {
       setName(user.name || "");
       setPhone(user.phone || "");
+      setAvatar(user.image || null);
     }
   };
 
-  // 4. Lưu thay đổi
-  const handleSaveChanges = () => {
-    // Validate
-    if (!name.trim()) return showToast("Tên không được để trống", "error");
+  // GỌI API LƯU THAY ĐỔI (CHÍNH)
+  const handleSaveChanges = async () => {
+    if (!name.trim()) {
+      showToast("Tên không được để trống", "error");
+      return;
+    }
 
-    // Payload
-    const payload = {
-      name,
-      phone,
-      // Chỉ gửi password nếu người dùng có nhập mới
-      ...(newPassword ? { password: newPassword } : {}),
+    if (!user?.id) {
+      showToast("Không tìm thấy thông tin người dùng", "error");
+      return;
+    }
+
+    setIsSaving(true);
+
+    const payload: Partial<IReqUpdateUserDTO> = {
+      name: name.trim(),
     };
 
-    console.log("Saving payload:", payload);
-    // await updateUserAPI(payload);
+    if (phone !== user.phone) payload.phone = phone;
+    if (newPassword) payload.password = newPassword;
 
-    showToast("Cập nhật hồ sơ thành công!", "success");
-    setIsEditing(false); // Khóa lại form
-    setNewPassword("");
-    setUpdatedAt(new Date().toISOString());
-  };
+    // ĐÃ SỬA: Kiểm tra avatar là string và bắt đầu bằng http
+    if (avatar && typeof avatar === "string" && avatar !== user.image) {
+      payload.image = avatar;
+    }
+    console.log(payload);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 1024 * 1024) {
-        showToast("Dung lượng file tối đa là 1MB!", "warning");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => setAvatar(reader.result as string);
-      reader.readAsDataURL(file);
+    try {
+      await updateUserDTOAPI(user.id, payload as IReqUpdateUserDTO);
+
+      showToast("Cập nhật hồ sơ thành công!", "success");
+      setIsEditing(false);
+      setNewPassword("");
+      setUpdatedAt(new Date().toISOString());
+    } catch (error: any) {
+      console.error("Update profile failed:", error);
+      showToast(error.response?.data?.message || "Cập nhật thất bại!", "error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const formatDate = (dateString: string | undefined | null) => {
+  const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
+  const userID = user?.id;
 
+  useEffect(() => {
+    if (!userID) return;
+
+    const fetchUser = async () => {
+      setLoading(true);
+      try {
+        const res = await getUserByIdAPI(userID);
+
+        if (res?.data?.statusCode === 200) {
+          setUserData(res.data.data.data);
+        } else {
+          console.warn("Fetch thất bại:", res?.data?.message);
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userID]);
+  
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
-        {/* Banner trạng thái Locked/Unlocked */}
         {isEditing && (
           <div className="bg-green-100 text-green-800 text-xs font-bold text-center py-1 absolute top-0 w-full z-10">
             CHẾ ĐỘ CHỈNH SỬA ĐANG BẬT
           </div>
         )}
 
-        {/* Header */}
         <div
           className={`px-6 py-5 border-b border-gray-100 flex justify-between items-center ${
             isEditing ? "bg-green-50 mt-4" : "bg-gray-50"
@@ -322,14 +379,37 @@ const Profile = () => {
               <button
                 onClick={handleCancelEdit}
                 className="px-4 py-2 rounded-lg text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 text-sm font-medium"
+                disabled={isSaving}
               >
                 Hủy bỏ
               </button>
               <button
                 onClick={handleSaveChanges}
-                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200 text-sm font-medium"
+                disabled={isSaving}
+                className={`px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 ${
+                  isSaving
+                    ? "bg-green-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 shadow-md"
+                }`}
               >
-                Lưu thay đổi
+                {isSaving && (
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
+                {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
           )}
@@ -337,9 +417,9 @@ const Profile = () => {
 
         <div className="p-6 md:p-8">
           <div className="flex flex-col-reverse md:flex-row gap-8 md:gap-12">
-            {/* --- CỘT TRÁI: FORM --- */}
+            {/* Form */}
             <div className="flex-1 space-y-6">
-              {/* Tên hiển thị */}
+              {/* Các field như cũ */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Tên hiển thị
@@ -359,7 +439,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Email (Luôn Readonly - thường email là định danh không cho sửa dễ dàng) */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Email
@@ -368,7 +447,7 @@ const Profile = () => {
                   <input
                     type="text"
                     value={email}
-                    disabled={true} // Email thường không cho sửa hoặc cần quy trình riêng
+                    disabled={true}
                     className="w-full max-w-md px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                   />
                   {isEditing && (
@@ -379,7 +458,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Số điện thoại */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Số điện thoại
@@ -399,7 +477,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* MẬT KHẨU */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-start pt-2">
                 <label className="text-sm font-medium text-gray-600 md:text-right mt-2">
                   Mật khẩu
@@ -418,7 +495,7 @@ const Profile = () => {
                     <div className="animate-fade-in">
                       <PasswordInput
                         label=""
-                        placeholder="Nhập mật khẩu mới (nếu muốn đổi)"
+                        placeholder="Nhập mật khẩu mới (để trống nếu không đổi)"
                         value={newPassword}
                         onChange={setNewPassword}
                         disabled={false}
@@ -433,7 +510,6 @@ const Profile = () => {
 
               <div className="border-t border-gray-100 my-4"></div>
 
-              {/* Meta Data */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400">Ngày tham gia</p>
@@ -450,7 +526,7 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* --- CỘT PHẢI: AVATAR --- */}
+            {/* Avatar */}
             <div
               className={`flex flex-col items-center justify-start md:w-72 md:border-l md:border-gray-100 md:pl-12 transition-opacity duration-300 ${
                 !isEditing
@@ -460,9 +536,9 @@ const Profile = () => {
             >
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-green-50 shadow-sm bg-gray-100">
-                  {avatar ? (
+                  {user?.avatar ? (
                     <img
-                      src={avatar}
+                      src={`${import.meta.env.VITE_BACKEND_AVATAR_IMAGE_URL}${user?.avatar}`}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />
@@ -508,7 +584,7 @@ const Profile = () => {
                 </span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
                   className="hidden"
                   onChange={handleImageChange}
                   disabled={!isEditing}
@@ -519,7 +595,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* MODAL XÁC THỰC */}
       <VerifyPasswordModal
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
