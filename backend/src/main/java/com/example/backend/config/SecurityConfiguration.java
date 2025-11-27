@@ -63,6 +63,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/promotion-details/**").permitAll()
 
                         .requestMatchers("/api/v1/payment/**").permitAll()
+                        .requestMatchers("/api/v1/db/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/register/**").permitAll()

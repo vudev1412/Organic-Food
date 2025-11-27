@@ -162,7 +162,8 @@ public class UserServiceImpl implements UserService {
                 userCurr.setPhone(user.getPhone());
             }
             if(user.getPassword() != null){
-                userCurr.setPassword(user.getPassword());
+
+                userCurr.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             if(user.getImage() != null){
                 userCurr.setImage(user.getImage());

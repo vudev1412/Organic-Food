@@ -47,6 +47,12 @@ const Sidebar: React.FC = () => {
       icon: MessageSquareWarning,
       to: "complaints",
     },
+     {
+      id: "backup",
+      text: "Khôi phục sao lưu",
+      icon: MessageSquareWarning,
+      to: "backup",
+    },
   ];
 
   const isActive = (path: string) => {
