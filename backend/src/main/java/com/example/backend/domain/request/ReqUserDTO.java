@@ -9,4 +9,6 @@ public class ReqUserDTO {
     private String name;
     private String email;
     private String phone;
+    private String image;
+    private String password;
 }

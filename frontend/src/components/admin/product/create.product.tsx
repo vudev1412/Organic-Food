@@ -69,9 +69,13 @@ const CreateProductCertificate = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const [certificates, setCertificates] = useState<{ id: number; name: string }[]>([]);
+  const [certificates, setCertificates] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [units, setUnits] = useState<{ id: number; name: string }[]>([]);
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
 
   // Upload states
   const [mainImageFileList, setMainImageFileList] = useState<UploadFile[]>([]);
@@ -125,7 +129,9 @@ const CreateProductCertificate = ({
   };
 
   const uploadFileToServer = async (file: RcFile, folder: string) => {
-const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI;
+    const api = folder.includes("certs")
+      ? uploadFileCertsAPI
+      : uploadFileProductAPI;
     const res = await api(file, folder);
     return res.data;
   };
@@ -136,7 +142,10 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
       // Upload ảnh chính
       let mainImageUrl = null;
       if (mainImageFileList[0]?.originFileObj) {
-        mainImageUrl = await uploadFileToServer(mainImageFileList[0].originFileObj as RcFile, "products");
+        mainImageUrl = await uploadFileToServer(
+          mainImageFileList[0].originFileObj as RcFile,
+          "products"
+        );
       }
 
       // Upload ảnh phụ
@@ -153,7 +162,10 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
           .map(async (c) => {
             let imageUrl = null;
             if (c.fileList[0]?.originFileObj) {
-              imageUrl = await uploadFileToServer(c.fileList[0].originFileObj as RcFile, "certs");
+              imageUrl = await uploadFileToServer(
+                c.fileList[0].originFileObj as RcFile,
+                "certs"
+              );
             }
             return {
               certificateId: c.certificateId,
@@ -185,7 +197,8 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
         image: mainImageUrl,
         productImages: productImagesUrls,
         certificates: certificatesPayload,
-        description: validSections.length > 0 ? JSON.stringify(validSections) : null,
+        description:
+          validSections.length > 0 ? JSON.stringify(validSections) : null,
       };
 
       const res = await createProductAPI(payload);
@@ -211,8 +224,10 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
     <Modal
       title={
         <Space>
-          <SafetyCertificateOutlined style={{ color: "#1677ff", fontSize: 24 }} />
-<Title level={4} style={{ margin: 0, color: "#1a1a1a" }}>
+          <SafetyCertificateOutlined
+            style={{ color: "#1677ff", fontSize: 24 }}
+          />
+          <Title level={4} style={{ margin: 0, color: "#1a1a1a" }}>
             Tạo sản phẩm mới
           </Title>
         </Space>
@@ -231,29 +246,48 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
       width={1200}
       destroyOnClose
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ active: true }}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{ active: true }}
+      >
         {/* THÔNG TIN SẢN PHẨM */}
         <Divider orientation="left">Thông tin sản phẩm</Divider>
         <Row gutter={24}>
           <Col span={12}>
-            <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
+            <Form.Item
+              name="name"
+              label="Tên sản phẩm"
+              rules={[{ required: true }]}
+            >
               <Input size="large" placeholder="Nhập tên sản phẩm" />
             </Form.Item>
 
             <Row gutter={12}>
               <Col span={12}>
-                <Form.Item name="price" label="Giá bán (₫)" rules={[{ required: true }]}>
+                <Form.Item
+                  name="price"
+                  label="Giá bán (₫)"
+                  rules={[{ required: true }]}
+                >
                   <InputNumber
                     min={0}
                     style={{ width: "100%" }}
-                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    formatter={(v) =>
+                      `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
                     parser={(v) => v!.replace(/\$\s?|(,*)/g, "") as any}
                     size="large"
                   />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="quantity" label="Số lượng tồn" rules={[{ required: true }]}>
+                <Form.Item
+                  name="quantity"
+                  label="Số lượng tồn"
+                  rules={[{ required: true }]}
+                >
                   <InputNumber min={0} style={{ width: "100%" }} size="large" />
                 </Form.Item>
               </Col>
@@ -261,7 +295,11 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
 
             <Row gutter={12}>
               <Col span={12}>
-                <Form.Item name="unitId" label="Đơn vị" rules={[{ required: true }]}>
+                <Form.Item
+                  name="unitId"
+                  label="Đơn vị"
+                  rules={[{ required: true }]}
+                >
                   <Select size="large" placeholder="Chọn đơn vị">
                     {units.map((unit) => (
                       <Select.Option key={unit.id} value={unit.id}>
@@ -272,7 +310,11 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true }]}>
+                <Form.Item
+                  name="categoryId"
+                  label="Danh mục"
+                  rules={[{ required: true }]}
+                >
                   <Select size="large" placeholder="Chọn danh mục">
                     {categories.map((c) => (
                       <Select.Option key={c.id} value={c.id}>
@@ -290,19 +332,30 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
 
             <Row gutter={12}>
               <Col span={12}>
-<Form.Item name="mfgDate" label="Ngày sản xuất">
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" size="large" />
+                <Form.Item name="mfgDate" label="Ngày sản xuất">
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    size="large"
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item name="expDate" label="Hạn sử dụng">
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" size="large" />
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    size="large"
+                  />
                 </Form.Item>
               </Col>
             </Row>
 
             <Form.Item name="active" valuePropName="checked" label="Trạng thái">
-              <Switch checkedChildren="Đang bán" unCheckedChildren="Tạm ngưng" />
+              <Switch
+                checkedChildren="Đang bán"
+                unCheckedChildren="Tạm ngưng"
+              />
             </Form.Item>
           </Col>
 
@@ -313,7 +366,9 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                 <Upload
                   listType="picture-card"
                   fileList={mainImageFileList}
-                  onChange={({ fileList }) => setMainImageFileList(fileList.slice(-1))}
+                  onChange={({ fileList }) =>
+                    setMainImageFileList(fileList.slice(-1))
+                  }
                   beforeUpload={() => false}
                   maxCount={1}
                 >
@@ -349,7 +404,8 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
 
         {/* MÔ TẢ CHI TIẾT - MỚI THÊM */}
         <Divider orientation="left">
-          <AppstoreOutlined style={{ color: "#722ed1" }} /> Mô tả chi tiết sản phẩm
+          <AppstoreOutlined style={{ color: "#722ed1" }} /> Mô tả chi tiết sản
+          phẩm
         </Divider>
 
         <Form.List name="descriptionSections">
@@ -358,13 +414,26 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
               {fields.map(({ key, name }, idx) => (
                 <Card
                   key={key}
-                  style={{ marginBottom: 24, borderRadius: 16, boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}
+                  style={{
+                    marginBottom: 24,
+                    borderRadius: 16,
+                    boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+                  }}
                   title={
                     <Space align="center">
-                      <span style={{ fontSize: 18, fontWeight: 600 }}>Phần {idx + 1}</span>
+                      <span style={{ fontSize: 18, fontWeight: 600 }}>
+                        Phần {idx + 1}
+                      </span>
                       {fields.length > 1 && (
-                        <Popconfirm title="Xóa phần này?" onConfirm={() => remove(name)}>
-<Button danger size="small" icon={<DeleteOutlined />} />
+                        <Popconfirm
+                          title="Xóa phần này?"
+                          onConfirm={() => remove(name)}
+                        >
+                          <Button
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                          />
                         </Popconfirm>
                       )}
                     </Space>
@@ -372,7 +441,9 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                   extra={
                     <Button
                       type="link"
-                      onClick={() => add({ subtitle: "", text: "" }, `${name}.items`)}
+                      onClick={() =>
+                        add({ subtitle: "", text: "" }, `${name}.items`)
+                      }
                       style={{ color: "#1677ff" }}
                     >
                       + Thêm mục con
@@ -383,12 +454,20 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                     {...{ name: [name, "heading"] }}
                     rules={[{ required: true, message: "Nhập tiêu đề phần" }]}
                   >
-                    <Input size="large" placeholder="VD: Điểm nổi bật của sản phẩm" style={{ fontWeight: 600 }} />
+                    <Input
+                      size="large"
+                      placeholder="VD: Điểm nổi bật của sản phẩm"
+                      style={{ fontWeight: 600 }}
+                    />
                   </Form.Item>
 
                   <Form.List name={[name, "items"]}>
                     {(subFields, { add: addItem, remove: removeItem }) => (
-                      <Space direction="vertical" size={16} style={{ width: "100%", marginTop: 16 }}>
+                      <Space
+                        direction="vertical"
+                        size={16}
+                        style={{ width: "100%", marginTop: 16 }}
+                      >
                         {subFields.map((subField, subIdx) => (
                           <Card
                             key={subField.key}
@@ -396,7 +475,13 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                             style={{ background: "#f8faff", borderRadius: 12 }}
                             extra={
                               subFields.length > 1 && (
-                                <Button danger type="text" size="small" icon={<DeleteOutlined />} onClick={() => removeItem(subIdx)} />
+                                <Button
+                                  danger
+                                  type="text"
+                                  size="small"
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => removeItem(subIdx)}
+                                />
                               )
                             }
                           >
@@ -405,7 +490,12 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                                 <Form.Item
                                   {...subField}
                                   name={[subField.name, "subtitle"]}
-                                  rules={[{ required: true, message: "Nhập tiêu đề nhỏ" }]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: "Nhập tiêu đề nhỏ",
+                                    },
+                                  ]}
                                 >
                                   <Input placeholder="VD: Nguồn gốc Organic" />
                                 </Form.Item>
@@ -414,17 +504,30 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                                 <Form.Item
                                   {...subField}
                                   name={[subField.name, "text"]}
-                                  rules={[{ required: true, message: "Nhập nội dung" }]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: "Nhập nội dung",
+                                    },
+                                  ]}
                                 >
-                                  <TextArea rows={3} placeholder="Mô tả chi tiết..." />
+                                  <TextArea
+                                    rows={3}
+                                    placeholder="Mô tả chi tiết..."
+                                  />
                                 </Form.Item>
                               </Col>
                             </Row>
                           </Card>
                         ))}
-                        <Button type="dashed" onClick={() => addItem()} block icon={<PlusOutlined />}>
+                        <Button
+                          type="dashed"
+                          onClick={() => addItem()}
+                          block
+                          icon={<PlusOutlined />}
+                        >
                           Thêm mục con
-</Button>
+                        </Button>
                       </Space>
                     )}
                   </Form.List>
@@ -434,7 +537,9 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
               <Button
                 type="primary"
                 ghost
-                onClick={() => add({ heading: "", items: [{ subtitle: "", text: "" }] })}
+                onClick={() =>
+                  add({ heading: "", items: [{ subtitle: "", text: "" }] })
+                }
                 block
                 icon={<PlusOutlined />}
                 style={{ height: 48 }}
@@ -455,10 +560,17 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
             <Card
               key={cert.key}
               size="small"
-              title={<span><SafetyCertificateOutlined /> Chứng chỉ {index + 1}</span>}
+              title={
+                <span>
+                  <SafetyCertificateOutlined /> Chứng chỉ {index + 1}
+                </span>
+              }
               extra={
                 certList.length > 1 && (
-                  <Popconfirm title="Xóa chứng chỉ này?" onConfirm={() => removeCertificate(cert.key)}>
+                  <Popconfirm
+                    title="Xóa chứng chỉ này?"
+                    onConfirm={() => removeCertificate(cert.key)}
+                  >
                     <Button danger size="small" icon={<DeleteOutlined />} />
                   </Popconfirm>
                 )
@@ -507,7 +619,7 @@ const api = folder.includes("certs") ? uploadFileCertsAPI : uploadFileProductAPI
                     onChange={(date) => {
                       const updated = [...certList];
                       updated[index].certDate = date;
-setCertList(updated);
+                      setCertList(updated);
                     }}
                   />
                 </Col>
@@ -537,24 +649,32 @@ setCertList(updated);
           ))}
         </Space>
 
-       <div style={{ marginTop: 16, textAlign: "center" }}>
-  <Button
-    type="dashed"
-    onClick={addCertificate}
-    icon={<PlusOutlined />}
-    style={{ width: "100%" }}   
-  >
-    Thêm chứng chỉ khác
-  </Button>
-</div>
+        <div style={{ marginTop: 16, textAlign: "center" }}>
+          <Button
+            type="dashed"
+            onClick={addCertificate}
+            icon={<PlusOutlined />}
+            style={{ width: "100%" }}
+          >
+            Thêm chứng chỉ khác
+          </Button>
+        </div>
 
         <Divider />
 
         <div style={{ textAlign: "right" }}>
-          <Button onClick={() => setOpenModalCreate(false)} style={{ marginRight: 12 }}>
+          <Button
+            onClick={() => setOpenModalCreate(false)}
+            style={{ marginRight: 12 }}
+          >
             Hủy
           </Button>
-          <Button type="primary" htmlType="submit" loading={loading} size="large">
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            size="large"
+          >
             Tạo sản phẩm
           </Button>
         </div>

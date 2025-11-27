@@ -150,25 +150,29 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id);
     }
 
-    public User handleUpdateUser(Long id, ReqUserDTO user){
+    public User handleUpdateUser(Long id, ReqUserDTO user) {
         Optional<User> myUser = this.handleGetUserById(id);
         if(myUser.isPresent()){
             User userCurr = myUser.get();
-            if(userCurr.getName() != null){
+
+            if(user.getName() != null){
                 userCurr.setName(user.getName());
             }
-            if(userCurr.getEmail() != null){
-                userCurr.setEmail(user.getEmail());
-            }
-            if(userCurr.getPhone() != null){
+            if(user.getPhone() != null){
                 userCurr.setPhone(user.getPhone());
             }
+            if(user.getPassword() != null){
+                userCurr.setPassword(user.getPassword());
+            }
+            if(user.getImage() != null){
+                userCurr.setImage(user.getImage());
+            }
 
-            this.userRepository.save(userCurr);
-            return userCurr;
+            return this.userRepository.save(userCurr);
         }
         return null;
     }
+
 
     public ResCreateUserDTO convertToResCreateUserDTO(User user){
         ResCreateUserDTO resCreateUserDTO = new ResCreateUserDTO();

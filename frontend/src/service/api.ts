@@ -47,6 +47,10 @@ export const updateUserAPI = (id: number, payload: ICustomerTable) => {
   const urlBackend = `/api/v1/customer/profile/${id}`;
   return axios.put<IBackendRes<IRegister>>(urlBackend, payload);
 };
+export const updateUserDTOAPI = (id: number, payload: IReqUpdateUserDTO) => {
+  const urlBackend = `/api/v1/users/${id}`;
+  return axios.patch<IBackendRes<IRegister>>(urlBackend, payload);
+};
 
 export const updateEmployeeAPI = (id: number, payload: IEmployee) => {
   const urlBackend = `/api/v1/employee/profile/${id}`;
@@ -70,6 +74,11 @@ export const createUserAPI = (
   });
 };
 
+export const getUserByIdAPI = (id:number) => {
+  const urlBackend = `/api/v1/users/${id}`;
+  return axios.get<IBackendRes<IResUserById>>(urlBackend);
+};
+
 export const deleteUserProfileAPI = (id: number) => {
   const urlBackend = `/api/v1/customer/profile/${id}`;
   return axios.delete<IBackendRes<IRegister>>(urlBackend);
@@ -83,9 +92,9 @@ export const getProductAPI = () => {
   const urlBackend = `/api/v1/products?size=1000`;
   return axios.get<IBackendRes<IModelPaginate<IProduct>>>(urlBackend);
 };
-export const getOrderAPI = () => {
-  const urlBackend = `/api/v1/orders`;
-  return axios.get<IBackendRes<IOrder>>(urlBackend);
+export const getOrderAPI = (query: string) => {
+  const urlBackend = `/api/v1/orders?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<IOrder>>>(urlBackend);
 };
 export const getOrderAPIByUserId = (id: number) => {
   const urlBackend = `/api/v1/orders/user-order/${id}`;
@@ -354,6 +363,10 @@ export const uploadFileProductAPI = (file: File, folder: string = "products") =>
 export const uploadFileCertsAPI = (file: File, folder: string = "certs") => {
   return uploadFile(file, folder);
 };
+export const uploadFileAvatarAPI = (file: File, folder: string = "avatar") => {
+  return uploadFile(file, folder);
+};
+
 
 
 export const uploadMultipleFilesAPI = (files: File[], folder: string = "products") => {
@@ -571,3 +584,16 @@ export const deleteReviewAPI = (id: number) => {
   const urlBackend = `/api/v1/reviews/${id}`;
   return axios.delete<IBackendRes<void>>(urlBackend);
 };
+export const createOrder = (data:IReqCreateOrder) => {
+  const urlBackend = `/api/v1/orders`;
+  return axios.post<IBackendRes<void>>(urlBackend, data);
+};
+export const updateOrder = (orderId: number, data: IUpdateOrderDTO) => {
+  const urlBackend = `/api/v1/orders/${orderId}`;
+  return axios.patch<IBackendRes<void>>(urlBackend, data);
+};
+export const deleteOrder = (orderId: number, hardDelete = false) => {
+  const urlBackend = `/api/v1/orders/${orderId}?hardDelete=${hardDelete}`;
+  return axios.delete<IBackendRes<void>>(urlBackend);
+};
+

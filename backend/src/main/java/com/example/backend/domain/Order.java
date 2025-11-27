@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -39,7 +40,7 @@ public class Order {
 
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<OrderDetail> orderDetails;
+    private List<OrderDetail> orderDetails = new ArrayList<>();;
 
     @OneToOne(mappedBy = "order",cascade = CascadeType.ALL)
     @JsonIgnore

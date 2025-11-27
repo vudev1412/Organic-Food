@@ -42,6 +42,7 @@ declare global {
     id: number;
     email: string;
     name: string;
+    image: string;
     role: string;
   }
   interface IFetchAccount {
@@ -134,6 +135,16 @@ declare global {
     product: IProduct;
     certificate: ICertificate;
   }
+  export interface IOrderDetail {
+    id: number;
+    quantity: number;
+    price: number;
+    productId: number;
+    productName: string;
+    productImage: string;
+    productPrice: number;
+  }
+
   export interface IOrder {
     id: number;
     orderAt: string;
@@ -143,6 +154,8 @@ declare global {
     estimatedDate?: string;
     actualDate?: string;
     userId?: number;
+    userName?: string;
+    orderDetails?: IOrderDetail[];
   }
   export interface IOrderDetailFull {
     orderId: number;
@@ -399,10 +412,10 @@ declare global {
     orderId: number;
   }
 
-   interface IUnit {
+  interface IUnit {
     id: number;
     name: string;
-   }
+  }
 
   // Interface hiển thị (Mapping theo JSON response)
   export interface ICustomerAddress {
@@ -573,5 +586,50 @@ declare global {
     image: string;
     bestPromotion: IBestPromotion | null;
   }
-  export interface ICreateCustomerProfile {}
+  export interface IReqUpdateUserDTO {
+    name: string;
+    email: string;
+    password: string;
+    image: string;
+  }
+  interface IResUserById {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    image: string;
+  }
+  export interface IReqCustomer {
+    name: string;
+    email: string;
+    phone: string;
+    address?: string;
+  }
+
+  export interface IReqOrderDetailItem {
+    productId: number;
+    quantity: number;
+  }
+
+  export interface IReqCreateOrder {
+    customerDTO?: IReqCustomer;
+    userId?: number;
+    shipAddress: string;
+    note?: string;
+    estimatedDate?: string | null;
+    orderDetails: IReqOrderDetailItem[];
+  }
+  interface IUpdateOrderDTO {
+    shipAddress?: string;
+    note?: string;
+    statusOrder?:
+      | "PENDING"
+      | "PROCESSING"
+      | "SHIPPING"
+      | "DELIVERED"
+      | "CANCELLED";
+    estimatedDate?: string;
+    actualDate?: string;
+    orderDetails?: { productId: number; quantity: number }[];
+  }
 }
