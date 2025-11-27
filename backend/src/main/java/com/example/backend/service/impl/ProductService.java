@@ -5,6 +5,7 @@ import com.example.backend.domain.key.ProductCertificateKey;
 import com.example.backend.domain.request.ReqProductCertificateDTO;
 import com.example.backend.domain.request.ReqProductDTO;
 import com.example.backend.domain.response.*;
+import com.example.backend.enums.TypePromotion;
 import com.example.backend.mapper.ProductMapper;
 import com.example.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -40,8 +41,8 @@ public class ProductService {
     private final ProductCertificateRepository productCertificateRepository;
     private final PromotionDetailService promotionDetailService;
     private final ReceiptDetailRepository receiptDetailRepository;
-
-
+    private final PromotionDetailRepository promotionDetailRepository;
+    private final PromotionRepository promotionRepository;
 
 
     public ResGetAllProductDTO handleGetProductById(Long id) {
@@ -473,9 +474,63 @@ public class ProductService {
         return response;
     }
 
+    public ResultPaginationDTO handleGetProductsByPromotionId(long promotionId, Pageable pageable) {
+        // 1. Lấy thông tin Promotion gốc
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new RuntimeException("Promotion not found with id: " + promotionId));
+
+        // 2. Truy vấn danh sách từ bảng PromotionDetail
+        Page<PromotionDetail> pageDetails = promotionDetailRepository.findByPromotionId(promotionId, pageable);
+
+        // 3. Map dữ liệu sang DTO (List kết quả)
+        List<ResProductByPromotionDTO> listDTO = pageDetails.getContent().stream().map(detail -> {
+            Product product = detail.getProduct();
+
+            ResProductByPromotionDTO dto = new ResProductByPromotionDTO();
+            dto.setProductId(product.getId());
+            dto.setProductName(product.getName());
+            dto.setImage(product.getImage());
+            dto.setOriginalPrice(product.getPrice());
+            dto.setSlug(product.getSlug());
+            dto.setQuantity(product.getQuantity());
+            // Lấy ngày bắt đầu/kết thúc cụ thể từ bảng chi tiết
+            dto.setPromotionStartDate(detail.getStartDate());
+            dto.setPromotionEndDate(detail.getEndDate());
+            dto.setPromotionType(promotion.getType());
+            dto.setPromotionValue(promotion.getValue());
 
 
+            // --- Logic tính giá sau giảm ---
+            double discountAmount = 0;
+            if (TypePromotion.PERCENT.equals(promotion.getType())) {
+                discountAmount = product.getPrice() * (promotion.getValue() / 100);
+            } else {
+                discountAmount = promotion.getValue();
+            }
 
+            double finalPrice = product.getPrice() - discountAmount;
+            dto.setDiscountedPrice(finalPrice < 0 ? 0 : finalPrice);
 
+            return dto;
+        }).collect(Collectors.toList());
 
+        // 4. Tạo đối tượng Meta (Inner Class) theo đúng cấu trúc của bạn
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        meta.setPage(pageable.getPageNumber() + 1); // Pageable bắt đầu từ 0, client thường bắt đầu từ 1
+        meta.setPageSize(pageable.getPageSize());
+        meta.setPages(pageDetails.getTotalPages());
+        meta.setTotal(pageDetails.getTotalElements());
+
+        // 5. Đóng gói kết quả vào ResultPaginationDTO
+        ResultPaginationDTO response = new ResultPaginationDTO();
+        response.setMeta(meta);
+        response.setResult(listDTO);
+
+        return response;
+    }
 }
+
+
+
+
+
