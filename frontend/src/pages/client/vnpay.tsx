@@ -238,7 +238,7 @@ const CheckoutPage: React.FC = () => {
                     <Text type="secondary" className="text-lg block mb-6">
                       Bạn chưa có địa chỉ giao hàng nào
                     </Text>
-                    <Button type="primary" size="large" onClick={() => navigate("/profile?tab=address")}>
+                    <Button type="primary" size="large" onClick={() => navigate("/tai-khoan/dia-chi")}>
                       Thêm địa chỉ ngay
                     </Button>
                   </div>
