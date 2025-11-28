@@ -55,7 +55,7 @@ payment:
     url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     tmnCode: "58X4B4HP"
     secretKey: "VRLDWNVWDNPCOEPBZUTWSEDQAGXJCNGZ"
-    returnUrl: "https://stationery-judge-something-brokers.trycloudflare.com/api/v1/payment/vn-pay-callback"
+    returnUrl: "https://active-illustrated-pound-vendors.trycloudflare.com/api/v1/payment/vn-pay-callback"
     version: "2.1.0"
     command: "pay"
     orderType: "billpayment"
