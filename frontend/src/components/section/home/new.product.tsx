@@ -1,51 +1,64 @@
 // File path: /src/components/section/home/new.product.tsx
 
 import "./home.scss";
-import cachua from "../../../assets/jpg/ca-chua-beef-huu-co.jpg";
-import ProductCard from "../../common/product.card";
+import useProductSection from "../../../hooks/useProductSection";
+import { getNewArrivalsProductsAPI } from "../../../service/api";
+import QuantityModal from "../product/QuantityModal";
+import ProductCardWithPromotion from "../../common/product.card.with.promotion"; // Component hiển thị
+
 const NewProduct = () => {
+  const {
+    products,
+    loading,
+    error,
+    selectedProduct,
+    selectedDiscount,
+    handleShowQuantityModal,
+    handleCloseModal,
+    handleConfirmAddToCart,
+  } = useProductSection({
+    fetchProductsAPI: getNewArrivalsProductsAPI,
+    pageSize: 4,
+  });
+
+  if (loading) {
+    return (
+      <section className="mt-[50px] text-center">
+        <h1 style={{ color: "#0a472e" }}>Sản phẩm mới về</h1>
+        <p>Đang tải sản phẩm...</p>
+      </section>
+    );
+  }
+
+  if (error || products.length === 0) {
+    return (
+      <section className="mt-[50px] text-center">
+        <h1 style={{ color: "#0a472e" }}>Sản phẩm mới về</h1>
+        <p>{error || "Không tìm thấy sản phẩm mới nào."}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="mt-[50px]">
+      <QuantityModal
+        product={selectedProduct}
+        onClose={handleCloseModal}
+        discount={selectedDiscount}
+        onConfirm={handleConfirmAddToCart}
+      />
+
       <div className="flex justify-center mb-3">
         <h1 style={{ color: "#0a472e" }}>Sản phẩm mới về</h1>
       </div>
       <div className="flex flex-wrap gap-6 justify-center ">
-        <ProductCard
-          imageUrl={cachua}
-          altText="Cà chua bee hữu cơ"
-          name="Cà chua bee hữu cơ"
-          price={85000}
-          slug="ca-chua-bee-huu-co"
-          discount={{ type: "percent", value: 20 }}
-          onAddToCart={() => console.log("them vào giỏ Cà chua bee")}
-        />
-        <ProductCard
-          imageUrl={cachua}
-          altText="Cà chua bee hữu cơ"
-          name="Cà chua bee hữu cơ"
-          price={85000}
-          slug="ca-chua-bee-huu-co" // Thêm slug
-          discount={{ type: "percent", value: 20 }}
-          onAddToCart={() => console.log("them vào giỏ Cà chua bee")}
-        />
-        <ProductCard
-          imageUrl={cachua}
-          altText="Cà chua bee hữu cơ"
-          name="Cà chua bee hữu cơ"
-          price={85000}
-          slug="ca-chua-bee-huu-co" // Thêm slug
-          discount={{ type: "percent", value: 20 }}
-          onAddToCart={() => console.log("them vào giỏ Cà chua bee")}
-        />
-        <ProductCard
-          imageUrl={cachua}
-          altText="Cà chua bee hữu cơ"
-          name="Cà chua bee hữu cơ"
-          price={85000}
-          slug="ca-chua-bee-huu-co" // Thêm slug
-          discount={{ type: "percent", value: 20 }}
-          onAddToCart={() => console.log("them vào giỏ Cà chua bee")}
-        />
+        {products.map((p) => (
+          <ProductCardWithPromotion
+            key={p.id}
+            product={p}
+            onAddToCart={handleShowQuantityModal}
+          />
+        ))}
       </div>
     </section>
   );

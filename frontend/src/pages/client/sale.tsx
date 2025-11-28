@@ -10,14 +10,20 @@ import {
   CheckCircleFilled,
   LoadingOutlined,
   FilterOutlined,
-  CopyOutlined, // Đã thêm icon Copy
+  CopyOutlined, // Giữ lại icon Copy
 } from "@ant-design/icons";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-// Hãy đảm bảo đường dẫn import API này đúng với dự án của bạn
+// API (Cần giữ lại đường dẫn import này)
 import { getAvailableVouchersAPI } from "../../service/api";
 import salebanner from "../../assets/jpg/sale_banner.jpg";
+import axios from "axios";
 
-// --- 1. DEFINITIONS & INTERFACES ---
+// Components đã tách ra (theo file thứ 2)
+import ProductCard from "../../components/common/product.card";
+import QuantityModal from "../../components/section/product/QuantityModal";
+import { useCurrentApp } from "../../components/context/app.context";
+
+// --- 1. INTERFACES VÀ TYPES (Tối ưu từ cả 2 file) ---
 
 export interface IBackendRes<T> {
   data: T;
@@ -42,7 +48,32 @@ export interface IResVoucherDTO {
   active: boolean;
 }
 
-// --- UTILS ---
+export interface IDiscount {
+  type: "PERCENT" | "FIXED_AMOUNT";
+  value: number;
+}
+
+export interface IProductCard {
+  id: number;
+  name: string;
+  slug: string;
+  // Cần thêm imageUrl/imagePath tùy theo ProductCard component nhận prop gì
+  imageUrl: string; // Sử dụng imageUrl để nhất quán với file thứ 2
+  altText?: string;
+  price: number; // originalPrice
+  quantity: number; // stock quantity
+  discount?: IDiscount;
+}
+
+interface IPromotion {
+  id: number;
+  name: string;
+  active: boolean;
+}
+
+// --- 2. UTILS ---
+
+// Giữ lại vì không được import từ nơi khác
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -50,7 +81,7 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// --- HOOK: useInterval ---
+// Giữ lại Hook useInterval vì là logic nội bộ
 const useInterval = (callback: () => void, delay: number | null) => {
   const savedCallback = useRef(callback);
 
@@ -69,48 +100,8 @@ const useInterval = (callback: () => void, delay: number | null) => {
   }, [delay]);
 };
 
-// --- COMPONENT: ProductCard (Giữ nguyên) ---
-const ProductCard: React.FC<{ product: any }> = ({ product }) => {
-  const savings = product.originalPrice - product.promotionPrice;
-  return (
-    <Link
-      to={`/san-pham/${product.slug}`}
-      state={{ productId: product.id }}
-      className="block bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 group"
-    >
-      <div className="relative overflow-hidden h-48">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {savings > 0 && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
-            Giảm {formatCurrency(savings)}
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="text-gray-800 font-semibold text-lg line-clamp-2 mb-1">
-          {product.name}
-        </h3>
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-red-600">
-            {formatCurrency(product.promotionPrice)}
-          </span>
-          <span className="text-sm text-gray-400 line-through">
-            {formatCurrency(product.originalPrice)}
-          </span>
-        </div>
-        <button className="mt-3 w-full bg-green-50 text-green-700 py-2 rounded-lg font-medium border border-green-200 hover:bg-green-100 transition-colors">
-          Xem chi tiết
-        </button>
-      </div>
-    </Link>
-  );
-};
+// --- 3. VOUCHER COMPONENTS (Giữ lại vì không được import) ---
 
-// --- COMPONENT: VoucherCard (Compact & Icon Copy) ---
 const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
   const { color, icon, name } = useMemo(() => {
     switch (promo.typeVoucher) {
@@ -302,40 +293,133 @@ const VoucherFilter: React.FC<IVoucherFilterProps> = ({
   );
 };
 
-// --- MAIN PAGE: SalePage ---
+// --- 4. MAIN PAGE: SalePage (Tối ưu hóa logic API và Product Card) ---
 const SalePage: React.FC = () => {
+  const { addToCart } = useCurrentApp();
+
+  // ------------------
+  // Quantity Modal State
+  // ------------------
+  const [selectedProduct, setSelectedProduct] = useState<IProductCard | null>(
+    null
+  );
+  const [selectedDiscount, setSelectedDiscount] = useState<IDiscount>();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Mở modal, nhận ProductCard object đã được ánh xạ
+  const openModal = (p: IProductCard, discount?: IDiscount) => {
+    setSelectedProduct(p);
+    setSelectedDiscount(discount);
+    setIsModalOpen(true);
+  };
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleConfirmAdd = (product: IProductCard, quantity: number) => {
+    // ProductCard từ QuantityModal đã bao gồm discount trong prop
+    addToCart(product, quantity);
+    closeModal();
+  };
+
+  // ------------------
+  // Promotions + Products State & Fetching
+  // ------------------
+  const [promotions, setPromotions] = useState<IPromotion[]>([]);
+  const [promoProducts, setPromoProducts] =
+    useState<{ promotion: IPromotion; items: IProductCard[] }[]>();
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+  const fetchPromotions = async () => {
+    try {
+      const res = await axios.get("/api/v1/promotions");
+      setPromotions(res.data.data || []);
+    } catch (error) {
+      console.error("Lỗi khi tải promotions:", error);
+      setPromotions([]);
+    }
+  };
+
+  const fetchPromoProducts = async (allPromotions: IPromotion[]) => {
+    setIsLoadingProducts(true);
+    const active = allPromotions.filter((p) => p.active);
+
+    const result: { promotion: IPromotion; items: IProductCard[] }[] = [];
+
+    for (const promo of active) {
+      try {
+        const api = `/api/v1/products/promotion/${promo.id}?page=1&size=50`;
+        const res = await axios.get(api);
+
+        // DTO từ API: Giữ nguyên cấu trúc ánh xạ của file thứ 2
+        const items: any[] = res.data.data.result;
+
+        const mapped: IProductCard[] = items.map((p) => ({
+          id: p.productId,
+          name: p.productName,
+          slug: p.slug,
+          imageUrl: `/images/${p.image}`,
+          altText: p.productName,
+          price: p.originalPrice, // originalPrice
+          quantity: p.quantity, // stock quantity
+          discount: {
+            type: p.promotionType,
+            value: p.promotionValue,
+          },
+        }));
+
+        result.push({ promotion: promo, items: mapped });
+      } catch (error) {
+        console.error(`Lỗi khi tải sản phẩm cho KM ${promo.id}:`, error);
+        // Bỏ qua nếu có lỗi
+      }
+    }
+
+    setPromoProducts(result);
+    setIsLoadingProducts(false);
+  };
+
+  // 1. Fetch Promotions ban đầu
+  useEffect(() => {
+    fetchPromotions();
+  }, []);
+
+  // 2. Fetch Products khi Promotions thay đổi
+  useEffect(() => {
+    if (promotions.length > 0) {
+      fetchPromoProducts(promotions);
+    } else if (promotions.length === 0 && promoProducts) {
+      setPromoProducts(undefined); // Reset nếu không có KM nào
+    }
+  }, [promotions]); // Chỉ chạy khi danh sách promotions được set
+
+  // ------------------
+  // VOUCHER LOGIC
+  // ------------------
   const [availableVouchers, setAvailableVouchers] = useState<IResVoucherDTO[]>(
     []
   );
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingVouchers, setIsLoadingVouchers] = useState(true);
   const [activeFilter, setActiveFilter] = useState<VoucherType | "ALL">("ALL");
 
-  // Refs & State cho Scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  // 1. GỌI API
+  // load vouchers
   useEffect(() => {
-    const fetchVouchers = async () => {
-      setIsLoading(true);
+    const loadVoucher = async () => {
+      setIsLoadingVouchers(true);
       try {
-        const response = await getAvailableVouchersAPI();
-        if (response.data && response.data.data) {
-          setAvailableVouchers(response.data.data);
-        } else if (Array.isArray(response.data)) {
-          setAvailableVouchers(response.data as any);
-        } else {
-          setAvailableVouchers([]);
-        }
-      } catch (error) {
-        console.error("Lỗi khi tải vouchers:", error);
+        const res = await getAvailableVouchersAPI();
+        // Xử lý dữ liệu trả về theo 2 kiểu có thể (của file gốc)
+        const data = res.data.data || res.data;
+        setAvailableVouchers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Lỗi khi tải vouchers:", err);
         setAvailableVouchers([]);
       } finally {
-        setIsLoading(false);
+        setIsLoadingVouchers(false);
       }
     };
-
-    fetchVouchers();
+    loadVoucher();
   }, []);
 
   const filteredVouchers = useMemo(() => {
@@ -343,39 +427,28 @@ const SalePage: React.FC = () => {
     return availableVouchers.filter((v) => v.typeVoucher === activeFilter);
   }, [availableVouchers, activeFilter]);
 
-  // 2. XỬ LÝ SCROLL
-  const ITEM_WIDTH = 300; // Đã điều chỉnh cho phù hợp với card compact mới
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: direction === "left" ? -ITEM_WIDTH : ITEM_WIDTH,
-        behavior: "smooth",
-      });
-    }
+  const ITEM_WIDTH = 300;
+  const scroll = (dir: "left" | "right") => {
+    scrollContainerRef.current?.scrollBy({
+      left: dir === "left" ? -ITEM_WIDTH : ITEM_WIDTH,
+      behavior: "smooth",
+    });
   };
 
-  // 3. LOGIC LOOP SCROLL
+  // AUTO SCROLL
   useInterval(() => {
     if (
       isPaused ||
-      isLoading ||
+      isLoadingVouchers || // Thêm check loading
       filteredVouchers.length <= 3 ||
       !scrollContainerRef.current
-    ) {
+    )
       return;
-    }
 
-    const container = scrollContainerRef.current;
-    const isAtEnd =
-      container.scrollLeft + container.clientWidth >=
-      container.scrollWidth - 10;
-
-    if (isAtEnd) {
-      container.scrollTo({ left: 0, behavior: "smooth" });
-    } else {
-      scroll("right");
-    }
+    const c = scrollContainerRef.current;
+    if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 10) {
+      c.scrollTo({ left: 0, behavior: "smooth" });
+    } else scroll("right");
   }, 3500);
 
   const handleMouseEnter = () => setIsPaused(true);
@@ -438,7 +511,7 @@ const SalePage: React.FC = () => {
             setFilter={setActiveFilter}
           />
 
-          {isLoading ? (
+          {isLoadingVouchers ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-sm">
               <LoadingOutlined className="text-4xl text-green-600 mb-4" />
               <p className="text-gray-500">Đang tìm kiếm ưu đãi tốt nhất...</p>
@@ -498,120 +571,110 @@ const SalePage: React.FC = () => {
           )}
         </section>
 
-        {/* --- PRODUCT SUGGESTIONS --- */}
-        {[
-          {
-            vId: 1,
-            title: "Rau Củ Tươi",
-            prods: [
-              {
-                id: 301,
-                name: "Cải Kale Hữu Cơ",
-                slug: "cai-kale",
-                image: "https://placehold.co/300x300?text=Kale",
-                originalPrice: 45000,
-                promotionPrice: 35000,
-              },
-              {
-                id: 302,
-                name: "Cà Rốt Baby",
-                slug: "ca-rot",
-                image: "https://placehold.co/300x300?text=Carrot",
-                originalPrice: 60000,
-                promotionPrice: 50000,
-              },
-            ],
-          },
-          {
-            vId: 2,
-            title: "Thực Phẩm Khô",
-            prods: [
-              {
-                id: 101,
-                name: "Gạo Lứt ST25",
-                slug: "gao-lut",
-                image: "https://placehold.co/300x300?text=Rice",
-                originalPrice: 120000,
-                promotionPrice: 102000,
-              },
-              {
-                id: 102,
-                name: "Hạt Chia Úc",
-                slug: "hat-chia",
-                image: "https://placehold.co/300x300?text=Chia",
-                originalPrice: 150000,
-                promotionPrice: 135000,
-              },
-            ],
-          },
-        ].map((section) => {
-          const relatedVoucher = availableVouchers.find(
-            (v) => v.id === section.vId
-          );
-          if (
-            !relatedVoucher ||
-            (activeFilter !== "ALL" &&
-              relatedVoucher.typeVoucher !== activeFilter)
-          )
-            return null;
+        {/* =============================================================
+        🟢 KHỐI SẢN PHẨM THEO KHUYẾN MÃI 🟢
+       ============================================================= */}
+        <section className="mt-20">
+          <h2 className="text-3xl font-bold mb-8 flex items-center gap-2">
+            <GiftOutlined className="text-green-600" /> Sản phẩm đang khuyến mãi
+          </h2>
 
-          return (
-            <section key={section.vId} className="mb-16 animate-fade-in">
-              <div className="flex items-center justify-between mb-6 px-2">
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg text-green-700">
-                    <GiftOutlined className="text-xl" />
+          {isLoadingProducts && (
+            <div className="flex flex-col items-center justify-center py-10 bg-white rounded-xl shadow-sm">
+              <LoadingOutlined className="text-3xl text-green-600 mb-2" />
+              <p className="text-gray-500">Đang tải danh sách sản phẩm...</p>
+            </div>
+          )}
+
+          {!isLoadingProducts &&
+            (!promoProducts || promoProducts.length === 0) && (
+              <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
+                <p className="text-gray-500 font-medium">
+                  Hiện không có chương trình khuyến mãi nào đang diễn ra.
+                </p>
+              </div>
+            )}
+
+          {!isLoadingProducts &&
+            promoProducts &&
+            promoProducts.map((block) => {
+              // Lọc các block KM không phù hợp với filter đang chọn
+              const relatedVoucher = availableVouchers.find(
+                (v) => v.code === block.promotion.name // Giả định Tên KM = Code Voucher
+              );
+
+              // Lọc chỉ hiển thị các block nếu filter đang được bật
+              // (Sửa logic lọc của file gốc: Áp dụng filter voucher cho cả product section)
+              if (
+                activeFilter !== "ALL" &&
+                relatedVoucher?.typeVoucher !== activeFilter
+              ) {
+                // Nếu không tìm thấy voucher liên quan hoặc voucher không khớp filter
+                return null;
+              }
+
+              return (
+                <div key={block.promotion.id} className="mb-16 animate-fade-in">
+                  <div className="flex items-center justify-between mb-6 px-2">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-green-100 p-2 rounded-lg text-green-700">
+                        <GiftOutlined className="text-xl" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">
+                          {block.promotion.name}
+                        </h3>
+                        {relatedVoucher && (
+                          <p className="text-sm text-gray-500">
+                            Áp dụng mã:{" "}
+                            <span className="font-bold text-red-500">
+                              {relatedVoucher.code}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Link
+                      to="/san-pham"
+                      className="text-green-600 font-medium hover:underline text-sm"
+                    >
+                      Xem thêm &rarr;
+                    </Link>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">
-                      {section.title}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Áp dụng mã:{" "}
-                      <span className="font-bold text-red-500">
-                        {relatedVoucher.code}
-                      </span>
-                    </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                    {block.items.map((item) => (
+                      // Đảm bảo ProductCard nhận đúng props
+                      <ProductCard
+                        key={item.id}
+                        id={item.id}
+                        imageUrl={item.imageUrl}
+                        altText={item.altText || item.name}
+                        name={item.name}
+                        price={item.price}
+                        quantity={item.quantity}
+                        slug={item.slug}
+                        discount={item.discount}
+                        // Thêm onAddToCart cho ProductCard để mở modal
+                        onAddToCart={() => openModal(item, item.discount)}
+                      />
+                    ))}
                   </div>
                 </div>
-                <Link
-                  to="/san-pham"
-                  className="text-green-600 font-medium hover:underline text-sm"
-                >
-                  Xem thêm &rarr;
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                {section.prods.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
-
-        {/* --- NEWSLETTER --- */}
-        <div className="mt-20 bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-          <div className="relative z-10 max-w-2xl mx-auto">
-            <h3 className="text-3xl font-bold mb-4">Đừng Bỏ Lỡ Ưu Đãi!</h3>
-            <p className="mb-8 text-green-100">
-              Đăng ký nhận tin để nhận mã giảm giá mới nhất gửi thẳng vào email
-              của bạn hàng tuần.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                placeholder="Nhập email của bạn..."
-                className="flex-1 px-6 py-3 rounded-full text-gray-800 outline-none focus:ring-4 focus:ring-green-400/50"
-              />
-              <button className="bg-yellow-400 text-green-900 font-bold px-8 py-3 rounded-full hover:bg-yellow-300 transition-colors shadow-lg">
-                Đăng Ký
-              </button>
-            </div>
-          </div>
-        </div>
+              );
+            })}
+        </section>
       </div>
+
+      {/* --- MODAL SỐ LƯỢNG GIỎ HÀNG --- */}
+      {isModalOpen && selectedProduct && (
+        <QuantityModal
+          product={selectedProduct}
+          discount={selectedDiscount}
+          onClose={closeModal}
+          onConfirm={handleConfirmAdd}
+        />
+      )}
     </div>
   );
 };

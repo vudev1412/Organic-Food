@@ -74,7 +74,7 @@ export const createUserAPI = (
   });
 };
 
-export const getUserByIdAPI = (id:number) => {
+export const getUserByIdAPI = (id: number) => {
   const urlBackend = `/api/v1/users/${id}`;
   return axios.get<IBackendRes<IResUserById>>(urlBackend);
 };
@@ -340,23 +340,26 @@ export const createEmployeeProfileAPI = (data: any) => {
   return axios.post(`/api/v1/employee/profile`, data);
 };
 
-
-
 const uploadFile = (file: File, folder: string) => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("folder", folder);
 
-
-  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/files`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/files`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 };
 
-
-export const uploadFileProductAPI = (file: File, folder: string = "products") => {
+export const uploadFileProductAPI = (
+  file: File,
+  folder: string = "products"
+) => {
   return uploadFile(file, folder);
 };
 
@@ -367,22 +370,27 @@ export const uploadFileAvatarAPI = (file: File, folder: string = "avatar") => {
   return uploadFile(file, folder);
 };
 
-
-
-export const uploadMultipleFilesAPI = (files: File[], folder: string = "products") => {
+export const uploadMultipleFilesAPI = (
+  files: File[],
+  folder: string = "products"
+) => {
   const formData = new FormData();
-  
-  files.forEach(file => {
+
+  files.forEach((file) => {
     formData.append("files", file);
   });
-  
+
   formData.append("folder", folder);
 
-  return axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/files/multiple`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/files/multiple`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 };
 
 // =============================================================================
@@ -584,7 +592,7 @@ export const deleteReviewAPI = (id: number) => {
   const urlBackend = `/api/v1/reviews/${id}`;
   return axios.delete<IBackendRes<void>>(urlBackend);
 };
-export const createOrder = (data:IReqCreateOrder) => {
+export const createOrder = (data: IReqCreateOrder) => {
   const urlBackend = `/api/v1/orders`;
   return axios.post<IBackendRes<void>>(urlBackend, data);
 };
@@ -600,4 +608,128 @@ export const getOrderByUserId = (userId: number) => {
   const urlBackend = `/api/v1/orders/user-order/${userId}`;
   return axios.get<IBackendRes<IOrder>>(urlBackend);
 };
+/**
+ * Lấy danh sách sản phẩm có khuyến mãi tốt nhất.
+ * Endpoint: GET /api/v1/products/best-promotion
+ * FIX: Chuyển đổi kiểu trả về thành IModelPaginate<IProductCard>
+ */
+export const getBestPromotedProductsAPI = (
+  page: number = 1,
+  size: number = 4
+) => {
+  const urlBackend = `/api/v1/products/best-promotion?size=${size}&page=${page}`;
 
+  // Axios gọi API và nhận IBackendRes<ISpringRawResponse<IProductWithPromotion>>
+  return axios
+    .get<IBackendRes<ISpringRawResponse<IProductWithPromotion>>>(urlBackend)
+    .then((response) => {
+      const paginatedData = response.data.data;
+      if (!paginatedData) {
+        // Trả về IBackendRes với kiểu IModelPaginate rỗng nếu không có dữ liệu
+        return {
+          ...response.data,
+          data: {
+            meta: { page: page, size: size, pages: 0, total: 0 },
+            result: [],
+          },
+        } as IBackendRes<ISpringRawResponse<IProductCard>>;
+      }
+
+      // Mapping IProductWithPromotion sang IProductCard
+      const mappedResult: IProductCard[] = paginatedData.result.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug!,
+        image: p.image || "",
+        price: p.finalPrice, // Giá cuối cùng đã giảm
+        quantity: p.quantity,
+        // Thêm trường discount nếu có promotion
+        discount: p.promotionType
+          ? {
+              type: p.promotionType,
+              value: p.promotionValue,
+            }
+          : undefined,
+      }));
+
+      // Tạo cấu trúc IModelPaginate<IProductCard> giả lập để khớp với ProductRight
+      const mappedResponse: IBackendRes<ISpringRawResponse<IProductCard>> = {
+        ...response.data,
+        data: {
+          meta: paginatedData.meta,
+          result: mappedResult,
+        },
+      };
+      return mappedResponse;
+    });
+};
+
+/**
+ * Lấy danh sách sản phẩm mới về (New Arrivals)
+ * Endpoint: GET /api/v1/products/new-arrivals
+ * FIX: Chuyển đổi kiểu trả về thành IModelPaginate<IProductCard>
+ */
+export const getNewArrivalsProductsAPI = (
+  page: number = 1,
+  size: number = 4
+) => {
+  const urlBackend = `/api/v1/products/new-arrivals?size=${size}&page=${page}`;
+
+  // API này trả về IProductWithPromotion vì JSON mẫu có originalPrice/finalPrice
+  return axios
+    .get<IBackendRes<ISpringRawResponse<IProductWithPromotion>>>(urlBackend)
+    .then((response) => {
+      const paginatedData = response.data.data;
+      if (!paginatedData) {
+        return {
+          ...response.data,
+          data: {
+            meta: { page: page, size: size, pages: 0, total: 0 },
+            result: [],
+          },
+        } as IBackendRes<ISpringRawResponse<IProductCard>>;
+      }
+
+      // Mapping IProductWithPromotion sang IProductCard
+      const mappedResult: IProductCard[] = paginatedData.result.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug!,
+        image: p.image || "",
+        price: p.finalPrice, // Dùng finalPrice (có thể bằng originalPrice nếu không có khuyến mãi)
+        quantity: p.quantity,
+        discount: p.promotionType
+          ? {
+              type: p.promotionType,
+              value: p.promotionValue,
+            }
+          : undefined,
+      }));
+
+      const mappedResponse: IBackendRes<ISpringRawResponse  <IProductCard>> = {
+        ...response.data,
+        data: {
+          meta: paginatedData.meta,
+          result: mappedResult,
+        },
+      };
+      return mappedResponse;
+    });
+};
+
+export const getAllPromotionsAPI = () => {
+    const urlBackend = "/api/v1/promotions";
+    // Giả định backend trả về trực tiếp mảng các promotions
+    return axios.get<IBackendRes<IPromotion[]>>(urlBackend);
+};
+
+// Lấy sản phẩm theo ID khuyến mãi (có phân trang)
+export const getProductsByPromotionIdAPI = (
+    promotionId: number,
+    page: number = 1,
+    size: number = 10
+) => {
+    const urlBackend = `/api/v1/products/promotion/${promotionId}?page=${page}&size=${size}`;
+    // Trả về cấu trúc paginated list của IPromotionProductItem
+    return axios.get<IBackendRes<ISpringRawResponse<IPromotionProductItem>>>(urlBackend);
+};
