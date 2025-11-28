@@ -49,7 +49,7 @@ const PaymentSuccess: React.FC = () => {
 
           {/* Nút hành động */}
           <Space direction="vertical" size="large" className="w-full">
-            <Link to="/account/order" className="block w-full">
+            <Link to="/tai-khoan/don-hang" className="block w-full">
               <Button
                 type="primary"
                 size="large"

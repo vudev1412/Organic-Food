@@ -37,6 +37,7 @@ const TableProduct = () => {
   const { message, notification } = App.useApp();
   const [openModelUpdate, setOpenModelUpdate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<any>(null);
+
   const formatProductId = (id: number) => {
     if (id < 10) return `SP000${id}`;
     if (id < 100) return `SP00${id}`;
@@ -59,20 +60,23 @@ const TableProduct = () => {
     }
   };
 
+  const unitNames = ["", "Kg", "Gram", "Lít", "Hộp", "Cái"];
+
   const columns: ProColumns<IProduct>[] = [
     {
       title: "Mã SP",
       dataIndex: "id",
-      width: 100,
+      width: 90,
       fixed: "left",
       sorter: true,
       defaultSortOrder: "ascend",
       render: (_, record) => <a>{formatProductId(record.id)}</a>,
     },
+
     {
       title: "Sản phẩm",
       dataIndex: "name",
-      width: 280,
+      width: 260,
       render: (_, record) => (
         <Space>
           <Avatar
@@ -80,16 +84,14 @@ const TableProduct = () => {
             shape="square"
             src={
               record.image
-                ? `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${
-                    record.image
-                  }`
+                ? `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${record.image}`
                 : undefined
             }
             icon={<SafetyCertificateOutlined />}
-            style={{ backgroundColor: "#f0f2f5", flexShrink: 0 }}
+            style={{ backgroundColor: "#f0f2f5" }}
           />
           <div>
-            <div style={{ fontWeight: 500, fontSize: 15 }}>{record.name}</div>
+            <div style={{ fontWeight: 500 }}>{record.name}</div>
             <Text type="secondary" style={{ fontSize: 12 }}>
               {record.origin_address || "Chưa có xuất xứ"}
             </Text>
@@ -98,10 +100,31 @@ const TableProduct = () => {
       ),
     },
 
+    // 👉 Đơn vị tính (tách riêng)
+    {
+      title: "Đơn vị",
+      dataIndex: "unit",
+      width: 90,
+      render: (_, record) => unitNames[record.unit?.id || 0] || "Đơn vị",
+    },
+
+    // 👉 Số lượng — căn phải
+    {
+      title: "Số lượng",
+      dataIndex: "quantity",
+      width: 90,
+      align: "right",
+      render: (_, record) => (
+        <Text strong>{Number(record.quantity).toLocaleString("vi-VN")}</Text>
+      ),
+    },
+
+    // 👉 Giá bán — căn phải
     {
       title: "Giá bán",
-dataIndex: "price",
+      dataIndex: "price",
       width: 120,
+      align: "right",
       sorter: true,
       render: (price) => (
         <Text strong type="danger" style={{ fontSize: 15 }}>
@@ -109,27 +132,7 @@ dataIndex: "price",
         </Text>
       ),
     },
-    {
-      title: "Tồn kho",
-      dataIndex: "quantity",
-      width: 100,
-      render: (_, enity) => (
-        <Tag
-          color={
-            enity.quantity > 10
-              ? "green"
-              : enity.quantity > 0
-              ? "orange"
-              : "red"
-          }
-          style={{ fontWeight: 500 }}
-        >
-          {enity.quantity}{" "}
-          {["", "Kg", "Gram", "Lít", "Hộp", "Cái"][enity.unit.id || 0] ||
-            "Đơn vị"}
-        </Tag>
-      ),
-    },
+
     {
       title: "Chứng nhận",
       dataIndex: "certificates",
@@ -153,6 +156,7 @@ dataIndex: "price",
         );
       },
     },
+
     {
       title: "Trạng thái",
       dataIndex: "active",
@@ -164,17 +168,15 @@ dataIndex: "price",
         false: { text: "Tạm ngưng", status: "Error" },
       },
       render: (_, record) => (
-        <Tag
-          color={record.active ? "green" : "red"}
-          style={{ fontWeight: 500 }}
-        >
+        <Tag color={record.active ? "green" : "red"}>
           {record.active ? "Đang bán" : "Tạm ngưng"}
         </Tag>
       ),
     },
+
     {
       title: "Thao tác",
-      width: 120,
+      width: 130,
       fixed: "right",
       render: (_, record) => (
         <Space>
@@ -195,8 +197,8 @@ dataIndex: "price",
               icon={<EditTwoTone twoToneColor="#fa8c16" />}
               onClick={(e) => {
                 e.stopPropagation();
-                setDataUpdate(record); // truyền toàn bộ record
-                setOpenModelUpdate(true); // mở modal
+                setDataUpdate(record);
+                setOpenModelUpdate(true);
               }}
             />
           </Tooltip>
@@ -204,7 +206,7 @@ dataIndex: "price",
           <Popconfirm
             title="Xóa sản phẩm?"
             description={`Xóa "${record.name}" vĩnh viễn?`}
-onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -223,7 +225,7 @@ onConfirm={() => handleDelete(record.id)}
 
   return (
     <>
-      <ProTable<IProduct>
+      <ProTable
         columns={columns}
         actionRef={actionRef}
         cardBordered
@@ -231,20 +233,12 @@ onConfirm={() => handleDelete(record.id)}
         scroll={{ x: 1300 }}
         headerTitle={
           <Space>
-            <SafetyCertificateOutlined
-              style={{ fontSize: 20, color: "#1890ff" }}
-            />
-            <Text strong style={{ fontSize: 20 }}>
-              Quản lý sản phẩm
-            </Text>
+            <SafetyCertificateOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+            <Text strong style={{ fontSize: 20 }}>Quản lý sản phẩm</Text>
           </Space>
         }
         toolBarRender={() => [
-          <Button
-            key="reload"
-            icon={<ReloadOutlined />}
-            onClick={() => actionRef.current?.reload()}
-          >
+          <Button key="reload" icon={<ReloadOutlined />} onClick={() => actionRef.current?.reload()}>
             Làm mới
           </Button>,
           <Button
@@ -266,11 +260,10 @@ onConfirm={() => handleDelete(record.id)}
             query += `&filter=active==${status}`;
           }
 
-          // Sort
           if (Object.keys(sort).length > 0) {
             const field = Object.keys(sort)[0];
             const order = sort[field] === "ascend" ? "ASC" : "DESC";
-            query += `&sort=${field === "price" ? "price" : field},${order}`;
+            query += `&sort=${field},${order}`;
           } else {
             query += "&sort=id,ASC";
           }
@@ -279,13 +272,10 @@ onConfirm={() => handleDelete(record.id)}
           const rawData = res.data?.data.result || [];
           const mapProduct: Record<number, IProduct> = {};
 
-          rawData.forEach((item: any) => {
+          rawData.forEach((item) => {
             const id = item.id;
             if (!mapProduct[id]) {
-              mapProduct[id] = {
-                ...item,
-                certificates: item.certificates || [],
-              };
+              mapProduct[id] = { ...item, certificates: item.certificates || [] };
             } else {
               mapProduct[id].certificates = [
                 ...(mapProduct[id].certificates || []),
@@ -303,7 +293,7 @@ onConfirm={() => handleDelete(record.id)}
         rowClassName={(record) => (!record.active ? "row-disabled" : "")}
         search={{
           labelWidth: "auto",
-collapseRender: (collapsed) =>
+          collapseRender: (collapsed) =>
             collapsed ? "Mở rộng tìm kiếm" : "Thu gọn",
         }}
         options={{ reload: false, density: false, setting: false }}
@@ -326,6 +316,7 @@ collapseRender: (collapsed) =>
         setOpenModalCreate={setOpenModalCreate}
         refreshTable={() => actionRef.current?.reload()}
       />
+
       <UpdateProduct
         openModelUpdate={openModelUpdate}
         setOpenModelUpdate={setOpenModelUpdate}
