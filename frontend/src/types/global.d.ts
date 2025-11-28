@@ -92,6 +92,36 @@ declare global {
     phone: string;
     role: string;
   }
+  export interface IProductWithPromotion extends IProduct {
+    promotionId: number | null;
+    promotionName: string | null;
+    promotionType: "PERCENT" | "FIXED_AMOUNT" | null;
+    promotionValue: number;
+    promotionStartDate: string | null;
+    promotionEndDate: string | null;
+    originalPrice: number;
+    finalPrice: number;
+  }
+  export interface IPromotionProductItem {
+    productId: number;
+    productName: string;
+    quantity: number;
+    slug: string;
+    image: string;
+    originalPrice: number;
+    discountedPrice: number;
+    promotionStartDate: string;
+    promotionEndDate: string;
+    promotionType: "PERCENT" | "FIXED_AMOUNT";
+    promotionValue: number;
+  }
+  export interface IPromotion {
+    id: number;
+    name: string;
+    type: "PERCENT" | "FIXED_AMOUNT";
+    value: number;
+    active: boolean;
+  }
   interface IProduct {
     id: number;
     name: string;
