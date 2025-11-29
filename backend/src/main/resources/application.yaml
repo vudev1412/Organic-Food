@@ -59,3 +59,7 @@ payment:
     version: "2.1.0"
     command: "pay"
     orderType: "billpayment"
+payos:
+  client-id: ${PAYOS_CLIENT_ID}
+  api-key: ${PAYOS_API_KEY}
+  checksum-key: ${PAYOS_CHECKSUM_KEY}
