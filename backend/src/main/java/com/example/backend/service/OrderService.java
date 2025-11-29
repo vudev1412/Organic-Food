@@ -1,8 +1,10 @@
 package com.example.backend.service;
 
 import com.example.backend.domain.Order;
+import com.example.backend.domain.request.CreateUserOrderDTO;
 import com.example.backend.domain.request.ReqCreateOrderDTO;
 import com.example.backend.domain.request.ReqUpdateOrderDTO;
+import com.example.backend.domain.response.ResCreateUserOrderDTO;
 import com.example.backend.domain.response.ResOrderDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import org.springframework.data.domain.Pageable;
@@ -17,4 +19,7 @@ public interface OrderService {
     ResOrderDTO handleUpdateOrder(Long orderId, ReqUpdateOrderDTO reqDTO);
     void handleDeleteOrder(Long orderId, boolean hardDelete);
     List<ResOrderDTO> getOrdersByUserId(Long id);
+    void cancelOrder(Long orderId);
+    ResCreateUserOrderDTO handlePlaceUserOrder(CreateUserOrderDTO reqDTO);
+    ResOrderDTO convertToResOrderDTOv2(Order order);
 }

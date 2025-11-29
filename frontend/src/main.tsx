@@ -45,6 +45,7 @@ import RegisterMemBerPage from "./pages/client/register.member";
 import OrderHistoryPage from "./pages/account/order.history";
 import BackupRestorePage from "./pages/admin/backup.restore";
 import Payment from "./pages/client/payment";
+import SuccessPage from "./components/section/payment/SuccessPage";
 
 const router = createBrowserRouter([
   {
@@ -84,6 +85,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Payment />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/thanh-toan/thanh-cong",
+        element: (
+          <ProtectedRoute>
+            <SuccessPage />
           </ProtectedRoute>
         ),
       },

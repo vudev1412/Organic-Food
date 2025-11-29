@@ -189,6 +189,9 @@ const AddressSection = ({ user, onSelectAddress }: IAddressSectionProps) => {
                             {addr.street}, {addr.ward}, {addr.district},{" "}
                             {addr.province}
                           </p>
+                          <p className="text-sm text-gray-600 leading-snug">
+                            Note: <span className="italic">{addr.note}</span>
+                          </p>
                           {addr.defaultAddress && (
                             <span className="mt-2 inline-block text-[10px] uppercase tracking-wider font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full border border-green-300">
                               Mặc định
@@ -217,18 +220,19 @@ const AddressSection = ({ user, onSelectAddress }: IAddressSectionProps) => {
                 </div>
               </div>
 
-              {/* Footer Modal - Hành động */}
+              {/* Footer Modal */}
               <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse gap-3 rounded-b-2xl">
                 <button
                   type="button"
                   onClick={() => navigate("/tai-khoan/dia-chi")}
-                  className={`inline-flex w-full justify-center rounded-lg bg-${PRIMARY_COLOR} px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-green-700 transition-all sm:w-auto`}
+                  className={`flex-1 inline-flex justify-center rounded-lg bg-${PRIMARY_COLOR} px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-green-700 transition-all`}
                 >
                   Quản lý địa chỉ
                 </button>
+
                 <button
                   type="button"
-                  className="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto"
+                  className="flex-1 inline-flex justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100"
                   onClick={() => setShowAddressModal(false)}
                 >
                   Đóng

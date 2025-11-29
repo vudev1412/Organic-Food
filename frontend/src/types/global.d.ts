@@ -742,4 +742,65 @@ declare global {
 
     status?: "UNPAID" | "PAID" | "CANCELLED";
   }
+  // --- Type cho Request (Gửi đi) ---
+  export interface ICartItemRequest {
+    productId: number;
+    quantity: number;
+    price: number;
+  }
+
+  export interface IReqPlaceOrder {
+    receiverName: string;
+    receiverPhone: string;
+    shipAddress: string;
+    note: string;
+    paymentMethod: "COD" | "BANK_TRANSFER" | string; // Type string để linh hoạt
+    totalPrice: number;
+    cartItems: ICartItemRequest[];
+  }
+
+  // --- Type cho Response (Nhận về) ---
+  export interface IResPlaceOrder {
+    id: number; // Order ID
+    totalPrice: number;
+    paymentMethod: string;
+    receiverName: string;
+    receiverPhone: string;
+    address: string;
+    paymentStatus: string;
+  }
+  export interface IResOrderDetailItem {
+    productId: number;
+    productName: string;
+    productImage: string;
+    productSlug: string;
+    quantity: number;
+    price: number;
+  }
+
+  export interface IResOrderDTO {
+    id: number;
+    orderAt: string;
+    note: string;
+    statusOrder: string;
+    estimatedDate: string;
+    actualDate: string | null;
+
+    // Giao hàng
+    shipAddress: string;
+    receiverName: string;
+    receiverPhone: string;
+
+    // Tài chính
+    paymentMethod: string;
+    paymentStatus: string;
+    totalPrice: number;
+    subtotal: number;
+    shippingFee: number;
+    taxAmount: number;
+    discountAmount: number;
+
+    // Chi tiết sản phẩm
+    orderDetails: IResOrderDetailItem[];
+  }
 }

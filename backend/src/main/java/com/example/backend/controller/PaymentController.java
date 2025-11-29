@@ -1,10 +1,12 @@
 package com.example.backend.controller;
 
+import com.example.backend.domain.Invoice;
 import com.example.backend.domain.Payment;
 import com.example.backend.domain.request.CreatePaymentDTO;
 import com.example.backend.domain.request.ReqPaymentDTO;
 import com.example.backend.domain.response.ResPaymentDTO;
 import com.example.backend.enums.StatusPayment;
+import com.example.backend.repository.InvoiceRepository;
 import com.example.backend.repository.PaymentRepository;
 import com.example.backend.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import vn.payos.PayOS;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
@@ -28,6 +31,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final PaymentRepository paymentRepository;
+    private final InvoiceRepository invoiceRepository;
     private final PayOS payOS;
     @PostMapping("/payments/create")
     public ResponseEntity<Object> createPayment(@RequestBody CreatePaymentDTO body) {
@@ -43,9 +47,17 @@ public class PaymentController {
             payment.setProvider("PayOS");
             payment.setStatus(StatusPayment.PENDING);
 
-            // Lưu xuống DB (Lúc này savedPayment sẽ có giá trị và có ID)
             savedPayment = paymentRepository.save(payment);
-
+            long orderIdTarget = body.getOrderId();
+            Optional<Invoice> invoiceOptional = invoiceRepository.findByOrderId(orderIdTarget);
+            if (invoiceOptional.isPresent()) {
+                Invoice invoice = invoiceOptional.get();
+                invoice.setPayment(savedPayment); // Cập nhật Payment ID vào Invoice
+                invoiceRepository.save(invoice);  // LƯU LẠI NGAY
+                System.out.println("✅ Đã link Payment ID " + savedPayment.getId() + " vào Invoice của Order " + orderIdTarget);
+            } else {
+                System.err.println("❌ CẢNH BÁO: Không tìm thấy Invoice cho Order ID " + orderIdTarget);
+            }
             // BƯỚC 2: Lấy ID để gọi PayOS
             long paymentId = savedPayment.getId();
 

@@ -1,8 +1,10 @@
 package com.example.backend.controller;
 
 import com.example.backend.domain.Order;
+import com.example.backend.domain.request.CreateUserOrderDTO;
 import com.example.backend.domain.request.ReqCreateOrderDTO;
 import com.example.backend.domain.request.ReqUpdateOrderDTO;
+import com.example.backend.domain.response.ResCreateUserOrderDTO;
 import com.example.backend.domain.response.ResOrderDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.OrderService;
@@ -60,5 +62,25 @@ public class OrderController {
     @GetMapping("/user-order/{id}")
     public ResponseEntity<List<ResOrderDTO>> getOrderByUserId(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(id));
+    }
+    // --- [LOGIC MỚI: THÊM API NÀY CHO USER CHECKOUT] ---
+    @PostMapping("/place-order")
+    @ApiMessage("Customer place an order")
+    public ResponseEntity<ResCreateUserOrderDTO> placeUserOrder(@RequestBody CreateUserOrderDTO reqDTO) {
+        // Gọi hàm handlePlaceUserOrder mới trong Service
+        ResCreateUserOrderDTO newOrder = orderService.handlePlaceUserOrder(reqDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newOrder);
+    }
+    // ----------------------------------------------------
+    @GetMapping("/user/{id}")
+    public ResponseEntity<ResOrderDTO> getOrderById2(@PathVariable Long id) {
+        Order order = orderService.handleGetOrderById(id);
+
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ResOrderDTO resDTO = orderService.convertToResOrderDTOv2(order);
+        return ResponseEntity.ok(resDTO);
     }
 }

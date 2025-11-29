@@ -762,62 +762,20 @@ export const PaymentAPI = {
     return response.data;
   },
 };
-// =============================================================================
-//  INVOICE API
-// =============================================================================
-
 /**
- * Tạo mới một Invoice (Hóa đơn)
- * Endpoint: POST /api/v1/invoices
- * @param req DTO chứa thông tin hóa đơn (bao gồm cả các trường tính toán từ FE)
+ * API Đặt hàng dành cho User (Checkout)
+ * Endpoint: POST /api/v1/orders/place-order
+ * Xử lý: Tạo Order -> Trừ kho -> Tạo Invoice -> Trả về kết quả để thanh toán
  */
-export const createInvoiceAPI = (req: IReqInvoice) => {
-  const urlBackend = "/api/v1/invoices";
-  // Giả định backend trả về IBackendRes<ResInvoiceDTO>
-  return axios.post<IBackendRes<ResInvoiceDTO>>(urlBackend, req);
+export const placeOrderAPI = (data: IReqPlaceOrder) => {
+  const urlBackend = `/api/v1/orders/place-order`;
+  return axios.post<IBackendRes<IResPlaceOrder>>(urlBackend, data);
 };
-
 /**
- * Lấy danh sách tất cả Invoices (có thể thêm phân trang và query sau)
- * Endpoint: GET /api/v1/invoices
- * @param query Chuỗi query cho phân trang, tìm kiếm, sắp xếp
+ * Lấy chi tiết đơn hàng (Dành cho User - Success Page)
+ * Endpoint: GET /api/v1/orders/user/{id}
  */
-export const getAllInvoicesAPI = (query: string = "") => {
-  const urlBackend = `/api/v1/invoices?${query}`;
-  // Vì backend trả về List<ResInvoiceDTO> nên ta dùng IModelPaginate nếu có phân trang
-  // Nếu không có phân trang, cần kiểm tra lại cấu trúc trả về của backend.
-  // Ở đây, giả định dùng chung IModelPaginate<ResInvoiceDTO>
-  return axios.get<IBackendRes<IModelPaginate<ResInvoiceDTO>>>(urlBackend);
-};
-
-/**
- * Lấy chi tiết một Invoice theo ID
- * Endpoint: GET /api/v1/invoices/{id}
- * @param id ID của Invoice
- */
-export const getInvoiceByIdAPI = (id: number) => {
-  const urlBackend = `/api/v1/invoices/${id}`;
-  return axios.get<IBackendRes<ResInvoiceDTO>>(urlBackend);
-};
-
-/**
- * Cập nhật một Invoice
- * Endpoint: PATCH /api/v1/invoices/{id}
- * @param id ID của Invoice cần cập nhật
- * @param invoice Entity Invoice chứa các trường cần sửa đổi (Controller của bạn dùng Entity)
- */
-export const updateInvoiceAPI = (id: number, invoice: Invoice) => {
-  const urlBackend = `/api/v1/invoices/${id}`;
-  // Controller dùng PATCH và nhận Entity Invoice.
-  return axios.patch<IBackendRes<ResInvoiceDTO>>(urlBackend, invoice);
-};
-
-/**
- * Xóa một Invoice
- * Endpoint: DELETE /api/v1/invoices/{id}
- * @param id ID của Invoice cần xóa
- */
-export const deleteInvoiceAPI = (id: number) => {
-  const urlBackend = `/api/v1/invoices/${id}`;
-  return axios.delete<IBackendRes<void>>(urlBackend);
+export const getOrderByIdV2API = (id: number) => {
+  const urlBackend = `/api/v1/orders/user/${id}`;
+  return axios.get<IBackendRes<IResOrderDTO>>(urlBackend);
 };
