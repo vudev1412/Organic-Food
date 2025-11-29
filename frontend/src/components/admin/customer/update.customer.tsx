@@ -138,9 +138,37 @@ const UpdateUser = (props: IProps) => {
             name="phone"
             rules={[
               { required: true, message: "Vui lòng nhập số điện thoại!" },
+              {
+                pattern: /^(0\d{9}|\+84\d{9})$/,
+                message:
+                  "Số điện thoại không hợp lệ (VD: 0987654321 hoặc +84987654321)",
+              },
             ]}
           >
-            <Input />
+            <Input
+              maxLength={12} // +84 + 9 số
+              onKeyPress={(e) => {
+                const allowed = /[0-9]/;
+
+                // Cho phép "+" ở đầu
+                if (e.key === "+") {
+                  if (e.currentTarget.value.length === 0) return;
+                  e.preventDefault();
+                  return;
+                }
+
+                // Chặn ký tự không phải số
+                if (!allowed.test(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const pasteText = e.clipboardData.getData("text");
+                if (!/^\+?[0-9]+$/.test(pasteText)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           </Form.Item>
           <Form.Item<FieldType>
             label="Thành viên"
