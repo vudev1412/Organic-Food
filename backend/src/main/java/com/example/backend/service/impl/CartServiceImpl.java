@@ -4,6 +4,7 @@ import com.example.backend.domain.Cart;
 import com.example.backend.domain.response.CartItemDTO;
 import com.example.backend.domain.response.ResCartDTO;
 import com.example.backend.mapper.CartMapper;
+import com.example.backend.repository.CartItemRepository;
 import com.example.backend.repository.CartRepository;
 import com.example.backend.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final CartMapper cartMapper;
+
     @Override
     public Cart handleCreateCart(Cart cart) {
         return this.cartRepository.save(cart);
@@ -99,5 +102,11 @@ public class CartServiceImpl implements CartService {
         }
         return BigDecimal.valueOf(((Number) obj).doubleValue());
     }
+    @Override
+    public void clearCartByUserId(Long userId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found for userId = " + userId));
 
+        cartItemRepository.deleteAllByCartId(cart.getId());
+    }
 }

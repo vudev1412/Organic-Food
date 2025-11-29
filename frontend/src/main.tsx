@@ -11,7 +11,7 @@ import HomePage from "./pages/client/home";
 import AboutPage from "./pages/client/about";
 import SingUp from "./pages/auth/signup";
 import SingIn from "./pages/auth/signin";
-import Cart from "./pages/client/cart";
+import Cart from "./pages/client/payment";
 import Profile from "./pages/account/profile";
 import ProfileHeader from "./components/layout/profile/app.header";
 import ProductDetail from "./pages/client/product-detail";
@@ -43,9 +43,8 @@ import SalePage from "./pages/client/sale";
 import OrderTrackingPage from "./pages/account/order";
 import RegisterMemBerPage from "./pages/client/register.member";
 import OrderHistoryPage from "./pages/account/order.history";
-import PaymentSuccess from "./pages/client/payment.success";
-import PaymentFailure from "./pages/client/payment.fail";
 import BackupRestorePage from "./pages/admin/backup.restore";
+import Payment from "./pages/client/payment";
 
 const router = createBrowserRouter([
   {
@@ -81,10 +80,10 @@ const router = createBrowserRouter([
         element: <AboutPage />,
       },
       {
-        path: "/gio-hang",
+        path: "/thanh-toan",
         element: (
           <ProtectedRoute>
-            <Cart />
+            <Payment />
           </ProtectedRoute>
         ),
       },
@@ -108,14 +107,6 @@ const router = createBrowserRouter([
       {
         path: "/dang-ky-thanh-vien",
         element: <RegisterMemBerPage />,
-      },
-      {
-        path: "/thanh-toan-thanh-cong",
-        element: <PaymentSuccess />,
-      },
-       {
-        path: "/thanh-toan-that-bai",
-        element: <PaymentFailure />,
       },
 
       {
@@ -167,8 +158,8 @@ const router = createBrowserRouter([
       { path: "suppliers", element: <Suppliers /> }, // Trang /admin
       { path: "orders", element: <CustomerOrders /> }, // Trang /admin
       { path: "complaints", element: <ReturnRequests /> },
-      
-       { path: "backup", element: <BackupRestorePage /> },// Trang /admin
+
+      { path: "backup", element: <BackupRestorePage /> }, // Trang /admin
       // { path: "users", element: <ManageUsers /> }, // Trang /admin/users
       // { path: "products", element: <ManageProducts /> }, // Trang /admin/products
     ],

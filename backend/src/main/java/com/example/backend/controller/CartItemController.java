@@ -46,5 +46,17 @@ public class CartItemController {
 
         return ResponseEntity.ok().body(res);
     }
+    @DeleteMapping("/carts/{cartId}/items")
+    public ResponseEntity<Void> deleteAllCartItemsByCartId(@PathVariable Long cartId) throws IdInvalidException {
+        this.cartItemService.handleDeleteAllCartItemsByCartId(cartId);
+        return ResponseEntity.noContent().build(); // 204
+    }
+    @DeleteMapping("/users/{userId}/cart/items")
+    public ResponseEntity<Void> deleteAllCartItemsByUserId(@PathVariable Long userId) throws IdInvalidException {
+        this.cartItemService.handleDeleteAllCartItemsByUserId(userId);
+        return ResponseEntity.noContent().build(); // 204
+    }
+
+
 
 }

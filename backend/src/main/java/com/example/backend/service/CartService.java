@@ -13,4 +13,5 @@ public interface CartService {
     public ResCartDTO handleUpdateCart(Long id, Cart cart);
     public void handleDeleteCart(Long id);
     public List<CartItemDTO> getCartItemsByUserId(Long userId);
+    public void clearCartByUserId(Long userId) ;
 }
