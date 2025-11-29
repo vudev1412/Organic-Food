@@ -60,7 +60,6 @@ export const updateEmployeeAPI = (id: number, payload: IEmployee) => {
 export const createUserAPI = (
   name: string,
   email: string,
-  password: string,
   phone: string,
   role: string
 ) => {
@@ -68,7 +67,6 @@ export const createUserAPI = (
   return axios.post<IBackendRes<IRegister>>(urlBackend, {
     name,
     email,
-    password,
     phone,
     role,
   });

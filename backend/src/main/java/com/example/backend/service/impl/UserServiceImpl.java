@@ -13,6 +13,7 @@ import com.example.backend.domain.response.ResUserDTO;
 import com.example.backend.enums.Role;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.repository.*;
+import com.example.backend.service.MailService;
 import com.example.backend.service.UserService;
 import com.example.backend.util.error.IdInvalidException;
 import com.example.backend.util.error.InvalidOtpException;
@@ -48,6 +49,7 @@ public class UserServiceImpl implements UserService {
     private final CustomerProfileRepository customerProfileRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
     public boolean isEmailExist(String email){
         return this.userRepository.existsByEmail(email);
     }
@@ -60,64 +62,118 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResUserDTO handleCreateUser(ReqCreateUserDTO userDTO) throws IdInvalidException {
 
-        // 1. Tìm xem user đã có trong DB chưa (Thay vì chỉ check exists)
+        // 1. Kiểm tra user theo email
         User currentUser = userRepository.findByEmail(userDTO.getEmail());
 
-        // 2. XỬ LÝ LOGIC EMAIL TỒN TẠI
         if (currentUser != null) {
-            // Trường hợp 1: Tài khoản đã tồn tại VÀ Đã xác thực -> Báo lỗi
             if (currentUser.isEmailVerified()) {
                 throw new IdInvalidException("Email này đã được sử dụng và kích hoạt.");
             }
-
-            // Trường hợp 2: Tài khoản tồn tại nhưng CHƯA xác thực (User quay lại sửa form)
-            // -> Ta sẽ tái sử dụng (Update) user này thay vì tạo mới hay báo lỗi.
-            // (Code sẽ chạy tiếp xuống dưới để cập nhật thông tin mới)
         } else {
-            // Trường hợp 3: Chưa có user nào -> Tạo mới hoàn toàn
             currentUser = new User();
             currentUser.setEmail(userDTO.getEmail());
         }
 
-        // 3. KIỂM TRA SỐ ĐIỆN THOẠI (Logic chặt chẽ hơn)
+        // 2. Kiểm tra số điện thoại
         User phoneOwner = userRepository.findByPhone(userDTO.getPhone());
         if (phoneOwner != null) {
-            // Nếu số điện thoại đã có trong DB, nhưng không phải của chính user đang update (ID khác nhau)
-            // Thì mới báo lỗi.
             if (currentUser.getId() == null || !phoneOwner.getId().equals(currentUser.getId())) {
                 throw new IdInvalidException("Số điện thoại này đã được sử dụng bởi người khác.");
             }
         }
 
-        // 4. CẬP NHẬT THÔNG TIN (Cho cả User mới hoặc User cũ chưa verify)
-        // Lưu ý: Không dùng mapper.toUser() ở đây vì nó sẽ tạo object mới, làm mất ID của user cũ
+        // 3. Cập nhật thông tin
         currentUser.setName(userDTO.getName());
         currentUser.setPhone(userDTO.getPhone());
 
-        // 5. MÃ HÓA MẬT KHẨU
-        currentUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        // --- 4. XỬ LÝ PASSWORD ---
+        String rawPassword;
+        boolean isDefaultPassword = false;
 
-        // 6. THIẾT LẬP TRẠNG THÁI
-        currentUser.setEmailVerified(false); // Reset lại trạng thái verify để bắt buộc nhập OTP mới
-
-        // 7. Xử lý Role
-        if (userDTO.getRole() != null) {
-            currentUser.setUserRole(Role.valueOf(userDTO.getRole()));
+        if (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty()) {
+            rawPassword = "123456"; // Mật khẩu mặc định
+            isDefaultPassword = true;
         } else {
-            // Nếu update mà chưa có role thì set, có rồi thì giữ nguyên hoặc set lại tùy logic
-            if (currentUser.getUserRole() == null) {
-                currentUser.setUserRole(Role.CUSTOMER);
-            }
+            rawPassword = userDTO.getPassword();
         }
 
-        // 8. Lưu xuống DB
-        // Nếu currentUser có ID (cũ) -> Hibernate sẽ UPDATE.
-        // Nếu currentUser không có ID (mới) -> Hibernate sẽ INSERT.
+        currentUser.setPassword(passwordEncoder.encode(rawPassword));
+
+        // 5. Reset email verify
+        currentUser.setEmailVerified(false);
+
+        // 6. Set role
+        if (userDTO.getRole() != null) {
+            currentUser.setUserRole(Role.valueOf(userDTO.getRole()));
+        } else if (currentUser.getUserRole() == null) {
+            currentUser.setUserRole(Role.CUSTOMER);
+        }
+
+        // 7. Lưu DB
         User saved = userRepository.save(currentUser);
 
-        // 9. Trả về DTO
+        // 8. Gửi email chào mừng với HTML template đẹp
+        mailService.sendWelcomeEmail(
+                saved.getEmail(),
+                saved.getName(),
+                saved.getEmail(),
+                rawPassword,
+                saved.getUserRole().name(),
+                isDefaultPassword
+        );
+
         return mapper.toResUserDTO(saved);
     }
+    private void sendWelcomeEmail(User user, String password, boolean isDefaultPassword) {
+        String subject = "Chào mừng đến với hệ thống - Thông tin tài khoản";
+
+        StringBuilder emailContent = new StringBuilder();
+        emailContent.append("Kính gửi ").append(user.getName()).append(",\n\n");
+        emailContent.append("Tài khoản của bạn đã được tạo thành công bởi quản trị viên.\n\n");
+        emailContent.append("═══════════════════════════════════\n");
+        emailContent.append("THÔNG TIN TÀI KHOẢN\n");
+        emailContent.append("═══════════════════════════════════\n");
+        emailContent.append("📧 Email: ").append(user.getEmail()).append("\n");
+        emailContent.append("🔑 Mật khẩu: ").append(password).append("\n");
+        emailContent.append("👤 Họ tên: ").append(user.getName()).append("\n");
+        emailContent.append("📱 Số điện thoại: ").append(user.getPhone()).append("\n");
+        emailContent.append("🎭 Vai trò: ").append(getRoleDisplayName(user.getUserRole())).append("\n");
+        emailContent.append("═══════════════════════════════════\n\n");
+
+        if (isDefaultPassword) {
+            emailContent.append("⚠️ LƯU Ý QUAN TRỌNG:\n");
+            emailContent.append("- Đây là mật khẩu mặc định của hệ thống\n");
+            emailContent.append("- Vui lòng đăng nhập và đổi mật khẩu ngay để bảo mật tài khoản\n\n");
+        } else {
+            emailContent.append("🔐 LƯU Ý BẢO MẬT:\n");
+            emailContent.append("- Không chia sẻ mật khẩu với bất kỳ ai\n");
+            emailContent.append("- Nên đổi mật khẩu định kỳ để đảm bảo an toàn\n\n");
+        }
+
+        emailContent.append("🌐 Link đăng nhập: https://yourwebsite.com/login\n\n");
+        emailContent.append("Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ.\n\n");
+        emailContent.append("Trân trọng,\n");
+        emailContent.append("Ban quản trị hệ thống");
+
+        mailService.sendSimpleMail(user.getEmail(), subject, emailContent.toString());
+    }
+
+    /**
+     * Lấy tên hiển thị của vai trò
+     */
+    private String getRoleDisplayName(Role role) {
+        switch (role) {
+            case ADMIN:
+                return "Quản trị viên";
+            case EMPLOYEE:
+                return "Nhân viên";
+            case CUSTOMER:
+                return "Khách hàng";
+            default:
+                return role.name();
+        }
+    }
+
 
 
     public ResultPaginationDTO handleGetAllUser(Specification<User> spec, Pageable pageable) {

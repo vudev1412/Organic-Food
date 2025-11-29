@@ -46,23 +46,25 @@ public class UserController {
     }
     @PostMapping("/users")
     @ApiMessage("Created a user")
-    public ResponseEntity<ResUserDTO> createUser(@Valid @RequestBody ReqCreateUserDTO user) throws IdInvalidException{
+    public ResponseEntity<ResUserDTO> createUser(@Valid @RequestBody ReqCreateUserDTO user) throws IdInvalidException {
+        // Chỉ kiểm tra tồn tại, không xử lý password
         boolean isEmailExist = this.userService.isEmailExist(user.getEmail());
         boolean isPhoneExist = this.userService.isPhoneExist(user.getPhone());
-        if (isEmailExist){
-            throw new IdInvalidException(
-                    "Email" + user.getEmail() + " đã tồn tại, vui lòng sử dụng email khác"
-            );
-        }
-        if (isPhoneExist){
-            throw new IdInvalidException(
-                      user.getPhone() + " đã tồn tại, vui lòng sử dụng số điện thoại khác"
-            );
-        }
-        String hashPassWord = this.passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashPassWord);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.handleCreateUser(user));
+        if (isEmailExist) {
+            throw new IdInvalidException(
+                    "Email " + user.getEmail() + " đã tồn tại, vui lòng sử dụng email khác"
+            );
+        }
+
+        if (isPhoneExist) {
+            throw new IdInvalidException(
+                    user.getPhone() + " đã tồn tại, vui lòng sử dụng số điện thoại khác"
+            );
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.userService.handleCreateUser(user));
     }
     @GetMapping("/users/{id}")
     public ResponseEntity<Optional<User>> getUserById(@PathVariable Long id){

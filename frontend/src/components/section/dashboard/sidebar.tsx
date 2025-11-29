@@ -111,6 +111,7 @@ const Sidebar: React.FC = () => {
         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
     }
   `}
+                  title={collapsed ? item.text : ""}
                 >
                   {/* Icon luôn căn giữa đẹp khi collapse */}
                   <Icon
@@ -121,10 +122,12 @@ const Sidebar: React.FC = () => {
                   {/* Text */}
                   {!collapsed && <span>{item.text}</span>}
 
-                  {/* Tooltip khi thu gọn */}
+                  {/* Tooltip khi thu gọn - cải tiến */}
                   {collapsed && (
-                    <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-lg">
+                    <div className="absolute left-full ml-3 px-4 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-xl">
                       {item.text}
+                      {/* Mũi tên trỏ vào */}
+                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-gray-900"></div>
                     </div>
                   )}
                 </Link>

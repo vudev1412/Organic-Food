@@ -30,13 +30,7 @@ const CreateUser = (props: IProps) => {
 
     try {
       // 1️⃣ Tạo user trước
-      const resUser = await createUserAPI(
-        name,
-        email,
-        password,
-        phone,
-        "CUSTOMER"
-      );
+      const resUser = await createUserAPI(name, email, phone, "CUSTOMER");
 
       if (resUser?.data?.success === false || !resUser?.data?.data?.id) {
         const backendError =
@@ -181,20 +175,38 @@ const CreateUser = (props: IProps) => {
           rules={[
             { required: true, message: "Vui lòng nhập số điện thoại!" },
             {
-              pattern: /^0\d{9}$/,
-              message: "Số điện thoại không hợp lệ! (VD: 0987654321)",
+              pattern: /^(0\d{9}|\+84\d{9})$/,
+              message:
+                "Số điện thoại không hợp lệ! (VD: 0987654321 hoặc +84987654321)",
             },
           ]}
         >
-          <Input />
-        </Form.Item>
+          <Input
+            maxLength={12} // +84 + 9 số = 12 ký tự
+            onKeyPress={(e) => {
+              const allowed = /[0-9]/;
 
-        <Form.Item<FieldType>
-          label="Password"
-          name="password"
-          rules={[{ required: true, message: "Vui lòng nhập password!" }]}
-        >
-          <Input.Password />
+              // Cho phép ký tự "+" chỉ ở đầu
+              if (e.key === "+") {
+                if (e.currentTarget.value.length === 0) return;
+                e.preventDefault();
+                return;
+              }
+
+              // Chặn ký tự không phải số
+              if (!allowed.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            onPaste={(e) => {
+              const pasteText = e.clipboardData.getData("text");
+
+              // Cho phép +84 hoặc số
+              if (!/^\+?[0-9]+$/.test(pasteText)) {
+                e.preventDefault();
+              }
+            }}
+          />
         </Form.Item>
       </Form>
     </Modal>
