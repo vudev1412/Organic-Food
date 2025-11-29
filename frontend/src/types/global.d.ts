@@ -688,4 +688,58 @@ declare global {
     id: number;
     status: string; // "PENDING" | "SUCCESS" | "FAILED" | "CANCELED"
   }
+  interface ResInvoiceDTO {
+    id: number;
+    createAt: string; // Instant map sang string (ISO date)
+    deliverFee: number;
+    discountAmount: number;
+    subtotal: number;
+
+    // --- Các trường tính toán mới ---
+    taxRate: number;
+    taxAmount: number;
+    total: number;
+    // --------------------------------
+
+    status: "UNPAID" | "PAID" | "CANCELLED"; // StatusInvoice enum
+
+    // Mối quan hệ (IDs)
+    orderId: number;
+    customerId?: number; // nullable
+    employeeId?: number; // nullable
+    paymentId?: number;
+    voucherId?: number;
+  }
+  interface IReqInvoice {
+    deliverFee: number;
+    discountAmount: number;
+    subtotal: number;
+    status: "UNPAID" | "PAID" | "CANCELLED"; // StatusInvoice enum
+
+    // --- Các trường tính toán từ Client ---
+    taxRate: number;
+    taxAmount: number;
+    total: number;
+    // ----------------------------------------
+
+    // Mối quan hệ (IDs)
+    orderId: number;
+    customerId?: number;
+    employeeId?: number;
+    paymentId?: number;
+    voucherId?: number;
+  }
+  interface Invoice {
+    id?: number;
+
+    deliverFee?: number;
+    discountAmount?: number;
+    subtotal?: number;
+
+    taxRate?: number;
+    taxAmount?: number;
+    total?: number;
+
+    status?: "UNPAID" | "PAID" | "CANCELLED";
+  }
 }

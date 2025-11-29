@@ -1,7 +1,7 @@
 // File path: /src/pages/client/payment.tsx
 
 import { useCurrentApp } from "../../components/context/app.context";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "../../utils/format";
 import PaymentModal from "../../components/section/payment/PaymentModal";
@@ -15,6 +15,7 @@ import CartEmpty from "../../components/section/payment/CartEmpty";
 import CartCoupon from "../../components/section/payment/CartCoupon";
 import CartSummary from "../../components/section/payment/CartSummary";
 import CartItem from "../../components/section/payment/CartItem";
+import AddressSection from "../../components/section/payment/AddressSection";
 import { DeleteOutlined } from "@ant-design/icons";
 
 interface IAppliedVoucher extends IResVoucherDTO {
@@ -22,8 +23,14 @@ interface IAppliedVoucher extends IResVoucherDTO {
 }
 
 const Payment = () => {
-  const { cartItems, removeFromCart, clearCart, updateCartQuantity } =
-    useCurrentApp();
+  const {
+    cartItems,
+    removeFromCart,
+    clearCart,
+    updateCartQuantity,
+    user,
+    showToast,
+  } = useCurrentApp();
   const navigate = useNavigate();
 
   // State Voucher
@@ -43,21 +50,32 @@ const Payment = () => {
   }>({ isOpen: false, type: "delete-item" });
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-
+  const [deliveryAddress, setDeliveryAddress] =
+    useState<ICustomerAddress | null>(null);
   // ===================== LOGIC TÍNH TOÁN =====================
-  const { subtotal, totalSavings, shipping, total, discountAmount } =
+  const {
+    subtotal,
+    totalSavings,
+    shipping,
+    total,
+    discountAmount,
+    taxAmount,
+  } = // Thêm taxAmount vào destructuring
     useMemo(() => {
+      // 1. Tính Subtotal
       const subtotal = cartItems.reduce(
         (total, item) => total + item.price * item.quantity,
         0
       );
 
+      // 2. Tính Tiết kiệm
       const totalSavings = cartItems.reduce((total, item) => {
         const originalPrice = item.originalPrice || item.price;
         const savedPerItem = Math.max(0, originalPrice - item.price);
         return total + savedPerItem * item.quantity;
       }, 0);
 
+      // 3. Tính Ship và Discount
       const shippingFee = subtotal > 500000 ? 0 : 25000;
       let currentDiscountAmount = 0;
       let finalShipping = shippingFee;
@@ -80,18 +98,45 @@ const Payment = () => {
         }
       }
 
-      const finalSubtotalAfterVoucher = subtotal - currentDiscountAmount;
-      const finalTotal = finalSubtotalAfterVoucher + finalShipping;
+      // 4. [MỚI] TÍNH THUẾ (8%)
+      // Thuế tính trên giá sau khi đã trừ khuyến mãi sản phẩm và voucher
+      const taxableAmount = Math.max(0, subtotal - currentDiscountAmount);
+      const taxAmount = Math.round(taxableAmount * 0.08); // 8% Tax
+
+      // 5. TÍNH TỔNG CỘNG (Đã bao gồm thuế)
+      const finalTotal = taxableAmount + taxAmount + finalShipping;
 
       return {
         subtotal,
         totalSavings,
         shipping: finalShipping,
-        total: finalTotal,
+        total: finalTotal, // Biến này sẽ được dùng cho cả PaymentModal và CartSummary
         discountAmount: currentDiscountAmount,
+        taxAmount, // Trả thêm biến này để truyền xuống CartSummary hiển thị
       };
     }, [cartItems, appliedVoucher]);
+  // ===================== [MỚI] TỰ ĐỘNG KIỂM TRA VOUCHER =====================
+  // Thêm đoạn code này ngay sau useMemo tính toán
+  useEffect(() => {
+    if (appliedVoucher) {
+      // Nếu tổng tiền tạm tính nhỏ hơn giá trị tối thiểu của voucher
+      if (subtotal < appliedVoucher.minOrderValue) {
+        setAppliedVoucher(null); // Gỡ voucher
+        setVoucherCode(""); // Xóa mã đang hiển thị ở ô input (nếu muốn)
 
+        // Hiển thị thông báo lỗi ngay tại input voucher
+        setVoucherError(
+          `Đơn hàng không còn đủ điều kiện tối thiểu ${formatCurrency(
+            appliedVoucher.minOrderValue
+          )}`
+        );
+        showToast(
+          `Mã ${appliedVoucher.code} đã bị gỡ do tổng đơn hàng không đủ điều kiện.`,
+          "warning"
+        );
+      }
+    }
+  }, [subtotal, appliedVoucher]);
   // ===================== LOGIC API VOUCHER =====================
   const handleApplyVoucher = async () => {
     if (!voucherCode) {
@@ -169,8 +214,7 @@ const Payment = () => {
       setAppliedVoucher({ ...voucherData, discountAmount: calculatedDiscount });
       setVoucherError(`Áp dụng mã ${voucherCode.toUpperCase()} thành công!`);
     } catch (error) {
-      console.error(error);
-      setVoucherError("Lỗi hệ thống khi kiểm tra mã giảm giá.");
+      setVoucherError("Mã giảm giá không hợp lệ. ");
       setAppliedVoucher(null);
     } finally {
       setIsApplying(false);
@@ -232,6 +276,10 @@ const Payment = () => {
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-12">
           {/* Cột trái: Danh sách sản phẩm & Voucher */}
           <section className="lg:col-span-8">
+            <AddressSection
+              user={user}
+              onSelectAddress={(addr) => setDeliveryAddress(addr)}
+            />
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <ul className="divide-y divide-gray-100 !p-0 !m-0 list-none">
                 {cartItems.map((item) => (
@@ -264,9 +312,17 @@ const Payment = () => {
               totalSavings={totalSavings}
               shipping={shipping}
               total={total}
+              taxAmount={taxAmount}
               discountAmount={discountAmount}
               appliedVoucher={appliedVoucher}
-              onCheckout={() => setShowPaymentModal(true)}
+              onCheckout={() => {
+                if (!deliveryAddress) {
+                  // Có thể thay bằng Toast warning của bạn
+                  showToast("Vui lòng chọn địa chỉ giao hàng!", "warning");
+                  return;
+                }
+                setShowPaymentModal(true);
+              }}
             />
           </section>
         </div>

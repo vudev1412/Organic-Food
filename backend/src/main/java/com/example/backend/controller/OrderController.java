@@ -4,7 +4,6 @@ import com.example.backend.domain.Order;
 import com.example.backend.domain.request.ReqCreateOrderDTO;
 import com.example.backend.domain.request.ReqUpdateOrderDTO;
 import com.example.backend.domain.response.ResOrderDTO;
-import com.example.backend.domain.response.ResOrdersDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.OrderService;
 import com.example.backend.util.annotation.ApiMessage;
@@ -16,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import  com.example.backend.util.SecurityUtil;
 
 import java.util.List;
 
@@ -53,7 +53,7 @@ public class OrderController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
-        orderService.handleDeleteOrder(id, false); // ✅ Truyền false (soft delete)
+        orderService.handleDeleteOrder(id, false);
         return ResponseEntity.noContent().build();
     }
 

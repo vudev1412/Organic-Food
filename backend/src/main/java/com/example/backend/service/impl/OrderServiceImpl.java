@@ -2,18 +2,14 @@ package com.example.backend.service.impl;
 
 import com.example.backend.domain.*;
 import com.example.backend.domain.key.OrderDetailKey;
-import com.example.backend.domain.request.ReqCreateOrderDTO;
-import com.example.backend.domain.request.ReqCustomerDTO;
-import com.example.backend.domain.request.ReqOrderDetailItemDTO;
-import com.example.backend.domain.request.ReqUpdateOrderDTO;
+import com.example.backend.domain.request.*;
 import com.example.backend.domain.response.*;
 import com.example.backend.enums.Role;
+import com.example.backend.enums.StatusInvoice;
 import com.example.backend.enums.StatusOrder;
+import com.example.backend.enums.StatusPayment;
 import com.example.backend.mapper.OrderMapper;
-import com.example.backend.repository.OrderDetailRepository;
-import com.example.backend.repository.OrderRepository;
-import com.example.backend.repository.ProductRepository;
-import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.*;
 import com.example.backend.service.CustomerProfileService;
 import com.example.backend.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +35,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
     private final CustomerProfileService customerProfileService;
+    private final PaymentRepository paymentRepository;
+    private final InvoiceRepository invoiceRepository;
 
     @Transactional
     public ResOrderDTO handleCreateOrder(ReqCreateOrderDTO reqDTO) {
@@ -397,7 +395,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     }
-
+    @Override
     @Transactional(readOnly = true)
     public List<ResOrderDTO> getOrdersByUserId(Long userId) {
         // Lấy orders với đầy đủ orderDetails và product
