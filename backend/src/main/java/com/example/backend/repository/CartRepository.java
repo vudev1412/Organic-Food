@@ -2,9 +2,11 @@ package com.example.backend.repository;
 
 import com.example.backend.domain.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,4 +50,10 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
         """, nativeQuery = true)
     List<Object[]> fetchCartItemsRaw(@Param("userId") Long userId);
     Optional<Cart> findByUser_Email(String email);
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM CartItem c WHERE c.cart.id = :cartId")
+    void deleteAllByCartId(@Param("cartId") Long cartId);
+    Optional<Cart> findByUserId(Long userId);
+
 }

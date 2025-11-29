@@ -16,6 +16,7 @@ import com.example.backend.util.error.IdInvalidException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -183,4 +184,40 @@ public class CartItemServiceImpl implements CartItemService {
             return res;
         }
     }
+    @Override
+    @Transactional
+    public void handleDeleteAllCartItemsByCartId(Long cartId) throws IdInvalidException {
+
+        // Kiểm tra cart có tồn tại
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new IdInvalidException("Cart ID không tồn tại"));
+
+        // Xóa toàn bộ cartItem thuộc cart
+        cartItemRepository.deleteAllByCartId(cartId);
+
+        // Cập nhật timestamp
+        cart.setUpdatedAt(Instant.now());
+        cartRepository.save(cart);
+    }
+    @Override
+    @Transactional
+    public void handleDeleteAllCartItemsByUserId(Long userId) throws IdInvalidException {
+
+        // Kiểm tra user có tồn tại không
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IdInvalidException("User ID không tồn tại"));
+
+        // Lấy cart theo user
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new IdInvalidException("Cart không tồn tại cho User này"));
+
+        // Xóa CartItem theo cart.id
+        cartItemRepository.deleteAllByCartId(cart.getId());
+
+        // Cập nhật timestamp
+        cart.setUpdatedAt(Instant.now());
+        cartRepository.save(cart);
+    }
+
+
 }

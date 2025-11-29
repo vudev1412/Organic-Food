@@ -295,9 +295,8 @@ export const updateCartAPI = (productId: number, quantity: number) => {
     quantity,
   });
 };
-export const clearCartAPI = () => {
-  const urlBackend = `/api/v1/cart`;
-  return axios.delete<IBackendRes<void>>(urlBackend);
+export const clearCartAPI = (userId: number) => {
+  return axios.delete(`/api/v1/cart/clear/${userId}`);
 };
 
 export const getCertificate = () => {
@@ -514,6 +513,16 @@ export const getAvailableVouchersAPI = () => {
   // Giả định backend trả về IBackendRes chứa List<IResVoucherDTO>
   return axios.get<IBackendRes<IResVoucherDTO[]>>(urlBackend);
 };
+/**
+ * Lấy chi tiết một voucher theo mã code.
+ * Endpoint: GET /api/v1/vouchers/code/{code}
+ * @param code Mã code của voucher
+ */
+export const getVoucherByCodeAPI = (code: string) => {
+  const urlBackend = `/api/v1/vouchers/code/${code}`;
+  // Giả định backend trả về IBackendRes chứa IResVoucherDTO
+  return axios.get<IBackendRes<IResVoucherDTO>>(urlBackend);
+};
 // =============================================================================
 //  REVIEW API
 // =============================================================================
@@ -704,7 +713,7 @@ export const getNewArrivalsProductsAPI = (
           : undefined,
       }));
 
-      const mappedResponse: IBackendRes<ISpringRawResponse  <IProductCard>> = {
+      const mappedResponse: IBackendRes<ISpringRawResponse<IProductCard>> = {
         ...response.data,
         data: {
           meta: paginatedData.meta,
@@ -716,18 +725,40 @@ export const getNewArrivalsProductsAPI = (
 };
 
 export const getAllPromotionsAPI = () => {
-    const urlBackend = "/api/v1/promotions";
-    // Giả định backend trả về trực tiếp mảng các promotions
-    return axios.get<IBackendRes<IPromotion[]>>(urlBackend);
+  const urlBackend = "/api/v1/promotions";
+  // Giả định backend trả về trực tiếp mảng các promotions
+  return axios.get<IBackendRes<IPromotion[]>>(urlBackend);
 };
 
 // Lấy sản phẩm theo ID khuyến mãi (có phân trang)
 export const getProductsByPromotionIdAPI = (
-    promotionId: number,
-    page: number = 1,
-    size: number = 10
+  promotionId: number,
+  page: number = 1,
+  size: number = 10
 ) => {
-    const urlBackend = `/api/v1/products/promotion/${promotionId}?page=${page}&size=${size}`;
-    // Trả về cấu trúc paginated list của IPromotionProductItem
-    return axios.get<IBackendRes<ISpringRawResponse<IPromotionProductItem>>>(urlBackend);
+  const urlBackend = `/api/v1/products/promotion/${promotionId}?page=${page}&size=${size}`;
+  // Trả về cấu trúc paginated list của IPromotionProductItem
+  return axios.get<IBackendRes<ISpringRawResponse<IPromotionProductItem>>>(
+    urlBackend
+  );
+};
+const BASE_URL = "/api/v1/payments";
+
+export const PaymentAPI = {
+  // 1. Tạo link thanh toán
+  createPayment: async (data: CreatePaymentRequest) => {
+    const response = await axios.post<IBackendRes<IPaymentResponse>>(
+      `${BASE_URL}/create`,
+      data
+    );
+    return response.data;
+  },
+
+  // 2. Check trạng thái
+  checkStatus: async (paymentId: number) => {
+    const response = await axios.get<IBackendRes<IPaymentStatus>>(
+      `${BASE_URL}/status/${paymentId}`
+    );
+    return response.data;
+  },
 };

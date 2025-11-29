@@ -82,10 +82,7 @@ public class EmployeeProfileServiceImpl implements EmployeeProfileService {
         if(req.getHireDate() != null){
             currentEmp.setHireDate(req.getHireDate());
         }
-        if(req.getSalary() > 0){
-            currentEmp.setSalary(req.getSalary());
 
-        }
 
         this.employeeProfileRepository.save(currentEmp);
 

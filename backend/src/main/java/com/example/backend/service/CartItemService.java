@@ -16,4 +16,8 @@ public interface CartItemService {
     public void addToCart(Long cartId, Long productId, int quantity) ;
     public ResCartItemDTO handleAddCartItem(ReqCartItemDTO req) throws IdInvalidException;
     public ResCartItemDTO handleUpdateCartItem(ReqCartItemDTO req) throws IdInvalidException;
+    void handleDeleteAllCartItemsByCartId(Long cartId) throws IdInvalidException;
+    void handleDeleteAllCartItemsByUserId(Long userId) throws IdInvalidException;
+
+
 }

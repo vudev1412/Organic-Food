@@ -26,6 +26,19 @@ public class Invoice {
 
     private double subtotal = 0;
 
+    // --- TRƯỜNG THUẾ ---
+    /** Tỷ lệ thuế áp dụng cho hóa đơn (ví dụ: 0.08 cho 8%) */
+    private double taxRate = 0.08;
+
+    /** Số tiền thuế GTGT đã tính (subtotal * taxRate) */
+    private double taxAmount = 0;
+    // ------------------------
+
+    // --- TRƯỜNG TỔNG CỘNG CUỐI CÙNG ---
+    /** Tổng số tiền cuối cùng khách hàng phải trả (Subtotal + TaxAmount + DeliverFee - DiscountAmount) */
+    private double total = 0;
+    // -----------------------------------
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusInvoice status = StatusInvoice.UNPAID;
@@ -43,7 +56,6 @@ public class Invoice {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_user_id", nullable = true)
     private User employee;
-
 
 
     @ManyToOne(fetch = FetchType.LAZY)

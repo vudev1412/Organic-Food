@@ -13,10 +13,9 @@ import {
   DashboardOutlined,
   CaretDownOutlined,
   CloseOutlined,
-  FileTextOutlined,
 } from "@ant-design/icons";
 import { useCurrentApp } from "../context/app.context";
-import { Dropdown, type MenuProps, Drawer, Menu, Button, Avatar } from "antd"; // Thêm Avatar
+import { Dropdown, type MenuProps, Drawer, Menu, Button, Avatar } from "antd";
 import { logoutAPI, getAllCategoriesAPI } from "../../service/api";
 import "./index.scss";
 import ProductSearch from "../section/product/search.bar";
@@ -33,23 +32,21 @@ type MenuItem = Required<MenuProps>["items"][number];
 
 const AppHeader = () => {
   const navigate = useNavigate();
+
+  // 1. Lấy handleLogout từ Context (đổi tên thành contextLogout để tránh trùng tên)
   const {
     user,
     isAuthenticated,
-    setUser,
-    setIsAuthenticated,
     cartItems,
     removeFromCart,
     updateCartQuantity,
-    clearCart,
+    handleLogout: contextLogout,
   } = useCurrentApp();
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // --- STATE MỚI: Quản lý hiển thị Mega Menu ---
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -73,22 +70,23 @@ const AppHeader = () => {
     fetchCategories();
   }, []);
 
-  const handleLogout = async () => {
+  // 2. Cập nhật logic Logout
+  const handleLogoutClick = async () => {
     try {
-      // Gọi API để backend biết (invalidate token nếu cần)
+      // Gọi API để Backend invalidate token (nếu có)
       await logoutAPI();
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Logout API warning:", error);
+      // Kệ lỗi API, vẫn tiến hành logout ở client
     } finally {
-      // ✅ LUÔN LUÔN thực hiện các bước này dù API thành công hay thất bại
-      setUser(null);
-      setIsAuthenticated(false);
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("organic_cart_items");
-      clearCart();
-      navigate("/");
-      // Nếu đang mở menu mobile thì đóng lại luôn cho chắc
+      // ✅ Gọi hàm logout an toàn từ Context (Chỉ xóa local, không xóa DB)
+      contextLogout();
+
+      // Đóng menu mobile nếu đang mở
       setIsMobileMenuOpen(false);
+
+      // Chuyển về trang chủ
+      navigate("/");
     }
   };
 
@@ -96,14 +94,11 @@ const AppHeader = () => {
     console.log("Searching:", searchTerm);
   };
 
-  // --- HÀM MỚI: Đóng menu khi click ---
   const closeMegaMenu = () => {
     setIsMegaMenuOpen(false);
   };
 
-  // --- CẬP NHẬT: Menu User đẹp hơn ---
   const userMenuItems: MenuProps["items"] = [
-    // PHẦN 1: HEADER THÔNG TIN TÀI KHOẢN
     {
       key: "profile-header",
       label: (
@@ -127,8 +122,6 @@ const AppHeader = () => {
       style: { cursor: "default" },
     },
     { type: "divider" },
-
-    // PHẦN 2: CÁC MENU CHÍNH
     {
       key: "1",
       icon: <ProfileOutlined className="text-gray-500" />,
@@ -163,17 +156,13 @@ const AppHeader = () => {
 
     { type: "divider" },
 
-    // PHẦN 3: ĐĂNG XUẤT
     {
       key: "4",
       danger: true,
       icon: <LogoutOutlined />,
-      // ✅ CÁCH SỬA: Đưa onClick ra ngoài làm thuộc tính của item
-      onClick: handleLogout,
-      label: (
-        // Bỏ onClick ở trong span này đi
-        <span className="font-medium">Đăng xuất</span>
-      ),
+      // ✅ Sử dụng hàm logout mới
+      onClick: handleLogoutClick,
+      label: <span className="font-medium">Đăng xuất</span>,
     },
   ];
 
@@ -264,7 +253,7 @@ const AppHeader = () => {
 
         {/* 3. DESKTOP NAVIGATION */}
         <nav className="hidden lg:flex items-center gap-3 ml-8 h-full">
-          {/* --- MEGA MENU FULL WIDTH (UPDATED) --- */}
+          {/* --- MEGA MENU --- */}
           <div
             className="h-full flex items-center static"
             onMouseEnter={() => setIsMegaMenuOpen(true)}
@@ -273,7 +262,7 @@ const AppHeader = () => {
             <Link
               to="/san-pham"
               onClick={closeMegaMenu}
-              className="!text-gray-700 font-medium text-[15px] hover:!text-green-600 transition-colors h-full flex items-center  relative z-20"
+              className="!text-gray-700 font-medium text-[15px] hover:!text-green-600 transition-colors h-full flex items-center relative z-20"
             >
               Sản phẩm
               <svg
@@ -291,18 +280,12 @@ const AppHeader = () => {
               </svg>
             </Link>
 
-            {/* --- DROPDOWN FULL SCREEN (CONTROLLED BY STATE) --- */}
             {isMegaMenuOpen && (
               <div className="block fixed top-[80px] left-0 w-full h-[calc(100vh-80px)] z-[999]">
                 <div className="absolute -top-2 left-0 w-full h-4 bg-transparent"></div>
-
-                {/* OVERLAY */}
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-sm -z-10"></div>
-
-                {/* NỘI DUNG MENU */}
                 <div className="bg-white border-t border-gray-100 shadow-2xl max-h-[70vh] overflow-y-auto animate-fade-in-down">
                   <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* CHECK DỮ LIỆU */}
                     {categories.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-2"></div>
@@ -310,7 +293,6 @@ const AppHeader = () => {
                       </div>
                     ) : (
                       <div className="grid grid-cols-5 gap-8">
-                        {/* Render danh mục (Chiếm 4 cột) */}
                         <div className="col-span-4 grid grid-cols-4 gap-8">
                           {categories.map((cat) => (
                             <div key={cat.id} className="group/cat">
@@ -341,7 +323,6 @@ const AppHeader = () => {
                           ))}
                         </div>
 
-                        {/* Banner quảng cáo bên phải (Chiếm 1 cột) */}
                         <div className="col-span-1">
                           <div className="bg-green-50 rounded-xl p-6 h-full flex flex-col justify-center items-start border border-green-100">
                             <span className="bg-green-200 text-green-800 text-[10px] font-bold px-2 py-1 rounded mb-3">
@@ -375,7 +356,6 @@ const AppHeader = () => {
           >
             Khuyến mãi
           </Link>
-          {/* CÁC LINK KHÁC */}
           <Link
             to="/gioi-thieu"
             className="!text-gray-700 font-medium text-[15px] hover:!text-green-600 h-full flex items-center px-2 transition-colors"
@@ -424,7 +404,6 @@ const AppHeader = () => {
 
           <div className="hidden sm:block">
             {isAuthenticated ? (
-              // --- CẬP NHẬT: Giao diện Dropdown Trigger ---
               <Dropdown
                 menu={{
                   items: userMenuItems,
@@ -475,10 +454,9 @@ const AppHeader = () => {
         placement="left"
         onClose={() => setIsMobileMenuOpen(false)}
         open={isMobileMenuOpen}
-        width="85%" // Tăng nhẹ chiều rộng để thoáng hơn
+        width="85%"
         className="lg:hidden"
         closable={false}
-        // Thêm nút đóng tùy chỉnh ở góc phải
         extra={
           <Button
             type="text"
@@ -487,10 +465,9 @@ const AppHeader = () => {
             className="!text-gray-500 hover:!bg-gray-100"
           />
         }
-        // Tùy chỉnh header của Drawer
         styles={{
           header: { borderBottom: "1px solid #f0f0f0", padding: "16px 24px" },
-          body: { padding: 0 }, // Reset padding body để tự control
+          body: { padding: 0 },
         }}
       >
         <div className="flex flex-col h-full">
@@ -533,13 +510,13 @@ const AppHeader = () => {
                   </Link>
                   <div
                     className="text-center text-xs text-red-500 py-1.5 bg-red-50 rounded cursor-pointer hover:bg-red-100 transition-colors font-medium"
-                    onClick={handleLogout}
+                    // ✅ Sử dụng hàm logout mới
+                    onClick={handleLogoutClick}
                   >
                     Đăng xuất
                   </div>
                 </div>
 
-                {/* Admin Link nếu có */}
                 {user?.role === "ADMIN" && (
                   <Link
                     to="/admin"
@@ -577,12 +554,11 @@ const AppHeader = () => {
               mode="inline"
               items={mobileMenuItems}
               className="border-none font-medium !bg-transparent"
-              // Tùy chỉnh style cho item được chọn
               selectedKeys={[location.pathname]}
             />
           </div>
 
-          {/* Phần 3: Footer nhỏ (Optional) */}
+          {/* Phần 3: Footer nhỏ */}
           <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
             <p className="text-xs text-gray-400">© 2024 Organic Store</p>
           </div>

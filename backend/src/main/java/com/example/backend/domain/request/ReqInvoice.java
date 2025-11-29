@@ -11,6 +11,9 @@ public class ReqInvoice {
     private double deliverFee;
     private double discountAmount;
     private double subtotal;
+    private double taxRate;
+    private double taxAmount;
+    private double total;
     private StatusInvoice status;
 
     private Long orderId;

@@ -7,6 +7,7 @@ import {
   getMyCartAPI,
   updateCartAPI,
   fetchAccountAPI,
+  clearCartAPI,
 } from "../../service/api";
 
 // ✅ IMPORT TOAST STYLES
@@ -395,13 +396,46 @@ export const AppProvider = ({ children }: Tprops) => {
     }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    if (!isAuthenticated) {
+  const clearCart = async () => {
+    if (isAuthenticated && user?.id) {
+      try {
+        // Gọi API backend xoá cart theo userId
+        await clearCartAPI(user.id);
+
+        // Cập nhật cartItems rỗng sau khi xoá thành công
+        setCartItems([]);
+
+        showToast("Đã xoá toàn bộ giỏ hàng", "success");
+      } catch (error: any) {
+        console.error("Clear cart failed:", error);
+
+        let errorMsg = "Xoá giỏ hàng thất bại";
+        if (error.response?.data?.message) {
+          errorMsg = error.response.data.message;
+        }
+
+        showToast(errorMsg, "error");
+      }
+    } else {
+      // Offline: xoá local storage
+      setCartItems([]);
       localStorage.removeItem(CART_STORAGE_KEY);
+      showToast("Đã xoá toàn bộ giỏ hàng", "success");
     }
   };
+  const handleLogout = () => {
+    // 1. Xóa token và dữ liệu local
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("organic_cart_items"); // Nếu muốn xóa luôn cart offline cũ
 
+    // 2. Reset State về ban đầu
+    setUser(null);
+    setIsAuthenticated(false);
+    setCartItems([]); // ✅ Chỉ set mảng rỗng ở Client, KHÔNG gọi API xóa DB
+
+    // 3. Thông báo
+    showToast("Đăng xuất thành công", "success");
+  };
   // ==================== RENDER ====================
   return (
     <CurrentAppContext.Provider
@@ -417,13 +451,14 @@ export const AppProvider = ({ children }: Tprops) => {
         removeFromCart,
         updateCartQuantity,
         clearCart,
-        showToast, // ✅ THÊM TOAST VÀO VALUE
+        handleLogout,
+        showToast,
       }}
     >
       {children}
 
       {/* ✅ TOAST CONTAINER */}
-      {/* INLINE TOAST CONTAINER — luôn hoạt động */}
+
       <div
         style={{
           position: "fixed",

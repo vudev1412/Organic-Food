@@ -662,4 +662,30 @@ declare global {
     actualDate?: string;
     orderDetails?: { productId: number; quantity: number }[];
   }
+  interface CreatePaymentRequest {
+    amount: number;
+    description?: string;
+    buyerName?: string;
+    buyerPhone?: string;
+    orderId?: number; // ID của đơn hàng hoặc ID thanh toán tùy logic backend
+  }
+  export interface IPaymentResponse {
+    bin: string;
+    accountNumber: string;
+    accountName: string;
+    amount: number;
+    description: string;
+    orderCode: number; // Cái này quan trọng để check status
+    currency: string;
+    paymentLinkId: string;
+    status: string;
+    checkoutUrl: string;
+    qrCode: string; // Cái này quan trọng để hiện QR
+  }
+
+  // 2. Định nghĩa kiểu dữ liệu trả về khi check status
+  export interface IPaymentStatus {
+    id: number;
+    status: string; // "PENDING" | "SUCCESS" | "FAILED" | "CANCELED"
+  }
 }

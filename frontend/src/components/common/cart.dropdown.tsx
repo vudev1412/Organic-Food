@@ -364,7 +364,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 </div>
               </div>
 
-              <Link to="/gio-hang" onClick={handleNavigate}>
+              <Link to="/thanh-toan" onClick={handleNavigate}>
                 <button className="w-full py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold uppercase tracking-wide rounded-xl shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transition-all duration-300 flex items-center justify-center gap-2 group">
                   <span>Thanh toán ngay</span>
                   <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
