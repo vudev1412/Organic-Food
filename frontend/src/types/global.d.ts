@@ -705,7 +705,7 @@ declare global {
     quantity?: number;
     usedCount?: number;
     active?: boolean;
-=======
+  }
   interface ResInvoiceDTO {
     id: number;
     createAt: string; // Instant map sang string (ISO date)
