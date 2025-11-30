@@ -1,9 +1,14 @@
 package com.example.backend.controller;
 
+import com.example.backend.domain.User;
 import com.example.backend.domain.Voucher;
 import com.example.backend.domain.response.ResVoucherDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.VoucherService;
+import com.turkraft.springfilter.boot.Filter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +28,8 @@ public class VoucherController {
 
     // Get all vouchers
     @GetMapping
-    public ResponseEntity<List<ResVoucherDTO>> getAllVouchers() {
-        List<ResVoucherDTO> vouchers = voucherService.handleGetAllVoucher();
+    public ResponseEntity<ResultPaginationDTO> getAllVouchers(@Filter Specification<Voucher> spec, Pageable pageable) {
+        ResultPaginationDTO vouchers = voucherService.handleGetAllVoucher(spec,pageable);
         return ResponseEntity.ok(vouchers);
     }
 

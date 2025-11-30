@@ -1,7 +1,8 @@
 package com.example.backend.domain.response;
 
-import com.example.backend.enums.Role;
+import com.example.backend.domain.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,8 @@ import lombok.Setter;
 
 @Setter
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class RestLoginDTO {
     @JsonProperty("access_token")
     private String accessToken;
@@ -25,12 +28,8 @@ public class RestLoginDTO {
         private String role;
         private String phone;
         private String avatar;
-        public UserLogin(long id, String email, String name, String role) {
-            this.id = id;
-            this.email = email;
-            this.name = name;
-            this.role = role;
-        }
+
+
     }
 
     @Getter
@@ -39,5 +38,16 @@ public class RestLoginDTO {
     @NoArgsConstructor
     public static class UserGetAccount{
         private UserLogin user;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class UserInsideToken{
+        private long id;
+        private String email;
+        private String name;
+        private String phone;
     }
 }

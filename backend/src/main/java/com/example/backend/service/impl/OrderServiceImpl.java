@@ -7,13 +7,9 @@ import com.example.backend.domain.request.ReqCustomerDTO;
 import com.example.backend.domain.request.ReqOrderDetailItemDTO;
 import com.example.backend.domain.request.ReqUpdateOrderDTO;
 import com.example.backend.domain.response.*;
-import com.example.backend.enums.Role;
 import com.example.backend.enums.StatusOrder;
 import com.example.backend.mapper.OrderMapper;
-import com.example.backend.repository.OrderDetailRepository;
-import com.example.backend.repository.OrderRepository;
-import com.example.backend.repository.ProductRepository;
-import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.*;
 import com.example.backend.service.CustomerProfileService;
 import com.example.backend.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +35,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
     private final CustomerProfileService customerProfileService;
-
+    private RoleRepository roleRepository;
     @Transactional
     public ResOrderDTO handleCreateOrder(ReqCreateOrderDTO reqDTO) {
         User customer;
@@ -124,32 +120,31 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     private User createNewCustomer(ReqCustomerDTO customerDTO) {
-        // ✅ Bước 1: Tạo User mới
+        Role customerRole = roleRepository.findByName("CUSTOMER")
+                .orElseThrow(() -> new RuntimeException("Role CUSTOMER không tồn tại"));
+
+        // ➤ Tạo User mới
         User newUser = new User();
         newUser.setName(customerDTO.getName());
         newUser.setEmail(customerDTO.getEmail());
         newUser.setPhone(customerDTO.getPhone());
-        newUser.setUserRole(Role.CUSTOMER);
+        newUser.setRole(customerRole); // 🎯 GÁN ROLE ENTITY
 
         // Tạo mật khẩu random
         String randomPassword = UUID.randomUUID().toString().substring(0, 8);
         newUser.setPassword(passwordEncoder.encode(randomPassword));
 
-        // ✅ Bước 2: LƯU USER TRƯỚC để có ID
+        // ➤ Lưu User trước (để có ID)
         User savedUser = userRepository.save(newUser);
 
-        // ✅ Bước 3: Tạo CustomerProfile với User đã có ID
+        // ➤ Tạo CustomerProfile
         CustomerProfile customerProfile = new CustomerProfile();
         customerProfile.setMember(true);
         customerProfile.setUser(savedUser);
 
         customerProfileService.handleCreateCustomerProfile(customerProfile);
 
-        // ✅ Trả về User đã lưu
         return savedUser;
-
-        // TODO: Gửi email thông báo mật khẩu cho khách hàng
-        // sendWelcomeEmail(savedUser.getEmail(), randomPassword);
     }
     // ✅ Helper: Tính giá cuối cùng (có thể có promotion)
     private double calculateFinalPrice(Product product) {

@@ -37,11 +37,11 @@ public class SecurityUtil {
     @Value("${lhv.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public String createAccessToken(String email, RestLoginDTO.UserLogin restLoginDTO){
+    public String createAccessToken(String email, RestLoginDTO restLoginDTO){
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
         User user = this.userService.handleGetUserByUsername(email);
-        List<String> listAuthority = List.of("ROLE_" + user.getUserRole().name());
+        List<String> listAuthority = List.of("ROLE_" + user.getRole().getName());
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)

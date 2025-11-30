@@ -82,7 +82,7 @@ declare global {
     employeeCode: string;
     address: string;
     hireDate: string;
-    salary: number;
+    birth:string;
     user: ICustomer;
   }
   interface IRegister {
@@ -687,5 +687,19 @@ declare global {
   export interface IPaymentStatus {
     id: number;
     status: string; // "PENDING" | "SUCCESS" | "FAILED" | "CANCELED"
+  }
+  export interface IResVoucherDTO {
+    id: number;
+    code: string;
+    description?: string;
+    typeVoucher: string; // enum string: PERCENT / FIXED ...
+    value: number;
+    maxDiscountAmount?: number;
+    minOrderValue?: number;
+    startDate?: string; // ISO
+    endDate?: string;
+    quantity?: number;
+    usedCount?: number;
+    active?: boolean;
   }
 }

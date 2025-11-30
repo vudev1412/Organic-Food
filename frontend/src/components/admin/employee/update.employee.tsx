@@ -1,4 +1,4 @@
-// File path: /src/components/admin/employee/update.employee.tsx
+// src/components/admin/employee/update.employee.tsx
 
 import {
   App,
@@ -7,7 +7,6 @@ import {
   Input,
   Modal,
   type FormProps,
-  InputNumber,
   DatePicker,
 } from "antd";
 import { useEffect, useState } from "react";
@@ -22,23 +21,6 @@ interface IProps {
   dataUpdate: IEmployee | null;
 }
 
-interface IEmployee {
-  id: number;
-  employeeCode: string;
-  address: string;
-  hireDate: string; // giữ string
-  salary: number;
-  user: ICustomer;
-}
-
-interface ICustomer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  image?: string | null;
-}
-
 type FieldType = {
   id: number;
   name: string;
@@ -47,22 +29,15 @@ type FieldType = {
   address: string;
   employeeCode: string;
   hireDate: dayjs.Dayjs | null;
-  salary: number;
+  birth: dayjs.Dayjs | null;
 };
 
 const UpdateEmployee = (props: IProps) => {
-  const {
-    openModelUpdate,
-    setOpenModelUpdate,
-    refreshTable,
-    setDataUpdate,
-    dataUpdate,
-  } = props;
-  const [isSubmit, setIsSubmit] = useState<boolean>(false);
+  const { openModelUpdate, setOpenModelUpdate, refreshTable, setDataUpdate, dataUpdate } = props;
+  const [isSubmit, setIsSubmit] = useState(false);
   const { message, notification } = App.useApp();
   const [form] = Form.useForm<FieldType>();
 
-  // set giá trị khi mở modal
   useEffect(() => {
     if (dataUpdate) {
       form.setFieldsValue({
@@ -73,7 +48,7 @@ const UpdateEmployee = (props: IProps) => {
         address: dataUpdate.address,
         employeeCode: dataUpdate.employeeCode,
         hireDate: dataUpdate.hireDate ? dayjs(dataUpdate.hireDate) : null,
-        salary: dataUpdate.salary,
+        birth: dataUpdate.birth ? dayjs(dataUpdate.birth) : null,
       });
     }
   }, [dataUpdate]);
@@ -82,12 +57,13 @@ const UpdateEmployee = (props: IProps) => {
     if (!dataUpdate) return;
     setIsSubmit(true);
 
+    // Chuyển ngày birth và hireDate sang ISO string nếu có
     const payload: IEmployee = {
       id: dataUpdate.id,
       employeeCode: values.employeeCode,
       address: values.address,
-      hireDate: values.hireDate ? values.hireDate.toISOString() : "",
-      salary: values.salary,
+      hireDate: values.hireDate ? values.hireDate.toISOString() : null,
+      birth: values.birth ? values.birth.toISOString() : null,
       user: {
         id: dataUpdate.user.id,
         name: values.name,
@@ -101,7 +77,7 @@ const UpdateEmployee = (props: IProps) => {
       const res = await updateEmployeeAPI(dataUpdate.id, payload);
 
       if (res.data) {
-        message.success("Cập nhật user thành công");
+        message.success("Cập nhật nhân viên thành công");
         form.resetFields();
         setOpenModelUpdate(false);
         setDataUpdate(null);
@@ -137,74 +113,37 @@ const UpdateEmployee = (props: IProps) => {
       confirmLoading={isSubmit}
     >
       <Divider />
-      <Form
-        form={form}
-        name="update-employee"
-        layout="vertical"
-        onFinish={onFinish}
-        autoComplete="off"
-      >
-        <Form.Item<FieldType> hidden label="ID" name="id">
+      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
+        <Form.Item hidden label="ID" name="id">
           <Input disabled />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Email"
-          name="email"
-          rules={[
-            { required: true, message: "Vui lòng nhập Email!" },
-            { type: "email", message: "Email không đúng định dạng!" },
-          ]}
-        >
+        <Form.Item label="Email" name="email" rules={[{ required: true, message: "Vui lòng nhập Email!" }]}>
           <Input disabled />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Tên"
-          name="name"
-          rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
-        >
+        <Form.Item label="Tên" name="name" rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}>
           <Input />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Phone"
-          name="phone"
-          rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
-        >
+        <Form.Item label="Phone" name="phone" rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}>
           <Input />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Địa chỉ"
-          name="address"
-          rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
-        >
+        <Form.Item label="Địa chỉ" name="address" rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}>
           <Input />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Mã nhân viên"
-          name="employeeCode"
-          rules={[{ required: true, message: "Vui lòng nhập mã nhân viên!" }]}
-        >
+        <Form.Item label="Mã nhân viên" name="employeeCode" rules={[{ required: true, message: "Vui lòng nhập mã nhân viên!" }]}>
           <Input />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Ngày vào làm"
-          name="hireDate"
-          rules={[{ required: true, message: "Vui lòng chọn ngày vào làm!" }]}
-        >
+        <Form.Item label="Ngày vào làm" name="hireDate" rules={[{ required: true, message: "Vui lòng chọn ngày vào làm!" }]}>
           <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
         </Form.Item>
 
-        <Form.Item<FieldType>
-          label="Lương"
-          name="salary"
-          rules={[{ required: true, message: "Vui lòng nhập lương!" }]}
-        >
-          <Input style={{ width: "100%" }} min={0} />
+        <Form.Item label="Ngày sinh" name="birth" rules={[{ required: true, message: "Vui lòng chọn ngày sinh!" }]}>
+          <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
         </Form.Item>
       </Form>
     </Modal>

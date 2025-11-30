@@ -1,11 +1,16 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.domain.User;
 import com.example.backend.domain.Voucher;
 import com.example.backend.domain.response.ResVoucherDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.mapper.VoucherMapper;
 import com.example.backend.repository.VoucherRepository;
 import com.example.backend.service.VoucherService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,10 +28,24 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
-    public List<ResVoucherDTO> handleGetAllVoucher() {
-        return voucherRepository.findAll().stream()
+    public ResultPaginationDTO handleGetAllVoucher(Specification<Voucher> spec, Pageable pageable) {
+        Page<Voucher> pageUser = this.voucherRepository.findAll(spec,pageable);
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(pageUser.getTotalPages());
+        meta.setTotal(pageUser.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(pageUser.getContent());
+        List<ResVoucherDTO> list = pageUser.getContent().stream()
                 .map(voucherMapper::toResVoucherDTO)
                 .toList();
+        rs.setResult(list);
+        return rs;
     }
 
     @Override

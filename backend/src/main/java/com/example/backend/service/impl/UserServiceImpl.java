@@ -1,8 +1,8 @@
 package com.example.backend.service.impl;
 
-import com.example.backend.domain.CustomerProfile;
 import com.example.backend.domain.Order;
 import com.example.backend.domain.Return;
+import com.example.backend.domain.Role;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqCreateUserDTO;
 import com.example.backend.domain.request.ReqResetPasswordDTO;
@@ -10,7 +10,6 @@ import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.domain.response.ResUserDTO;
-import com.example.backend.enums.Role;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.repository.*;
 import com.example.backend.service.MailService;
@@ -19,6 +18,7 @@ import com.example.backend.util.error.IdInvalidException;
 import com.example.backend.util.error.InvalidOtpException;
 import com.example.backend.util.error.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.support.BeanDefinitionDsl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -50,6 +50,7 @@ public class UserServiceImpl implements UserService {
     private final EmployeeProfileRepository employeeProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final RoleRepository roleRepository;
     public boolean isEmailExist(String email){
         return this.userRepository.existsByEmail(email);
     }
@@ -86,12 +87,12 @@ public class UserServiceImpl implements UserService {
         currentUser.setName(userDTO.getName());
         currentUser.setPhone(userDTO.getPhone());
 
-        // --- 4. XỬ LÝ PASSWORD ---
+        // 4. Xử lý password
         String rawPassword;
         boolean isDefaultPassword = false;
 
         if (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty()) {
-            rawPassword = "123456"; // Mật khẩu mặc định
+            rawPassword = "123456";
             isDefaultPassword = true;
         } else {
             rawPassword = userDTO.getPassword();
@@ -99,31 +100,39 @@ public class UserServiceImpl implements UserService {
 
         currentUser.setPassword(passwordEncoder.encode(rawPassword));
 
-        // 5. Reset email verify
+        // 5. Reset verify
         currentUser.setEmailVerified(false);
 
-        // 6. Set role
-        if (userDTO.getRole() != null) {
-            currentUser.setUserRole(Role.valueOf(userDTO.getRole()));
-        } else if (currentUser.getUserRole() == null) {
-            currentUser.setUserRole(Role.CUSTOMER);
+        // 6. Xử lý ROLE (ROLE ENTITY)
+        // 6. Xử lý ROLE
+        Role roleEntity;
+        if (userDTO.getRoleName() != null && !userDTO.getRoleName().isEmpty()) {
+            roleEntity = roleRepository.findByName(userDTO.getRoleName())
+                    .orElseThrow(() -> new IdInvalidException("Role không tồn tại"));
+        } else {
+            roleEntity = roleRepository.findByName("CUSTOMER")
+                    .orElseThrow(() -> new IdInvalidException("Role CUSTOMER không tồn tại"));
         }
+
+        currentUser.setRole(roleEntity);
+
 
         // 7. Lưu DB
         User saved = userRepository.save(currentUser);
 
-        // 8. Gửi email chào mừng với HTML template đẹp
+        // 8. Gửi email
         mailService.sendWelcomeEmail(
                 saved.getEmail(),
                 saved.getName(),
                 saved.getEmail(),
                 rawPassword,
-                saved.getUserRole().name(),
+                saved.getRole().getName(),
                 isDefaultPassword
         );
 
         return mapper.toResUserDTO(saved);
     }
+
     private void sendWelcomeEmail(User user, String password, boolean isDefaultPassword) {
         String subject = "Chào mừng đến với hệ thống - Thông tin tài khoản";
 
@@ -137,7 +146,6 @@ public class UserServiceImpl implements UserService {
         emailContent.append("🔑 Mật khẩu: ").append(password).append("\n");
         emailContent.append("👤 Họ tên: ").append(user.getName()).append("\n");
         emailContent.append("📱 Số điện thoại: ").append(user.getPhone()).append("\n");
-        emailContent.append("🎭 Vai trò: ").append(getRoleDisplayName(user.getUserRole())).append("\n");
         emailContent.append("═══════════════════════════════════\n\n");
 
         if (isDefaultPassword) {
@@ -161,18 +169,7 @@ public class UserServiceImpl implements UserService {
     /**
      * Lấy tên hiển thị của vai trò
      */
-    private String getRoleDisplayName(Role role) {
-        switch (role) {
-            case ADMIN:
-                return "Quản trị viên";
-            case EMPLOYEE:
-                return "Nhân viên";
-            case CUSTOMER:
-                return "Khách hàng";
-            default:
-                return role.name();
-        }
-    }
+
 
 
 
@@ -311,40 +308,46 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResultPaginationDTO getAllUserByRole(Specification<User> spec, Pageable pageable) {
-        Specification<User> finalSpec = spec == null
-                ? (root, query, cb) -> cb.equal(root.get("userRole"), Role.CUSTOMER)
-                : spec.and((root, query, cb) -> cb.equal(root.get("userRole"),  Role.CUSTOMER));
+        Specification<User> roleSpec = (root, query, cb) ->
+                cb.equal(root.join("userRole").get("name"), "CUSTOMER");
+
+        Specification<User> finalSpec = (spec == null)
+                ? roleSpec
+                : spec.and(roleSpec);
+
         Page<User> page = userRepository.findAll(finalSpec, pageable);
+
         List<ResUserDTO> userDTOs = page.getContent()
                 .stream()
                 .map(mapper::toResUserDTO)
                 .toList();
+
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
 
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
-
         meta.setPages(page.getTotalPages());
         meta.setTotal(page.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(page.getContent());
-
         rs.setResult(userDTOs);
+
         return rs;
     }
+
 
     public ResultPaginationDTO getAllUserByEmployee(Specification<User> spec, Pageable pageable) {
-        Specification<User> finalSpec = spec == null
-                ? (root, query, cb) -> cb.or(
-                cb.equal(root.get("userRole"), Role.EMPLOYEE),
-                cb.equal(root.get("userRole"), Role.ADMIN)
-        )
-                : spec.and((root, query, cb) -> cb.or(
-                cb.equal(root.get("userRole"), Role.EMPLOYEE),
-                cb.equal(root.get("userRole"), Role.ADMIN)
-        ));
+
+        Specification<User> roleSpec = (root, query, cb) ->
+                cb.or(
+                        cb.equal(root.join("userRole").get("name"), "EMPLOYEE"),
+                        cb.equal(root.join("userRole").get("name"), "ADMIN")
+                );
+
+        Specification<User> finalSpec = (spec == null)
+                ? roleSpec
+                : spec.and(roleSpec);
 
         Page<User> page = userRepository.findAll(finalSpec, pageable);
 
@@ -362,11 +365,11 @@ public class UserServiceImpl implements UserService {
         meta.setTotal(page.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(userDTOs); // chỉ cần set DTO, không cần set entity gốc
+        rs.setResult(userDTOs);
 
         return rs;
-
     }
+
 
     @Override
     @Transactional //  Thêm cái này để đảm bảo DB và Email đồng bộ

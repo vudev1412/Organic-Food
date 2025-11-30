@@ -12,15 +12,18 @@ import {
   Spin,
   Divider,
   Popconfirm,
+  Tag,
 } from "antd";
 import {
   DatabaseOutlined,
   DownloadOutlined,
   UploadOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
+  CheckCircleFilled,
+  ExclamationCircleFilled,
   FileTextOutlined,
   ClockCircleOutlined,
+  SafetyOutlined,
+  AlertOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 
@@ -31,32 +34,31 @@ const BackupRestorePage: React.FC = () => {
   const [loadingBackup, setLoadingBackup] = useState(false);
   const [loadingRestore, setLoadingRestore] = useState(false);
   const [result, setResult] = useState<{
-    type: "success" | "error";
+    type: string;
     title: string;
     msg: string;
     filePath?: string;
   } | null>(null);
 
-  // Tự động sinh tên file backup - LƯU VÀO Ổ D:
+  // Tự động tạo tên file backup - ưu tiên lưu vào D:/backups
   const generateBackupPath = () => {
     const now = new Date();
-    const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, "");
-    
-    // Phát hiện hệ điều hành
-    const isWindows = navigator.platform.toLowerCase().includes('win');
-    
-    // Mặc định lưu vào D:/backups trên Windows
-    const defaultPath = isWindows 
-      ? `D:/backups/organic_store_backup_${timestamp}.sql`
-      : `/tmp/organic_store_backup_${timestamp}.sql`;
-    
+    const date = now.toLocaleDateString("vi-VN").replace(/\//g, "-");
+    const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
+    const filename = `organic_store_backup_${date}_${time}.sql`;
+
+    const isWindows = navigator.userAgent.includes("Win");
+    const defaultPath = isWindows
+      ? `D:/backups/${filename}`
+      : `/tmp/${filename}`;
+
     setPath(defaultPath);
+    message.info(`Đã tạo tên file tự động: ${filename}`);
   };
 
-  // Backup
   const handleBackup = async () => {
     if (!path.trim()) {
-      message.warning("Vui lòng nhập đường dẫn file backup!");
+      message.warning("Vui lòng nhập đường dẫn lưu file backup!");
       return;
     }
 
@@ -68,46 +70,21 @@ const BackupRestorePage: React.FC = () => {
         `http://localhost:8080/api/v1/db/backup?path=${encodeURIComponent(path.trim())}`
       );
 
-      console.log("Backend response:", res);
-      console.log("Status:", res.status);
-      console.log("Data:", res.data);
-
-      // Kiểm tra status code 200 = thành công
       if (res.status === 200) {
-        const apiData = res.data;
-        const fullMessage = apiData.message || apiData.data || "Backup thành công!";
-        
-        // Trích xuất đường dẫn file đầy đủ
-        const filePathMatch = fullMessage.match(/([A-Z]:[\\/][\w\\/.-]+\.sql|\/[\w\\/.-]+\.sql)/i);
-        const filePath = filePathMatch ? filePathMatch[1] : "";
-
+        const filePath = path.trim();
         setResult({
           type: "success",
-          title: "✓ Backup thành công!",
-          msg: fullMessage,
+          title: "Backup thành công!",
+          msg: "Đã sao lưu toàn bộ dữ liệu hệ thống thành công.",
           filePath,
         });
-        message.success("Backup thành công!");
-      } else {
-        // Không phải 200 = lỗi
-        setResult({
-          type: "error",
-          title: "✗ Backup thất bại!",
-          msg: res.data?.message || "Có lỗi xảy ra từ server",
-        });
-        message.error("Backup thất bại!");
+        message.success("Backup hoàn tất!");
       }
     } catch (err: any) {
-      console.error("Backup error:", err);
-      
-      const errMsg =
-        err.response?.data?.message ||
-        err.message ||
-        "Lỗi kết nối đến server";
-
+      const errMsg = err.response?.data?.message || "Không thể kết nối đến server";
       setResult({
         type: "error",
-        title: "✗ Backup thất bại!",
+        title: "Backup thất bại!",
         msg: errMsg,
       });
       message.error("Backup thất bại!");
@@ -116,10 +93,9 @@ const BackupRestorePage: React.FC = () => {
     }
   };
 
-  // Restore
   const handleRestore = async () => {
     if (!path.trim()) {
-      message.warning("Vui lòng nhập đường dẫn file restore!");
+      message.warning("Vui lòng nhập đường dẫn file .sql để khôi phục!");
       return;
     }
 
@@ -131,259 +107,254 @@ const BackupRestorePage: React.FC = () => {
         `http://localhost:8080/api/v1/db/restore?path=${encodeURIComponent(path.trim())}`
       );
 
-      console.log("Backend response:", res);
-      console.log("Status:", res.status);
-      console.log("Data:", res.data);
-
-      // Kiểm tra status code 200 = thành công
       if (res.status === 200) {
-        const apiData = res.data;
-        const fullMessage = apiData.message || apiData.data || "Restore thành công!";
-        
-        // Trích xuất đường dẫn file đầy đủ
-        const filePathMatch = fullMessage.match(/([A-Z]:[\\/][\w\\/.-]+\.sql|\/[\w\\/.-]+\.sql)/i);
-        const filePath = filePathMatch ? filePathMatch[1] : "";
-
         setResult({
           type: "success",
-          title: "✓ Restore thành công!",
-          msg: fullMessage,
-          filePath,
+          title: "Khôi phục thành công!",
+          msg: "Hệ thống đã được khôi phục từ file backup thành công.",
+          filePath: path.trim(),
         });
-        message.success("Restore thành công!");
-      } else {
-        // Không phải 200 = lỗi
-        setResult({
-          type: "error",
-          title: "✗ Restore thất bại!",
-          msg: res.data?.message || "Có lỗi xảy ra từ server",
-        });
-        message.error("Restore thất bại!");
+        message.success("Khôi phục hoàn tất!");
       }
     } catch (err: any) {
-      console.error("Restore error:", err);
-      
-      const errMsg =
-        err.response?.data?.message ||
-        err.message ||
-        "Lỗi kết nối đến server";
-
+      const errMsg = err.response?.data?.message || "Không thể thực hiện khôi phục";
       setResult({
         type: "error",
-        title: "✗ Restore thất bại!",
+        title: "Khôi phục thất bại!",
         msg: errMsg,
       });
-      message.error("Restore thất bại!");
+      message.error("Khôi phục thất bại!");
     } finally {
       setLoadingRestore(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl shadow-2xl mb-6 animate-pulse">
-            <DatabaseOutlined className="text-5xl text-white" />
-          </div>
-          <Title
-            level={1}
-            className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600"
-          >
-            Backup & Restore Database
-          </Title>
-          <Text type="secondary" className="text-lg mt-4 block max-w-2xl mx-auto">
-            Quản lý sao lưu và khôi phục toàn bộ dữ liệu hệ thống một cách an toàn và nhanh chóng
-          </Text>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+
+        {/* Header đẹp, chuyên nghiệp */}
+        <div className="text-center mb-10">
+          <Space direction="vertical" size={24}>
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-2xl shadow-xl">
+              <DatabaseOutlined className="text-5xl text-white" />
+            </div>
+            <Title level={1} style={{ fontSize: 36, fontWeight: 700, color: "#1e293b" }}>
+              Quản lý sao lưu & khôi phục
+            </Title>
+            <Text type="secondary" style={{ fontSize: 18 }}>
+              Bảo vệ dữ liệu hệ thống – Backup định kỳ, khôi phục nhanh chóng
+            </Text>
+          </Space>
         </div>
 
-        {/* Main Card */}
         <Card
-          className="shadow-2xl rounded-3xl border-0 overflow-hidden"
-          bodyStyle={{ padding: "48px" }}
-          style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            color: "white",
-          }}
+          bordered={false}
+          className="shadow-xl rounded-2xl overflow-hidden"
+          bodyStyle={{ padding: "40px 48px" }}
         >
-          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-10 shadow-2xl">
-            {/* Đường dẫn file */}
-            <div className="mb-10">
-              <div className="flex items-center gap-3 mb-4">
-                <FileTextOutlined className="text-2xl text-indigo-600" />
-                <Text strong className="text-xl text-gray-800">
-                  Đường dẫn file backup/restore
-                </Text>
-              </div>
+          {/* Nhập đường dẫn */}
+          <div className="mb-8">
+            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+              <Space align="center">
+                <FileTextOutlined style={{ fontSize: 24, color: "#1890ff" }} />
+                <Title level={4} style={{ margin: 0, color: "#262626" }}>
+                  Đường dẫn file sao lưu / khôi phục
+                </Title>
+              </Space>
 
               <Space.Compact style={{ width: "100%" }}>
                 <Input
                   size="large"
                   value={path}
                   onChange={(e) => setPath(e.target.value)}
-                  placeholder="Nhập đường dẫn tuyệt đối (VD: D:/backups/backup.sql)..."
-                  className="text-lg font-mono rounded-l-2xl"
-                  style={{ height: 56 }}
+                  placeholder="Ví dụ: D:/backups/organic_store_backup_2025-04-05_143000.sql"
+                  style={{ height: 56, fontSize: 16, fontFamily: "monospace" }}
+                  prefix={<FileTextOutlined style={{ color: "#8c8c8c" }} />}
                 />
                 <Button
                   type="primary"
                   size="large"
                   icon={<ClockCircleOutlined />}
                   onClick={generateBackupPath}
-                  className="rounded-r-2xl"
-                  style={{ height: 56 }}
+                  style={{ height: 56, minWidth: 180, fontSize: 16 }}
                 >
                   Tạo tên tự động
                 </Button>
               </Space.Compact>
 
-              <Text type="secondary" className="text-sm block mt-3 text-gray-600">
-                Gợi ý: Windows: <code className="bg-blue-100 px-2 py-1 rounded font-bold">D:/backups/organic_store.sql</code> | Linux/Mac: <code className="bg-gray-200 px-2 py-1 rounded ml-2">/tmp/backup.sql</code>
-              </Text>
-            </div>
+              <Alert
+                type="info"
+                showIcon
+                message={
+                  <Text strong>
+                    Gợi ý: Tạo thư mục <Tag color="blue">D:/backups</Tag> trên server trước khi backup
+                  </Text>
+                }
+                style={{ borderRadius: 12 }}
+              />
+            </Space>
+          </div>
 
-            <Divider className="my-12 border-dashed border-gray-300" />
+          <Divider />
 
-            {/* Nút hành động */}
-            <div className="grid md:grid-cols-2 gap-12">
-              {/* Backup */}
-              <div className="text-center group">
-                <div className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-2xl mb-8 transform group-hover:scale-110 transition-all duration-300">
-                  {loadingBackup ? <Spin size="large" /> : <DownloadOutlined className="text-6xl text-white" />}
+          {/* Hai nút hành động chính */}
+          <div className="grid md:grid-cols-2 gap-10">
+
+            {/* BACKUP */}
+            <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-200">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-600 rounded-2xl shadow-lg mb-6">
+                  {loadingBackup ? (
+                    <Spin size="large" />
+                  ) : (
+                    <DownloadOutlined className="text-5xl text-white" />
+                  )}
                 </div>
-                <Title level={2} className="mb-4 text-emerald-600 group-hover:text-emerald-700 transition-colors">
+                <Title level={3} style={{ color: "#1890ff", marginBottom: 16 }}>
                   Sao lưu dữ liệu
                 </Title>
-                <Text className="block mb-8 text-gray-600 max-w-sm mx-auto text-lg">
-                  Tạo bản sao lưu đầy đủ database (cấu trúc + dữ liệu) chỉ trong vài giây
+                <Text style={{ fontSize: 16, color: "#595959" }}>
+                  Tạo bản sao lưu đầy đủ toàn bộ CSDL (cấu trúc + dữ liệu)
                 </Text>
-                <Button
-                  type="primary"
-                  size="large"
-                  loading={loadingBackup}
-                  onClick={handleBackup}
-                  icon={<DownloadOutlined />}
-                  className="h-16 px-12 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-emerald-500/50"
-                  style={{ background: "linear-gradient(90deg, #10b981, #059669)", border: "none" }}
-                >
-                  {loadingBackup ? "Đang sao lưu..." : "Thực hiện Backup ngay"}
-                </Button>
               </div>
 
-              {/* Restore */}
-              <div className="text-center group">
-                <div className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-rose-500 to-red-600 rounded-full shadow-2xl mb-8 transform group-hover:scale-110 transition-all duration-300">
-                  {loadingRestore ? <Spin size="large" /> : <UploadOutlined className="text-6xl text-white" />}
+              <Button
+                type="primary"
+                size="large"
+                block
+                loading={loadingBackup}
+                onClick={handleBackup}
+                icon={<DownloadOutlined />}
+                style={{
+                  height: 60,
+                  fontSize: 18,
+                  fontWeight: 600,
+                  borderRadius: 16,
+                  background: "linear-gradient(90deg, #1890ff, #40a9ff)",
+                  border: "none",
+                  boxShadow: "0 8px 20px rgba(24,144,255,0.3)",
+                }}
+              >
+                {loadingBackup ? "Đang sao lưu..." : "Thực hiện Backup ngay"}
+              </Button>
+            </div>
+
+            {/* RESTORE */}
+            <div className="text-center p-8 bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl border border-red-200">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-24 h-24 bg-red-600 rounded-2xl shadow-lg mb-6">
+                  {loadingRestore ? (
+                    <Spin size="large" />
+                  ) : (
+                    <UploadOutlined className="text-5xl text-white" />
+                  )}
                 </div>
-                <Title level={2} className="mb-4 text-rose-600 group-hover:text-rose-700 transition-colors">
+                <Title level={3} style={{ color: "#ff4d4f", marginBottom: 16 }}>
                   Khôi phục dữ liệu
                 </Title>
-                <Text className="block mb-4 text-gray-600 max-w-sm mx-auto text-lg">
-                  <strong className="text-red-600">Cảnh báo:</strong> Toàn bộ dữ liệu hiện tại sẽ bị thay thế hoàn toàn!
+                <Text style={{ fontSize: 16, color: "#595959" }}>
+                  <Text strong type="danger">
+                    Cảnh báo: Toàn bộ dữ liệu hiện tại sẽ bị thay thế!
+                  </Text>
                 </Text>
-                <Popconfirm
-                  title="Bạn có chắc chắn muốn khôi phục?"
-                  description={
-                    <div>
-                      <p>Hành động này sẽ <strong>xóa toàn bộ dữ liệu hiện tại</strong>!</p>
-                      <p className="mt-2 text-sm">Bạn đã backup dữ liệu mới nhất chưa?</p>
-                    </div>
-                  }
-                  okText="Có, khôi phục ngay"
-                  cancelText="Hủy bỏ"
-                  okButtonProps={{ danger: true, size: "large" }}
-                  cancelButtonProps={{ size: "large" }}
-                  onConfirm={handleRestore}
-                >
-                  <Button
-                    danger
-                    type="primary"
-                    size="large"
-                    loading={loadingRestore}
-                    icon={<UploadOutlined />}
-                    className="h-16 px-12 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-rose-500/50"
-                    style={{ background: "linear-gradient(90deg, #ef4444, #dc2626)", border: "none" }}
-                  >
-                    {loadingRestore ? "Đang khôi phục..." : "Thực hiện Restore"}
-                  </Button>
-                </Popconfirm>
               </div>
-            </div>
 
-            {/* Kết quả */}
-            {result && (
-              <div className="mt-12">
-                <Alert
-                  message={
-                    <div className="flex items-start gap-4">
-                      {result.type === "success" ? (
-                        <CheckCircleOutlined className="text-4xl text-green-600 mt-1" />
-                      ) : (
-                        <ExclamationCircleOutlined className="text-4xl text-red-600 mt-1" />
-                      )}
-                      <div className="flex-1">
-                        <Title level={3} className={`m-0 mb-2 ${result.type === "success" ? "text-green-700" : "text-red-700"}`}>
-                          {result.title}
-                        </Title>
-                        <div className="text-base text-gray-700 mb-3">
-                          {result.msg}
-                        </div>
-                        {result.filePath && (
-                          <div className="mt-3 p-3 bg-gray-100 rounded-lg border border-gray-300">
-                            <Text strong className="text-gray-600">Đường dẫn file:</Text>
-                            <div className="font-mono text-sm text-blue-600 mt-1 break-all">
-                              {result.filePath}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  }
-                  type={result.type === "success" ? "success" : "error"}
-                  showIcon={false}
-                  className="rounded-2xl shadow-2xl border-0"
+              <Popconfirm
+                title="Xác nhận khôi phục dữ liệu?"
+                description={
+                  <div style={{ maxWidth: 320 }}>
+                    <Text strong type="danger">
+                      <AlertOutlined style={{ marginRight: 8 }} />
+                      Hành động này sẽ XÓA TOÀN BỘ dữ liệu hiện tại!
+                    </Text>
+                    <br /><br />
+                    <Text>Bạn đã backup dữ liệu mới nhất chưa?</Text>
+                  </div>
+                }
+                okText="Có, khôi phục ngay"
+                cancelText="Hủy bỏ"
+                okButtonProps={{ danger: true, size: "large" }}
+                cancelButtonProps={{ size: "large" }}
+                onConfirm={handleRestore}
+              >
+                <Button
+                  danger
+                  type="primary"
+                  size="large"
+                  block
+                  loading={loadingRestore}
+                  icon={<UploadOutlined />}
                   style={{
-                    background: result.type === "success" 
-                      ? "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)" 
-                      : "linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)",
-                    border: result.type === "success" ? "2px solid #86efac" : "2px solid #fca5a5",
-                    padding: "24px"
+                    height: 60,
+                    fontSize: 18,
+                    fontWeight: 600,
+                    borderRadius: 16,
+                    background: "linear-gradient(90deg, #ff4d4f, #ff7875)",
+                    border: "none",
+                    boxShadow: "0 8px 20px rgba(255,77,79,0.3)",
                   }}
-                />
-              </div>
-            )}
-
-            {/* Ghi chú */}
-            <div className="mt-12 p-8 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl">
-              <Space size={20}>
-                <ExclamationCircleOutlined className="text-5xl text-amber-600" />
-                <div>
-                  <Title level={4} className="text-amber-800 mb-3">
-                    Lưu ý cực kỳ quan trọng
-                  </Title>
-                  <ul className="space-y-2 text-gray-700 text-base">
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-bold">•</span>
-                      <span>Luôn <strong>backup trước khi restore</strong> – không thể hoàn tác!</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-bold">•</span>
-                      <span>Đảm bảo file backup tồn tại và đúng định dạng .sql</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-bold">•</span>
-                      <span>Quyền ghi file trên server phải được cấp đầy đủ</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-bold">•</span>
-                      <span><strong>Thư mục D:/backups phải được tạo trước</strong> trên server Windows</span>
-                    </li>
-                  </ul>
-                </div>
-              </Space>
+                >
+                  {loadingRestore ? "Đang khôi phục..." : "Thực hiện Restore"}
+                </Button>
+              </Popconfirm>
             </div>
           </div>
+
+          {/* Kết quả thực hiện */}
+          {result && (
+            <div className="mt-10">
+              <Alert
+                type={result.type === "success" ? "success" : "error"}
+                showIcon
+                icon={
+                  result.type === "success" ? (
+                    <CheckCircleFilled style={{ fontSize: 32 }} />
+                  ) : (
+                    <ExclamationCircleFilled style={{ fontSize: 32 }} />
+                  )
+                }
+                message={
+                  <Title level={3} style={{ margin: 0, color: result.type === "success" ? "#52c41a" : "#ff4d4f" }}>
+                    {result.title}
+                  </Title>
+                }
+                description={
+                  <div style={{ marginTop: 12 }}>
+                    <Text style={{ fontSize: 16 }}>{result.msg}</Text>
+                    {result.filePath && (
+                      <div style={{ marginTop: 12, padding: 12, background: "#f6ffed", borderRadius: 8, border: "1px solid #b7eb8f" }}>
+                        <Text strong>Đường dẫn file:</Text>
+                        <div style={{ fontFamily: "monospace", color: "#08979c", wordBreak: "break-all", marginTop: 4 }}>
+                          {result.filePath}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                }
+                style={{ padding: "24px", borderRadius: 16 }}
+              />
+            </div>
+          )}
+
+          {/* Hướng dẫn quan trọng */}
+          <div className="mt-10 p-6 bg-amber-50 border-2 border-amber-300 rounded-2xl">
+            <Space size={16}>
+              <SafetyOutlined style={{ fontSize: 36, color: "#d46b08" }} />
+              <div>
+                <Title level={4} style={{ color: "#d46b08", margin: 0 }}>
+                  Lưu ý quan trọng
+                </Title>
+                <ul style={{ margin: "12px 0 0 0", paddingLeft: 20, color: "#595959" }}>
+                  <li>Luôn <strong>backup trước khi restore</strong> – không thể hoàn tác!</li>
+                  <li>Đảm bảo thư mục <Tag color="orange">D:/backups</Tag> đã được tạo trên server</li>
+                  <li>Quyền ghi file phải được cấp cho user chạy ứng dụng</li>
+                  <li>File backup phải có định dạng <Tag>.sql</Tag> và tồn tại thực tế</li>
+                </ul>
+              </div>
+            </Space>
+          </div>
+
         </Card>
       </div>
     </div>

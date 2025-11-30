@@ -30,7 +30,7 @@ const CreateUser = (props: IProps) => {
 
     try {
       // 1️⃣ Tạo user trước
-      const resUser = await createUserAPI(name, email, phone, "CUSTOMER");
+      const resUser = await createUserAPI(name, email, phone);
 
       if (resUser?.data?.success === false || !resUser?.data?.data?.id) {
         const backendError =

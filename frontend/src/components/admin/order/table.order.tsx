@@ -1,11 +1,17 @@
-// File path: /src/components/admin/order/table.order.tsx
+// File: src/components/admin/order/table.order.tsx
 
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { EyeOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  EditTwoTone,
+  DeleteTwoTone,
+  PlusOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { Button, Tag, Space, Typography, Avatar, Tooltip, Popconfirm, message } from "antd";
-import { getOrderAPI, getUserByIdAPI, updateOrder, deleteOrder } from "../../../service/api";
+import { Button, Tag, Space, Typography, Tooltip, Popconfirm, App } from "antd";
+import { getOrderAPI, getUserByIdAPI, deleteOrder } from "../../../service/api";
 import DetailOrder from "./detail.order";
 import CreateOrder from "./create.order";
 import UpdateOrder from "./update.order";
@@ -35,114 +41,70 @@ const TableOrder = () => {
   const [openCreate, setOpenCreate] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<IOrder | null>(null);
+  const [userDetail, setUserDetail] = useState<IResUserById | null>(null);
 
-  // Format mã đơn hàng: DH000001
-  const formatOrderId = (id: number) => `DH${String(id).padStart(6, "0")}`;
+  const { message, notification } = App.useApp();
+
+  const formatOrderId = (id: number) => {
+    if (id < 10) return `DH000${id}`;
+    if (id < 100) return `DH00${id}`;
+    if (id < 1000) return `DH0${id}`;
+    return `DH${id}`;
+  };
+  
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+    Number(price).toLocaleString("vi-VN") + " ₫";
 
   const columns: ProColumns<IOrder>[] = [
     {
       title: "Mã đơn",
       dataIndex: "id",
-      width: 110,
+      width: 120,
       fixed: "left",
       sorter: true,
       defaultSortOrder: "descend",
       render: (_, record) => (
-        <Text strong className="text-blue-600 font-bold text-lg">
+        <Text strong style={{ fontSize: 15, color: "#1677ff" }}>
           {formatOrderId(record.id)}
         </Text>
       ),
     },
     {
       title: "Khách hàng",
-      width: 160,
+      width: 200,
       render: (_, record) => (
-        <div>
-          <Text strong className="block text-base text-gray-800">
-            {record.userName || "Khách lẻ"}
-          </Text>
+        <Space direction="vertical" size={0}>
+          <Text strong>{record.userName || "Khách lẻ"}</Text>
           {record.userName && (
-            <Text type="secondary" className="text-xs">
-              ID: {record.userId}
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Mã KH: {record.userId}
             </Text>
           )}
-        </div>
+        </Space>
       ),
     },
     {
-      title: "Sản phẩm",
-      width: 340,
+      title: "Số lượng SP",
+      width: 110,
+      align: "center",
       render: (_, record) => {
-        const details = record.orderDetails || [];
-        if (!details.length) return <Text type="secondary">Không có sản phẩm</Text>;
-
-        return (
-          <Space direction="vertical" size={8} className="w-full">
-            {details.slice(0, 3).map((item, index) => {
-              const actualPrice = item.price / item.quantity;
-              const hasDiscount = actualPrice < item.productPrice;
-
-              return (
-                <div
-                  key={`${item.productId}-${index}`}
-                  className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all"
-                >
-                  <Avatar
-                    size={48}
-                    shape="square"
-                    src={
-                      item.productImage?.startsWith("http")
-                        ? item.productImage
-                        : item.productImage
-                        ? `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${item.productImage}`
-                        : "/default-product.png"
-                    }
-                    className="border-2 border-white shadow-sm"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <Text strong className="block text-sm text-gray-800 truncate">
-                      {item.productName}
-                    </Text>
-                    <Space size={12} className="mt-1 text-xs">
-                      <Text type="secondary">
-                        SL: <strong className="text-gray-700">{item.quantity}</strong>
-                      </Text>
-                      <div className="flex items-center gap-2">
-                        <Text type="secondary">Giá:</Text>
-                        <Text strong type="danger">
-                          {formatPrice(actualPrice)}
-                        </Text>
-                        {hasDiscount && (
-                          <del className="text-gray-400">
-                            {formatPrice(item.productPrice)}
-                          </del>
-                        )}
-                      </div>
-                    </Space>
-                  </div>
-                </div>
-              );
-            })}
-            {details.length > 3 && (
-              <Tag color="blue" className="text-xs font-medium">
-                +{details.length - 3} sản phẩm khác
-              </Tag>
-            )}
-          </Space>
-        );
+        const totalItems = record.orderDetails?.length || 0;
+        return <Tag color="blue">{totalItems}</Tag>;
       },
     },
     {
       title: "Tổng tiền",
-      width: 150,
+      width: 140,
       align: "right",
       render: (_, record) => {
-        const total = record.orderDetails?.reduce((sum, item) => sum + item.price, 0) || 0;
+        const total =
+          record.orderDetails?.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          ) || 0;
         return (
-          <Text strong type="danger" className="text-xl font-bold">
+          <Text strong type="danger" style={{ fontSize: 15 }}>
             {formatPrice(total)}
           </Text>
         );
@@ -151,26 +113,38 @@ const TableOrder = () => {
     {
       title: "Trạng thái",
       dataIndex: "statusOrder",
-      width: 120,
+      width: 150, // giữ nguyên độ rộng cột
+      align: "center",
       render: (_, record) => (
         <Tag
           color={statusColors[record.statusOrder] || "default"}
-          className="px-4 py-2 text-sm font-medium rounded-full shadow-sm"
+          style={{
+            width: 120, // 🎯 SET CHIỀU RỘNG CỐ ĐỊNH
+            textAlign: "center", // 🎯 CĂN GIỮA CHỮ
+            fontWeight: 600,
+            fontSize: 13,
+            padding: "6px 0", // giữ chiều cao đều
+            borderRadius: 20,
+            display: "inline-block", // tránh tự co lại
+          }}
         >
           {statusTexts[record.statusOrder] || record.statusOrder}
         </Tag>
       ),
     },
+
     {
       title: "Thao tác",
-      width: 140,
+      width: 130,
       fixed: "right",
+      align: "center",
       render: (_, record) => (
         <Space>
+          {/* Xem chi tiết */}
           <Tooltip title="Xem chi tiết">
             <Button
               type="text"
-              icon={<EyeOutlined className="text-blue-600 text-xl" />}
+              icon={<EyeOutlined style={{ color: "#1890ff" }} />}
               onClick={() => {
                 setDataViewDetail(record);
                 setOpenViewDetail(true);
@@ -178,10 +152,11 @@ const TableOrder = () => {
             />
           </Tooltip>
 
-          <Tooltip title="Cập nhật đơn hàng">
+          {/* Chỉnh sửa */}
+          <Tooltip title="Chỉnh sửa">
             <Button
               type="text"
-              icon={<EditOutlined className="text-green-600 text-xl" />}
+              icon={<EditTwoTone twoToneColor="#fa8c16" />}
               onClick={() => {
                 setDataUpdate(record);
                 setOpenUpdate(true);
@@ -189,31 +164,28 @@ const TableOrder = () => {
             />
           </Tooltip>
 
+          {/* Xóa */}
           <Popconfirm
-            title="Xóa đơn hàng này?"
-            description={
-              <div>
-                <p>Mã đơn: <strong>{formatOrderId(record.id)}</strong></p>
-                <p>Khách hàng: <strong>{record.userName || "Khách lẻ"}</strong></p>
-                <p className="text-red-600 font-medium">Hành động này không thể hoàn tác!</p>
-              </div>
-            }
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
+            title="Xác nhận xóa đơn hàng?"
             onConfirm={async () => {
               try {
                 await deleteOrder(record.id);
                 message.success("Xóa đơn hàng thành công!");
                 actionRef.current?.reload();
               } catch (error: any) {
-                message.error(error.response?.data?.message || "Không thể xóa đơn hàng!");
+                notification.error({
+                  message: "Xóa thất bại",
+                  description: error.response?.data?.message || "Có lỗi xảy ra",
+                });
               }
             }}
+            okText="Xác nhận"
+            cancelText="Hủy"
           >
-            <Tooltip title="Xóa đơn hàng">
-              <Button danger type="text" icon={<DeleteOutlined className="text-xl" />} />
-            </Tooltip>
+            <Button
+              type="text"
+              icon={<DeleteTwoTone twoToneColor="#ff4d4f" />}
+            />
           </Popconfirm>
         </Space>
       ),
@@ -227,40 +199,43 @@ const TableOrder = () => {
         actionRef={actionRef}
         rowKey="id"
         cardBordered
-        scroll={{ x: 1350 }}
-        className="shadow-xl rounded-2xl overflow-hidden bg-white"
+        scroll={{ x: 1200 }}
         headerTitle={
-          <div className="flex items-center gap-4">
-            <Text strong className="text-2xl text-gray-800">
+          <Space>
+            <Text strong style={{ fontSize: 20 }}>
               Quản lý đơn hàng
             </Text>
-            <Tag color="blue" className="text-base px-5 py-2 font-semibold">
-              Tổng: <strong>{actionRef.current?.pagination?.total ?? 0}</strong> đơn
-            </Tag>
-          </div>
+          </Space>
         }
-        toolbar={{
-          actions: [
-            <Button
-              key="create"
-              type="primary"
-              size="large"
-              icon={<PlusOutlined />}
-              className="font-semibold text-base px-8 h-12 shadow-lg hover:shadow-xl transition-shadow"
-              onClick={() => setOpenCreate(true)}
-            >
-              Tạo đơn hàng mới
-            </Button>,
-          ],
-        }}
+        toolBarRender={() => [
+          <Button
+            key="reload"
+            icon={<ReloadOutlined />}
+            onClick={() => actionRef.current?.reload()}
+          >
+            Làm mới
+          </Button>,
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            size="large"
+            onClick={() => setOpenCreate(true)}
+          >
+            Tạo đơn mới
+          </Button>,
+        ]}
         request={async (params) => {
-          const query = `page=${params.current || 1}&size=${params.pageSize || 5}`;
+          const query = `page=${params.current || 1}&size=${
+            params.pageSize || 10
+          }`;
+
           try {
             const res = await getOrderAPI(query);
             const rawData = res.data?.data?.result || [];
 
-            const enhancedData = await Promise.all(
-              rawData.map(async (order: IOrder) => {
+            const enhanced = await Promise.all(
+              rawData.map(async (order: any) => {
                 let userName = "Khách lẻ";
                 if (order.userId) {
                   try {
@@ -273,7 +248,7 @@ const TableOrder = () => {
             );
 
             return {
-              data: enhancedData,
+              data: enhanced,
               success: true,
               total: res.data?.data?.meta?.total || 0,
             };
@@ -284,18 +259,38 @@ const TableOrder = () => {
         pagination={{
           defaultPageSize: 5,
           showSizeChanger: true,
-          pageSizeOptions: ["5", "10", "20", "50", "100"],
+          pageSizeOptions: ["10", "20", "50", "100"],
           showTotal: (total, range) => (
-            <span className="text-base font-medium text-gray-600">
-              Hiển thị {range[0]}-{range[1]} trong <strong className="text-blue-600">{total}</strong> đơn hàng
+            <span style={{ fontSize: 15, color: "#595959" }}>
+              Hiển thị{" "}
+              <strong>
+                {range[0]}-{range[1]}
+              </strong>{" "}
+              trong <strong style={{ color: "#1677ff" }}>{total}</strong> đơn
+              hàng
             </span>
           ),
         }}
       />
 
-      <DetailOrder open={openViewDetail} onClose={() => setOpenViewDetail(false)} data={dataViewDetail} />
-      <CreateOrder open={openCreate} setOpen={setOpenCreate} refreshTable={() => actionRef.current?.reload()} />
-      <UpdateOrder open={openUpdate} setOpen={setOpenUpdate} data={dataUpdate} refreshTable={() => actionRef.current?.reload()} />
+      <DetailOrder
+        open={openViewDetail}
+        onClose={() => setOpenViewDetail(false)}
+        data={dataViewDetail}
+      />
+
+      <CreateOrder
+        open={openCreate}
+        setOpen={setOpenCreate}
+        refreshTable={() => actionRef.current?.reload()}
+      />
+
+      <UpdateOrder
+        open={openUpdate}
+        setOpen={setOpenUpdate}
+        data={dataUpdate}
+        refreshTable={() => actionRef.current?.reload()}
+      />
     </>
   );
 };

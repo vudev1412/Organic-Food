@@ -45,6 +45,7 @@ import RegisterMemBerPage from "./pages/client/register.member";
 import OrderHistoryPage from "./pages/account/order.history";
 import BackupRestorePage from "./pages/admin/backup.restore";
 import Payment from "./pages/client/payment";
+import Voucher from "./pages/admin/voucher";
 
 const router = createBrowserRouter([
   {
@@ -158,6 +159,7 @@ const router = createBrowserRouter([
       { path: "suppliers", element: <Suppliers /> }, // Trang /admin
       { path: "orders", element: <CustomerOrders /> }, // Trang /admin
       { path: "complaints", element: <ReturnRequests /> },
+      { path: "voucher", element: <Voucher /> },
 
       { path: "backup", element: <BackupRestorePage /> }, // Trang /admin
       // { path: "users", element: <ManageUsers /> }, // Trang /admin/users

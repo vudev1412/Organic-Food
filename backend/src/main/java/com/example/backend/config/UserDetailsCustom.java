@@ -2,13 +2,14 @@ package com.example.backend.config;
 
 import com.example.backend.domain.User;
 import com.example.backend.service.UserService;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
+import java.util.*;
 
 @Component("userDetailsService")
 public class UserDetailsCustom implements UserDetailsService {
@@ -24,26 +25,31 @@ public class UserDetailsCustom implements UserDetailsService {
         User user;
 
         if (username.contains("@")) {
-            // login bằng email
-            user = this.userService.handleGetUserByUsername(username);
+            user = userService.handleGetUserByUsername(username);
         } else {
-            // login bằng số điện thoại
-            user = this.userService.handleGetUserByPhone(username);
+            user = userService.handleGetUserByPhone(username);
         }
 
         if (user == null) {
             throw new UsernameNotFoundException("Username/password không hợp lệ");
         }
 
-        // quyền động dựa theo role của user
-        SimpleGrantedAuthority authority =
-                new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name());
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
 
-        // giữ nguyên username người dùng nhập (email hoặc phone)
+        // ROLE_*
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
+
+        // PERMISSION từ bảng
+        user.getRole().getPermissions().forEach(p ->
+                authorities.add(new SimpleGrantedAuthority(p.getName()))
+        );
+
         return new org.springframework.security.core.userdetails.User(
                 username,
                 user.getPassword(),
-                Collections.singletonList(authority)
+                authorities
         );
     }
+
+
 }
