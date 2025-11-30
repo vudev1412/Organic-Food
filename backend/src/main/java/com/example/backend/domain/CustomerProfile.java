@@ -14,9 +14,12 @@ public class CustomerProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private boolean member;
+    private boolean member =false;
 
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "payment_id") // Tạo cột payment_id trong bảng customer_profile
+    private Payment membershipPayment;
 }

@@ -560,7 +560,7 @@ const AppHeader = () => {
 
           {/* Phần 3: Footer nhỏ */}
           <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400">© 2024 Organic Store</p>
+            <p className="text-xs text-gray-400">© 2024 Organic Food</p>
           </div>
         </div>
       </Drawer>

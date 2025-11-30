@@ -2,20 +2,18 @@ package com.example.backend.service.impl;
 
 import com.example.backend.domain.*;
 import com.example.backend.domain.key.OrderDetailKey;
-import com.example.backend.domain.request.ReqCreateOrderDTO;
-import com.example.backend.domain.request.ReqCustomerDTO;
-import com.example.backend.domain.request.ReqOrderDetailItemDTO;
-import com.example.backend.domain.request.ReqUpdateOrderDTO;
+import com.example.backend.domain.request.*;
 import com.example.backend.domain.response.*;
 import com.example.backend.enums.Role;
+import com.example.backend.enums.StatusInvoice;
 import com.example.backend.enums.StatusOrder;
+import com.example.backend.enums.StatusPayment;
 import com.example.backend.mapper.OrderMapper;
-import com.example.backend.repository.OrderDetailRepository;
-import com.example.backend.repository.OrderRepository;
-import com.example.backend.repository.ProductRepository;
-import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.*;
 import com.example.backend.service.CustomerProfileService;
 import com.example.backend.service.OrderService;
+import com.example.backend.service.UserService;
+import com.example.backend.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +38,10 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
     private final CustomerProfileService customerProfileService;
+    private final PaymentRepository paymentRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final UserService userService;
+    private final VoucherRepository voucherRepository;
 
     @Transactional
     public ResOrderDTO handleCreateOrder(ReqCreateOrderDTO reqDTO) {
@@ -197,20 +200,23 @@ public class OrderServiceImpl implements OrderService {
 
     // ✅ Helper method: Convert Order Entity → ResOrderDTO
     private ResOrderDTO convertToResOrderDTO(Order order) {
-        // Map OrderDetails
-        List<ResOrderDetalDTO> orderDetailDTOs = order.getOrderDetails().stream()
-                .map(od -> ResOrderDetalDTO.builder()
-                        .id(od.getId().getOrderId()) // Hoặc productId tùy logic
-                        .quantity(od.getQuantity())
-                        .price(od.getPrice())
+
+        // 1. Map danh sách Order Details sang cấu trúc mới (ResOrderDetailItem)
+        List<ResOrderDTO.ResOrderDetailItem> orderDetailItems = order.getOrderDetails().stream()
+                .map(od -> ResOrderDTO.ResOrderDetailItem.builder()
                         .productId(od.getProduct().getId())
                         .productName(od.getProduct().getName())
+                        // Nếu product có ảnh thì lấy, không thì null hoặc string rỗng
                         .productImage(od.getProduct().getImage())
-                        .productPrice(od.getProduct().getPrice())
+                        // Nếu product có slug thì lấy
+                        .productSlug(od.getProduct().getSlug())
+                        .quantity(od.getQuantity())
+                        .price(od.getPrice())
                         .build())
                 .collect(Collectors.toList());
 
-        return ResOrderDTO.builder()
+        // 2. Map các thông tin còn lại của Order
+        ResOrderDTO.ResOrderDTOBuilder builder = ResOrderDTO.builder()
                 .id(order.getId())
                 .orderAt(order.getOrderAt())
                 .note(order.getNote())
@@ -218,9 +224,26 @@ public class OrderServiceImpl implements OrderService {
                 .shipAddress(order.getShipAddress())
                 .estimatedDate(order.getEstimatedDate())
                 .actualDate(order.getActualDate())
+                // Tách user ID nếu có
                 .userId(order.getUser() != null ? order.getUser().getId() : null)
-                .orderDetails(orderDetailDTOs)
-                .build();
+                // Gán danh sách detail mới
+                .orderDetails(orderDetailItems);
+
+        // 3. Map thông tin tài chính từ Invoice (Để Admin cũng xem được chi tiết tiền)
+        if (order.getInvoice() != null) {
+            builder.totalPrice(order.getInvoice().getTotal());
+            builder.subtotal(order.getInvoice().getSubtotal());
+            builder.shippingFee(order.getInvoice().getDeliverFee());
+            builder.taxAmount(order.getInvoice().getTaxAmount());
+            builder.discountAmount(order.getInvoice().getDiscountAmount());
+
+            if (order.getInvoice().getPayment() != null) {
+                builder.paymentMethod(order.getInvoice().getPayment().getMethod());
+                builder.paymentStatus(order.getInvoice().getPayment().getStatus().name());
+            }
+        }
+
+        return builder.build();
     }
 
     @Override
@@ -397,7 +420,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     }
-
+    @Override
     @Transactional(readOnly = true)
     public List<ResOrderDTO> getOrdersByUserId(Long userId) {
         // Lấy orders với đầy đủ orderDetails và product
@@ -408,5 +431,220 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::convertToResOrderDTO)
                 .collect(Collectors.toList());
     }
+    // --- 1. LOGIC ĐẶT HÀNG (KÈM TRỪ TỒN KHO) ---
+    @Override
+    @Transactional
+    public ResCreateUserOrderDTO handlePlaceUserOrder(CreateUserOrderDTO reqDTO) {
 
+        // --- BƯỚC 1: LẤY USER HIỆN TẠI ---
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa đăng nhập"));
+        User currentUser = userService.handleGetUserByUsername(currentUserEmail);
+
+        // --- BƯỚC 2: TẠO ORDER (MASTER) ---
+        Order order = new Order();
+        order.setOrderAt(Instant.now());
+        order.setNote(reqDTO.getNote());
+        order.setStatusOrder(StatusOrder.PENDING);
+        order.setUser(currentUser); // Gán User vào Order
+
+        // Gộp địa chỉ giao hàng đầy đủ
+        String fullAddress = String.format("%s - %s - %s",
+                reqDTO.getReceiverName(),
+                reqDTO.getReceiverPhone(),
+                reqDTO.getShipAddress());
+        order.setShipAddress(fullAddress);
+
+        // Tính ngày dự kiến giao (Cộng 3 ngày)
+        order.setEstimatedDate(Instant.now().plus(3, ChronoUnit.DAYS));
+        order.setActualDate(null); // Chưa giao xong
+
+        Order savedOrder = orderRepository.save(order);
+
+        // --- BƯỚC 3: XỬ LÝ ORDER DETAIL & TRỪ TỒN KHO ---
+        if (reqDTO.getCartItems() != null) {
+            List<OrderDetail> details = new ArrayList<>();
+            for (CreateUserOrderDTO.CartItemDTO item : reqDTO.getCartItems()) {
+                Product product = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại ID: " + item.getProductId()));
+
+                // Kiểm tra tồn kho
+                if (product.getQuantity() < item.getQuantity()) {
+                    throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng (Còn: " + product.getQuantity() + ")");
+                }
+
+                // Trừ kho
+                product.setQuantity(product.getQuantity() - item.getQuantity());
+                productRepository.save(product);
+
+                // Tạo OrderDetail
+                OrderDetail detail = new OrderDetail();
+                OrderDetailKey key = new OrderDetailKey(savedOrder.getId(), product.getId());
+                detail.setId(key);
+                detail.setOrder(savedOrder);
+                detail.setProduct(product);
+                detail.setQuantity(item.getQuantity());
+                detail.setPrice(item.getPrice());
+
+                details.add(detail);
+            }
+            orderDetailRepository.saveAll(details);
+        }
+
+        // --- BƯỚC 4: TẠO INVOICE & XỬ LÝ VOUCHER ---
+        Invoice invoice = new Invoice();
+        invoice.setOrder(savedOrder);
+        invoice.setCustomer(currentUser); // Lưu user vào invoice
+        invoice.setCreateAt(Instant.now());
+
+        // Lưu các thông tin tiền tệ chi tiết từ Frontend gửi xuống
+        invoice.setSubtotal(reqDTO.getSubtotal());         // Tiền hàng
+        invoice.setDeliverFee(reqDTO.getShippingFee());    // Phí ship
+        invoice.setDiscountAmount(reqDTO.getDiscountAmount()); // Giảm giá
+        invoice.setTaxAmount(reqDTO.getTaxAmount());       // Thuế
+        invoice.setTotal(reqDTO.getTotalPrice());          // Tổng cuối cùng
+
+        // Xử lý Voucher (nếu có)
+        if (reqDTO.getVoucherId() != null) {
+            Voucher voucher = voucherRepository.findById(reqDTO.getVoucherId()).orElse(null);
+            if (voucher != null) {
+                invoice.setVoucher(voucher);
+                // Tăng số lượt đã sử dụng
+                voucher.setUsedCount(voucher.getUsedCount() + 1);
+                voucherRepository.save(voucher);
+            }
+        }
+
+        // --- BƯỚC 5: XỬ LÝ THANH TOÁN (PAYMENT) ---
+        String currentPaymentStatus = "PENDING";
+
+        if ("COD".equals(reqDTO.getPaymentMethod())) {
+            // Trường hợp COD: Tạo Payment ngay -> Provider GHTK
+            Payment payment = new Payment();
+            payment.setMethod("COD");
+            payment.setProvider("GHTK"); // Mặc định GHTK cho COD
+            payment.setAmount(reqDTO.getTotalPrice());
+            payment.setStatus(StatusPayment.PENDING);
+            payment.setCreateAt(Instant.now());
+
+            payment = paymentRepository.save(payment);
+
+            invoice.setPayment(payment);
+            invoice.setStatus(StatusInvoice.UNPAID);
+        } else {
+            // Trường hợp BANK_TRANSFER:
+            // Chưa tạo Payment ở đây, Invoice.payment = null
+            // Frontend sẽ gọi API /payments/create để tạo Payment sau và link vào Invoice này
+            invoice.setPayment(null);
+            invoice.setStatus(StatusInvoice.UNPAID);
+        }
+
+        invoiceRepository.save(invoice);
+
+        // --- BƯỚC 6: TRẢ VỀ DTO CHO FRONTEND ---
+        return ResCreateUserOrderDTO.builder()
+                .id(savedOrder.getId())
+                .totalPrice(invoice.getTotal())
+                .paymentMethod(reqDTO.getPaymentMethod())
+                .receiverName(reqDTO.getReceiverName())
+                .receiverPhone(reqDTO.getReceiverPhone())
+                .address(reqDTO.getShipAddress())
+                .paymentStatus(currentPaymentStatus)
+                .build();
+    }
+
+    // --- 2. LOGIC HỦY ĐƠN (KÈM HOÀN TỒN KHO) ---
+    @Override
+    @Transactional
+    public void cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
+        // Chỉ cho hủy khi đang PENDING hoặc CONFIRMED (Tùy nghiệp vụ)
+        if (order.getStatusOrder() == StatusOrder.CANCELLED || order.getStatusOrder() == StatusOrder.SHIPPING || order.getStatusOrder() == StatusOrder.DELIVERED) {
+            throw new RuntimeException("Không thể hủy đơn hàng ở trạng thái này.");
+        }
+
+        // Hoàn lại số lượng tồn kho
+        List<OrderDetail> details = order.getOrderDetails();
+        if (details != null) {
+            for (OrderDetail detail : details) {
+                Product product = detail.getProduct();
+                product.setQuantity(product.getQuantity() + detail.getQuantity());
+                productRepository.save(product);
+            }
+        }
+
+        // Cập nhật trạng thái Order
+        order.setStatusOrder(StatusOrder.CANCELLED);
+
+        // Cập nhật trạng thái Invoice (nếu cần thiết để đối soát)
+        if (order.getInvoice() != null) {
+            order.getInvoice().setStatus(StatusInvoice.CANCELLED);
+            invoiceRepository.save(order.getInvoice());
+        }
+
+        orderRepository.save(order);
+    }
+    @Override
+    public ResOrderDTO convertToResOrderDTOv2(Order order) {
+        // 1. Builder cơ bản từ Order Entity
+        ResOrderDTO.ResOrderDTOBuilder builder = ResOrderDTO.builder()
+                .id(order.getId())
+                .orderAt(order.getOrderAt())
+                .note(order.getNote())
+                .statusOrder(order.getStatusOrder())
+                .shipAddress(order.getShipAddress())
+                .estimatedDate(order.getEstimatedDate())
+                .actualDate(order.getActualDate());
+
+        // 2. Tách thông tin người nhận (Nếu shipAddress lưu dạng "Tên - SĐT - Địa chỉ")
+        if (order.getShipAddress() != null) {
+            String[] parts = order.getShipAddress().split(" - ", 3);
+            if (parts.length >= 2) {
+                builder.receiverName(parts[0]);
+                builder.receiverPhone(parts[1]);
+            } else {
+                // Fallback nếu không tách được
+                builder.receiverName("Khách hàng");
+                builder.receiverPhone("");
+            }
+        }
+
+        // 3. Map danh sách Order Details
+        if (order.getOrderDetails() != null) {
+            List<ResOrderDTO.ResOrderDetailItem> items = order.getOrderDetails().stream()
+                    .map(detail -> ResOrderDTO.ResOrderDetailItem.builder()
+                            .productId(detail.getProduct().getId())
+                            .productName(detail.getProduct().getName())
+                            .productImage(detail.getProduct().getImage()) // Lấy ảnh
+                            .productSlug(detail.getProduct().getSlug())   // Lấy slug
+                            .quantity(detail.getQuantity())
+                            .price(detail.getPrice())
+                            .build())
+                    .toList();
+            builder.orderDetails(items);
+        }
+
+        // 4. Map thông tin tài chính từ Invoice (QUAN TRỌNG)
+        if (order.getInvoice() != null) {
+            builder.totalPrice(order.getInvoice().getTotal());
+            builder.subtotal(order.getInvoice().getSubtotal());
+            builder.shippingFee(order.getInvoice().getDeliverFee());
+            builder.taxAmount(order.getInvoice().getTaxAmount());
+            builder.discountAmount(order.getInvoice().getDiscountAmount());
+
+            // Payment Info
+            if (order.getInvoice().getPayment() != null) {
+                builder.paymentMethod(order.getInvoice().getPayment().getMethod());
+                builder.paymentStatus(order.getInvoice().getPayment().getStatus().name());
+            } else {
+                // Mặc định nếu chưa có payment (ví dụ Bank Transfer đang chờ tạo)
+                builder.paymentMethod("BANK_TRANSFER");
+                builder.paymentStatus("PENDING");
+            }
+        }
+
+        return builder.build();
+    }
 }

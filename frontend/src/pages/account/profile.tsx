@@ -1,7 +1,7 @@
-// File path: /src/pages/account/profile.tsx
-
 import { useEffect, useState } from "react";
 import { useCurrentApp } from "../../components/context/app.context";
+import { useNavigate } from "react-router-dom";
+import { CrownOutlined } from "@ant-design/icons";
 import {
   getUserByIdAPI,
   updateUserDTOAPI,
@@ -25,10 +25,13 @@ const PasswordInput = ({
   const [show, setShow] = useState(false);
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+    // Đã xóa mb-4 ở đây để căn giữa với label bên ngoài chuẩn hơn
+    <div className="w-full">
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
       <div className="relative">
         <input
           type={show ? "text" : "password"}
@@ -36,12 +39,15 @@ const PasswordInput = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          // Thêm autoComplete để gợi ý đúng mật khẩu mới
+          autoComplete="new-password"
           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors ${
             disabled
               ? "bg-gray-100 text-gray-500 cursor-not-allowed"
               : "bg-white border-gray-300"
           }`}
         />
+
         <button
           type="button"
           onClick={() => setShow(!show)}
@@ -87,7 +93,7 @@ const PasswordInput = ({
             </svg>
           )}
         </button>
-      </div>
+      </div>{" "}
     </div>
   );
 };
@@ -133,6 +139,14 @@ const VerifyPasswordModal = ({
             tin.
           </p>
 
+          {/* --- FIX AUTOFILL: Input ẩn để hứng username --- */}
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            style={{ display: "none" }}
+          />
+
           <PasswordInput
             label="Mật khẩu hiện tại"
             placeholder="Nhập mật khẩu..."
@@ -143,16 +157,16 @@ const VerifyPasswordModal = ({
             }}
             disabled={false}
           />
+          {error && <p className="text-red-500 text-sm mb-2 mt-2">{error}</p>}
 
-          {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-
-          <div className="flex justify-end gap-3 mt-4">
+          <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={onClose}
               className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium"
             >
               Hủy
             </button>
+
             <button
               onClick={handleSubmit}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium shadow-sm"
@@ -161,7 +175,7 @@ const VerifyPasswordModal = ({
             </button>
           </div>
         </div>
-      </div>
+      </div>{" "}
     </div>
   );
 };
@@ -169,6 +183,7 @@ const VerifyPasswordModal = ({
 // --- 3. MAIN COMPONENT ---
 const Profile = () => {
   const { user, showToast } = useCurrentApp();
+  const navigate = useNavigate();
 
   const [id, setId] = useState<number>(0);
   const [name, setName] = useState("");
@@ -178,13 +193,17 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userById, setUserById] = useState<IResUserById | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false); // Thêm trạng thái loading khi lưu
+  const [isSaving, setIsSaving] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userData, setUserData] = useState<IResUserById | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
-  // Sync dữ liệu từ user
+  const isMember = user?.customerProfile?.member === true;
+
   useEffect(() => {
     if (user) {
       setId(user.id || 0);
@@ -192,12 +211,11 @@ const Profile = () => {
       setEmail(user.email || "");
       setPhone(user.phone || "");
       setAvatar(user.image || null);
-      setCreatedAt(user.createdAt || null);
-      setUpdatedAt(user.updatedAt || null);
+      setCreatedAt(user.createAt || null);
+      setUpdatedAt(user.updateAt || null);
     }
   }, [user]);
-  console.log(user?.avatar)
-  // Upload Avatar
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -218,7 +236,7 @@ const Profile = () => {
     reader.readAsDataURL(file);
 
     try {
-      showToast("Đang tải ảnh lên...", "loading");
+      showToast("Đang tải ảnh lên...", "info");
       const uploadedUrl = await uploadFileAvatarAPI(file, "avatar");
       console.log(uploadedUrl);
       setAvatar(uploadedUrl.data);
@@ -229,7 +247,6 @@ const Profile = () => {
     }
   };
 
-  // Xác thực mở khóa chỉnh sửa
   const handleRequestEdit = () => setIsVerifyModalOpen(true);
 
   const handleVerifySuccess = async (passwordInput: string) => {
@@ -255,7 +272,6 @@ const Profile = () => {
     }
   };
 
-  // GỌI API LƯU THAY ĐỔI (CHÍNH)
   const handleSaveChanges = async () => {
     if (!name.trim()) {
       showToast("Tên không được để trống", "error");
@@ -276,7 +292,6 @@ const Profile = () => {
     if (phone !== user.phone) payload.phone = phone;
     if (newPassword) payload.password = newPassword;
 
-    // ĐÃ SỬA: Kiểm tra avatar là string và bắt đầu bằng http
     if (avatar && typeof avatar === "string" && avatar !== user.image) {
       payload.image = avatar;
     }
@@ -308,6 +323,9 @@ const Profile = () => {
     });
   };
   const userID = user?.id;
+  const handleNavigateToVip = () => {
+    navigate("/dang-ky-thanh-vien");
+  };
 
   useEffect(() => {
     if (!userID) return;
@@ -331,7 +349,7 @@ const Profile = () => {
 
     fetchUser();
   }, [userID]);
-  
+
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
@@ -347,33 +365,53 @@ const Profile = () => {
           }`}
         >
           <div>
-            <h5 className="text-xl font-bold text-gray-800">Hồ sơ của tôi</h5>
+            <h5 className="text-xl font-bold text-gray-800 flex items-center gap-3">
+              Hồ sơ của tôi
+              {isMember && (
+                <span className="inline-flex items-center gap-1 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                  <CrownOutlined /> VIP MEMBER
+                </span>
+              )}
+            </h5>
+
             <p className="text-sm text-gray-500 mt-1">
-              Quản lý thông tin hồ sơ & bảo mật
+              {isMember
+                ? "Bạn đang sở hữu đặc quyền Hội viên VIP!"
+                : "Quản lý thông tin hồ sơ & bảo mật"}
             </p>
           </div>
-
+          {/* NÚT HÀNH ĐỘNG */}
           {!isEditing ? (
-            <button
-              onClick={handleRequestEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-green-500 hover:text-green-600 transition-all shadow-sm font-medium text-sm"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-4 h-4"
+            <div className="flex gap-3">
+              {!isMember && (
+                <button
+                  onClick={handleNavigateToVip}
+                  className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all shadow-md font-medium text-sm"
+                >
+                  <CrownOutlined /> Nâng cấp VIP{" "}
+                </button>
+              )}
+              <button
+                onClick={handleRequestEdit}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-green-500 hover:text-green-600 transition-all shadow-sm font-medium text-sm"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-                />
-              </svg>
-              Mở khóa chỉnh sửa
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                  />
+                </svg>
+                Mở khóa chỉnh sửa
+              </button>
+            </div>
           ) : (
             <div className="flex gap-2">
               <button
@@ -419,14 +457,17 @@ const Profile = () => {
           <div className="flex flex-col-reverse md:flex-row gap-8 md:gap-12">
             {/* Form */}
             <div className="flex-1 space-y-6">
-              {/* Các field như cũ */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+              {/* --- TÊN HIỂN THỊ (Đã thêm items-center) --- */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Tên hiển thị
                 </label>
+
                 <div className="md:col-span-3">
                   <input
                     type="text"
+                    name="fullName"
+                    autoComplete="name"
                     value={name}
                     disabled={!isEditing}
                     onChange={(e) => setName(e.target.value)}
@@ -439,13 +480,17 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+              {/* --- EMAIL (Đã thêm items-center & autoComplete) --- */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Email
                 </label>
+
                 <div className="md:col-span-3">
                   <input
-                    type="text"
+                    type="email"
+                    name="email"
+                    autoComplete="username"
                     value={email}
                     disabled={true}
                     className="w-full max-w-md px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
@@ -458,10 +503,12 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+              {/* --- SĐT (Đã thêm items-center) --- */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Số điện thoại
                 </label>
+
                 <div className="md:col-span-3">
                   <input
                     type="text"
@@ -477,13 +524,15 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-start pt-2">
-                <label className="text-sm font-medium text-gray-600 md:text-right mt-2">
+              {/* --- MẬT KHẨU (Đã căn giữa) --- */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center pt-2">
+                <label className="text-sm font-medium text-gray-600 md:text-right">
                   Mật khẩu
                 </label>
+
                 <div className="md:col-span-3 max-w-md">
                   {!isEditing ? (
-                    <div className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 flex justify-between items-center cursor-not-allowed">
+                    <div className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 flex justify-between items-center cursor-not-allowed h-[42px]">
                       <span className="text-lg tracking-widest pt-1">
                         ••••••••
                       </span>
@@ -493,6 +542,7 @@ const Profile = () => {
                     </div>
                   ) : (
                     <div className="animate-fade-in">
+                      {/* PasswordInput đã bỏ margin-bottom, căn giữa chuẩn hơn */}
                       <PasswordInput
                         label=""
                         placeholder="Nhập mật khẩu mới (để trống nếu không đổi)"
@@ -500,7 +550,7 @@ const Profile = () => {
                         onChange={setNewPassword}
                         disabled={false}
                       />
-                      <p className="text-xs text-gray-500 mt-[-10px]">
+                      <p className="text-xs text-gray-500 mt-1">
                         Để trống nếu bạn không muốn đổi mật khẩu.
                       </p>
                     </div>
@@ -509,7 +559,6 @@ const Profile = () => {
               </div>
 
               <div className="border-t border-gray-100 my-4"></div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400">Ngày tham gia</p>
@@ -517,6 +566,7 @@ const Profile = () => {
                     {formatDate(createdAt)}
                   </p>
                 </div>
+
                 <div>
                   <p className="text-xs text-gray-400">Cập nhật lần cuối</p>
                   <p className="text-sm text-gray-600 font-medium">
@@ -535,10 +585,16 @@ const Profile = () => {
               }`}
             >
               <div className="relative group">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-green-50 shadow-sm bg-gray-100">
-                  {user?.avatar ? (
+                <div
+                  className={`w-32 h-32 rounded-full overflow-hidden border-4 ${
+                    isMember ? "border-yellow-400" : "border-green-50"
+                  } shadow-sm bg-gray-100`}
+                >
+                  {user?.image ? (
                     <img
-                      src={`${import.meta.env.VITE_BACKEND_AVATAR_IMAGE_URL}${user?.avatar}`}
+                      src={`${import.meta.env.VITE_BACKEND_AVATAR_IMAGE_URL}${
+                        user?.image
+                      }`}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />
@@ -554,6 +610,7 @@ const Profile = () => {
                     </div>
                   )}
                 </div>
+
                 {isEditing && (
                   <div className="absolute bottom-0 right-0 bg-green-500 p-1.5 rounded-full border-2 border-white shadow-sm text-white">
                     <svg
@@ -567,7 +624,6 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-
               <label
                 className={`mt-5 cursor-pointer ${
                   !isEditing ? "cursor-not-allowed" : ""
@@ -582,6 +638,7 @@ const Profile = () => {
                 >
                   {isEditing ? "Chọn Ảnh Mới" : "Ảnh đại diện"}
                 </span>
+
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -594,12 +651,11 @@ const Profile = () => {
           </div>
         </div>
       </div>
-
       <VerifyPasswordModal
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
         onConfirm={handleVerifySuccess}
-      />
+      />{" "}
     </>
   );
 };

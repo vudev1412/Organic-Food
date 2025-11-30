@@ -8,6 +8,8 @@ import {
   updateCartAPI,
   fetchAccountAPI,
   clearCartAPI,
+  getCustomerInfoAPI,
+  getUserById,
 } from "../../service/api";
 
 // ✅ IMPORT TOAST STYLES
@@ -89,30 +91,67 @@ export const AppProvider = ({ children }: Tprops) => {
   // === THÊM ĐOẠN NÀY: Khôi phục User khi F5 ===
   useEffect(() => {
     const fetchAccount = async () => {
-      setIsAppLoading(true); // Bắt đầu loading
+      setIsAppLoading(true);
       const token = localStorage.getItem("access_token");
 
       if (token) {
         try {
-          // Gọi API lấy thông tin user từ token
           const res = await fetchAccountAPI();
-          if (res && res.data) {
-            setUser(res.data.data.user); // Lưu info user vào state
-            setIsAuthenticated(true); // Đã đăng nhập
+
+          // Kiểm tra xem res.data.data có tồn tại không
+          if (res && res.data && res.data.data && res.data.data.user) {
+            const basicUser = res.data.data.user;
+
+            // Gọi API lấy chi tiết User
+            const userDetailRes = await getUserById(basicUser.id);
+
+            // 👇 SỬA Ở ĐÂY: Phải chọc vào 2 lớp .data
+            if (
+              userDetailRes &&
+              userDetailRes.data &&
+              userDetailRes.data.data
+            ) {
+              // Lấy object user thật sự từ bên trong
+              let fetchedUser = userDetailRes.data.data;
+              // Nếu là CUSTOMER thì lấy thêm info
+              if (fetchedUser.userRole === "CUSTOMER") {
+                try {
+                  const customerRes = await getCustomerInfoAPI(fetchedUser.id);
+                  // 👇 SỬA CẢ CHỖ NÀY: Cũng phải chọc vào 2 lớp .data
+                  if (
+                    customerRes &&
+                    customerRes.data &&
+                    customerRes.data.data
+                  ) {
+                    fetchedUser = {
+                      ...fetchedUser,
+                      customerProfile: customerRes.data.data,
+                    };
+                  }
+                } catch (e) {
+                  console.log("Lỗi lấy customer info:", e);
+                }
+              }
+
+              // Cập nhật state
+              setUser(fetchedUser);
+              setIsAuthenticated(true);
+            }
           }
         } catch (error) {
-          // Token lỗi hoặc hết hạn -> Xóa sạch
-          console.log("Token hết hạn hoặc không hợp lệ");
+          console.log("Lỗi xác thực:", error);
           localStorage.removeItem("access_token");
           setUser(null);
           setIsAuthenticated(false);
         }
       }
-      setIsAppLoading(false); // Kết thúc loading
+
+      setIsAppLoading(false);
     };
 
     fetchAccount();
-  }, []); // [] rỗng để chỉ chạy 1 lần khi mount
+  }, []);
+  // [] rỗng để chỉ chạy 1 lần khi mount
   // ============================================
   // ==================== CART EFFECTS ====================
 

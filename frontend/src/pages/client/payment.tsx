@@ -1,29 +1,35 @@
 // File path: /src/pages/client/payment.tsx
 
 import { useCurrentApp } from "../../components/context/app.context";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "../../utils/format";
 import PaymentModal from "../../components/section/payment/PaymentModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { getVoucherByCodeAPI } from "../../service/api";
+import { DeleteOutlined } from "@ant-design/icons";
 
 // Import các Component con
-
 import "./index.scss";
 import CartEmpty from "../../components/section/payment/CartEmpty";
 import CartCoupon from "../../components/section/payment/CartCoupon";
 import CartSummary from "../../components/section/payment/CartSummary";
 import CartItem from "../../components/section/payment/CartItem";
-import { DeleteOutlined } from "@ant-design/icons";
+import AddressSection from "../../components/section/payment/AddressSection";
 
 interface IAppliedVoucher extends IResVoucherDTO {
   discountAmount: number;
 }
 
 const Payment = () => {
-  const { cartItems, removeFromCart, clearCart, updateCartQuantity } =
-    useCurrentApp();
+  const {
+    cartItems,
+    removeFromCart,
+    clearCart,
+    updateCartQuantity,
+    user,
+    showToast,
+  } = useCurrentApp();
   const navigate = useNavigate();
 
   // State Voucher
@@ -35,7 +41,6 @@ const Payment = () => {
   const [isApplying, setIsApplying] = useState(false);
 
   // State Modal
-
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     type: "delete-item" | "clear-cart";
@@ -43,21 +48,26 @@ const Payment = () => {
   }>({ isOpen: false, type: "delete-item" });
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] =
+    useState<ICustomerAddress | null>(null);
 
   // ===================== LOGIC TÍNH TOÁN =====================
-  const { subtotal, totalSavings, shipping, total, discountAmount } =
+  const { subtotal, totalSavings, shipping, total, discountAmount, taxAmount } =
     useMemo(() => {
+      // 1. Tính Subtotal
       const subtotal = cartItems.reduce(
         (total, item) => total + item.price * item.quantity,
         0
       );
 
+      // 2. Tính Tiết kiệm
       const totalSavings = cartItems.reduce((total, item) => {
         const originalPrice = item.originalPrice || item.price;
         const savedPerItem = Math.max(0, originalPrice - item.price);
         return total + savedPerItem * item.quantity;
       }, 0);
 
+      // 3. Tính Ship và Discount
       const shippingFee = subtotal > 500000 ? 0 : 25000;
       let currentDiscountAmount = 0;
       let finalShipping = shippingFee;
@@ -80,8 +90,12 @@ const Payment = () => {
         }
       }
 
-      const finalSubtotalAfterVoucher = subtotal - currentDiscountAmount;
-      const finalTotal = finalSubtotalAfterVoucher + finalShipping;
+      // 4. TÍNH THUẾ (8%)
+      const taxableAmount = Math.max(0, subtotal - currentDiscountAmount);
+      const taxAmount = Math.round(taxableAmount * 0.08);
+
+      // 5. TÍNH TỔNG CỘNG
+      const finalTotal = taxableAmount + taxAmount + finalShipping;
 
       return {
         subtotal,
@@ -89,8 +103,29 @@ const Payment = () => {
         shipping: finalShipping,
         total: finalTotal,
         discountAmount: currentDiscountAmount,
+        taxAmount,
       };
     }, [cartItems, appliedVoucher]);
+
+  // ===================== TỰ ĐỘNG KIỂM TRA VOUCHER =====================
+  useEffect(() => {
+    if (appliedVoucher) {
+      if (subtotal < appliedVoucher.minOrderValue) {
+        setAppliedVoucher(null);
+        setVoucherCode("");
+        setVoucherError(
+          `Đơn hàng không còn đủ điều kiện tối thiểu ${formatCurrency(
+            appliedVoucher.minOrderValue
+          )}`
+        );
+        console.log(deliveryAddress?.note);
+        showToast(
+          `Mã ${appliedVoucher.code} đã bị gỡ do tổng đơn hàng không đủ điều kiện.`,
+          "warning"
+        );
+      }
+    }
+  }, [subtotal, appliedVoucher]);
 
   // ===================== LOGIC API VOUCHER =====================
   const handleApplyVoucher = async () => {
@@ -111,16 +146,11 @@ const Payment = () => {
         setAppliedVoucher(null);
         return;
       }
-
-      // Kiểm tra Active
       if (!voucherData.active) {
-        setVoucherError(
-          "Mã giảm giá này chưa được kích hoạt hoặc đã bị vô hiệu hóa."
-        );
+        setVoucherError("Mã giảm giá chưa kích hoạt hoặc bị vô hiệu hóa.");
         setAppliedVoucher(null);
         return;
       }
-
       const now = new Date();
       const startDate = new Date(voucherData.startDate);
       const endDate = new Date(voucherData.endDate);
@@ -130,13 +160,11 @@ const Payment = () => {
         setAppliedVoucher(null);
         return;
       }
-
       if (voucherData.quantity <= voucherData.usedCount) {
         setVoucherError("Mã giảm giá đã hết lượt sử dụng.");
         setAppliedVoucher(null);
         return;
       }
-
       if (subtotal < voucherData.minOrderValue) {
         setVoucherError(
           `Đơn hàng tối thiểu để áp dụng là ${formatCurrency(
@@ -147,7 +175,7 @@ const Payment = () => {
         return;
       }
 
-      // Logic tính toán lại tiền giảm để lưu vào state (dùng để hiển thị)
+      // Tính lại discount
       let calculatedDiscount = 0;
       if (voucherData.typeVoucher === "FIXED_AMOUNT") {
         calculatedDiscount = Math.min(voucherData.value, subtotal);
@@ -169,8 +197,7 @@ const Payment = () => {
       setAppliedVoucher({ ...voucherData, discountAmount: calculatedDiscount });
       setVoucherError(`Áp dụng mã ${voucherCode.toUpperCase()} thành công!`);
     } catch (error) {
-      console.error(error);
-      setVoucherError("Lỗi hệ thống khi kiểm tra mã giảm giá.");
+      setVoucherError("Mã giảm giá không hợp lệ.");
       setAppliedVoucher(null);
     } finally {
       setIsApplying(false);
@@ -200,20 +227,24 @@ const Payment = () => {
     closeModal();
   };
 
-  const handlePaymentSuccess = () => {
-    clearCart();
-    setShowPaymentModal(false);
-    navigate("/success");
+  const handlePaymentSuccess = (orderId: number) => {
+    clearCart(); // Xóa giỏ hàng
+    setShowPaymentModal(false); // Đóng modal
+
+    // Chuyển hướng kèm Order ID để trang Success hiển thị thông tin
+    if (orderId) {
+      navigate(`thanh-cong?orderId=${orderId}`);
+    } else {
+      navigate("thanh-cong"); // Fallback nếu không có ID
+    }
   };
 
-  // ===================== RENDER =====================
   if (cartItems.length === 0) return <CartEmpty />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="mb-8 flex justify-between items-center">
-          {/* Thay đổi ở đây */}
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
               Giỏ hàng của bạn
@@ -230,8 +261,12 @@ const Payment = () => {
         </div>
 
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-12">
-          {/* Cột trái: Danh sách sản phẩm & Voucher */}
+          {/* Cột trái */}
           <section className="lg:col-span-8">
+            <AddressSection
+              user={user}
+              onSelectAddress={(addr) => setDeliveryAddress(addr)}
+            />
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <ul className="divide-y divide-gray-100 !p-0 !m-0 list-none">
                 {cartItems.map((item) => (
@@ -264,9 +299,16 @@ const Payment = () => {
               totalSavings={totalSavings}
               shipping={shipping}
               total={total}
+              taxAmount={taxAmount}
               discountAmount={discountAmount}
               appliedVoucher={appliedVoucher}
-              onCheckout={() => setShowPaymentModal(true)}
+              onCheckout={() => {
+                if (!deliveryAddress) {
+                  showToast("Vui lòng chọn địa chỉ giao hàng!", "warning");
+                  return;
+                }
+                setShowPaymentModal(true);
+              }}
             />
           </section>
         </div>
@@ -291,8 +333,28 @@ const Payment = () => {
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          totalAmount={total}
           onSuccess={handlePaymentSuccess}
+          // --- [UPDATE] TRUYỀN DỮ LIỆU TÀI CHÍNH ---
+          subtotal={subtotal}
+          totalAmount={total}
+          shippingFee={shipping}
+          taxAmount={taxAmount}
+          discountAmount={discountAmount}
+          voucherId={appliedVoucher ? appliedVoucher.id : null}
+          cartItems={cartItems}
+          initialBuyerInfo={
+            deliveryAddress
+              ? {
+                  name: deliveryAddress.receiverName,
+                  phone: deliveryAddress.phone,
+                  province: deliveryAddress.province,
+                  district: deliveryAddress.district,
+                  ward: deliveryAddress.ward,
+                  street: deliveryAddress.street,
+                }
+              : undefined
+          }
+          note={deliveryAddress?.note || ""}
         />
       </main>
     </div>
