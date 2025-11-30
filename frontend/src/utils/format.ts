@@ -28,3 +28,17 @@ export const formatCategoryName = (name: string) => {
 
   return str;
 };
+/**
+ * Format ID thành mã đơn hàng (VD: 13 -> DH000013)
+ * @param id - Số ID của đơn hàng
+ * @param prefix - Tiền tố (mặc định là DH)
+ * @param length - Độ dài phần số (mặc định là 6)
+ */
+export const formatOrderCode = (
+  id: number | string,
+  prefix: string = "DH",
+  length: number = 6
+): string => {
+  if (!id) return "";
+  return `${prefix}${id.toString().padStart(length, "0")}`;
+};

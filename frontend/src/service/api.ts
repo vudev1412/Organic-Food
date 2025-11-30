@@ -763,6 +763,7 @@ export const PaymentAPI = {
     return response.data;
   },
 };
+
 export const getVouchersAPI = (query: string) => {
   const url = `/api/v1/vouchers?${query}`;
   return axios.get<IBackendRes<IModelPaginate<IResVoucherDTO>>>(url);
@@ -789,4 +790,43 @@ export const getVoucherByIdAPI = (id: number) => {
 };
 
 
+
+=======
+/**
+ * API Đặt hàng dành cho User (Checkout)
+ * Endpoint: POST /api/v1/orders/place-order
+ * Xử lý: Tạo Order -> Trừ kho -> Tạo Invoice -> Trả về kết quả để thanh toán
+ */
+export const placeOrderAPI = (data: IReqPlaceOrder) => {
+  const urlBackend = `/api/v1/orders/place-order`;
+  return axios.post<IBackendRes<IResPlaceOrder>>(urlBackend, data);
+};
+/**
+ * Lấy chi tiết đơn hàng (Dành cho User - Success Page)
+ * Endpoint: GET /api/v1/orders/user/{id}
+ */
+export const getOrderByIdV2API = (id: number) => {
+  const urlBackend = `/api/v1/orders/user/${id}`;
+  return axios.get<IBackendRes<IResOrderDTO>>(urlBackend);
+};
+/**
+ * Lấy thông tin chi tiết khách hàng (bao gồm trạng thái Member)
+ * URL: /api/v1/customers/info/{userId}
+ */
+export const getCustomerInfoAPI = (userId: number) => {
+  const URL_API = `/api/v1/customer/info/${userId}`;
+  return axios.get<IBackendRes<ICustomerProfile>>(URL_API);
+};
+
+/**
+ * Gọi API tạo thanh toán Membership
+ * Endpoint: POST /api/v1/payments/create-membership
+ */
+export const createMembershipPaymentAPI = (data: IReqMembership) => {
+  return axios.post(`/api/v1/payments/create-membership`, data);
+};
+export const getUserById = (id: number) => {
+  const urlBackend = `/api/v1/users/${id}`;
+  return axios.get<IBackendRes<IUser>>(urlBackend);
+};
 

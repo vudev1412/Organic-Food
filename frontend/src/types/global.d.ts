@@ -42,9 +42,14 @@ declare global {
     id: number;
     email: string;
     name: string;
+    phone: string;
     image: string;
     role: string;
+    createAt?: string;
+    updateAt?: string;
+    customerProfile?: ICustomerProfile | null;
   }
+
   interface IFetchAccount {
     data: {
       user: IUser;
@@ -335,11 +340,9 @@ declare global {
     };
   }
   interface ICustomerProfile {
-    data: {
-      id: number;
-      member: boolean;
-      userId: number;
-    };
+    id: number;
+    member: boolean;
+    userId: number;
   }
 
   // Interface cho Chứng chỉ
@@ -688,6 +691,7 @@ declare global {
     id: number;
     status: string; // "PENDING" | "SUCCESS" | "FAILED" | "CANCELED"
   }
+
   export interface IResVoucherDTO {
     id: number;
     code: string;
@@ -701,5 +705,136 @@ declare global {
     quantity?: number;
     usedCount?: number;
     active?: boolean;
+=======
+  interface ResInvoiceDTO {
+    id: number;
+    createAt: string; // Instant map sang string (ISO date)
+    deliverFee: number;
+    discountAmount: number;
+    subtotal: number;
+
+    // --- Các trường tính toán mới ---
+    taxRate: number;
+    taxAmount: number;
+    total: number;
+    // --------------------------------
+
+    status: "UNPAID" | "PAID" | "CANCELLED"; // StatusInvoice enum
+
+    // Mối quan hệ (IDs)
+    orderId: number;
+    customerId?: number; // nullable
+    employeeId?: number; // nullable
+    paymentId?: number;
+    voucherId?: number;
+  }
+  interface IReqInvoice {
+    deliverFee: number;
+    discountAmount: number;
+    subtotal: number;
+    status: "UNPAID" | "PAID" | "CANCELLED"; // StatusInvoice enum
+
+    // --- Các trường tính toán từ Client ---
+    taxRate: number;
+    taxAmount: number;
+    total: number;
+    // ----------------------------------------
+
+    // Mối quan hệ (IDs)
+    orderId: number;
+    customerId?: number;
+    employeeId?: number;
+    paymentId?: number;
+    voucherId?: number;
+  }
+  interface Invoice {
+    id?: number;
+
+    deliverFee?: number;
+    discountAmount?: number;
+    subtotal?: number;
+
+    taxRate?: number;
+    taxAmount?: number;
+    total?: number;
+
+    status?: "UNPAID" | "PAID" | "CANCELLED";
+  }
+  // --- Type cho Request (Gửi đi) ---
+  export interface ICartItemRequest {
+    productId: number;
+    quantity: number;
+    price: number;
+  }
+
+  export interface IReqPlaceOrder {
+    receiverName: string;
+    receiverPhone: string;
+    shipAddress: string;
+    note: string;
+    paymentMethod: "COD" | "BANK_TRANSFER" | string; // Type string để linh hoạt
+    totalPrice: number;
+    cartItems: ICartItemRequest[];
+  }
+
+  // --- Type cho Response (Nhận về) ---
+  export interface IResPlaceOrder {
+    id: number; // Order ID
+    totalPrice: number;
+    paymentMethod: string;
+    receiverName: string;
+    receiverPhone: string;
+    address: string;
+    paymentStatus: string;
+  }
+  export interface IResOrderDetailItem {
+    productId: number;
+    productName: string;
+    productImage: string;
+    productSlug: string;
+    quantity: number;
+    price: number;
+  }
+
+  export interface IResOrderDTO {
+    id: number;
+    orderAt: string;
+    note: string;
+    statusOrder: string;
+    estimatedDate: string;
+    actualDate: string | null;
+
+    // Giao hàng
+    shipAddress: string;
+    receiverName: string;
+    receiverPhone: string;
+
+    // Tài chính
+    paymentMethod: string;
+    paymentStatus: string;
+    totalPrice: number;
+    subtotal: number;
+    shippingFee: number;
+    taxAmount: number;
+    discountAmount: number;
+
+    // Chi tiết sản phẩm
+    orderDetails: IResOrderDetailItem[];
+  }
+  // Kiểu dữ liệu trả về từ API lấy thông tin khách hàng
+  interface IResCustomerInfo {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    image: string;
+    isMember: boolean; // Đây là trường quan trọng nhất để check VIP
+  }
+
+  // Kiểu dữ liệu gửi đi khi tạo thanh toán Membership
+  interface IReqMembership {
+    userId: number;
+    amount: number;
+
   }
 }
