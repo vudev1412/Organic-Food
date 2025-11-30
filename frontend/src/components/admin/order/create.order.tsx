@@ -10,13 +10,13 @@ import {
   Button,
   Space,
   Divider,
-  Card,
   Image,
   Typography,
   App,
+  Tag,
 } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
-import { createOrder, getProductsAPI } from "../../../service/api";
+import { PlusOutlined, DeleteOutlined, UserOutlined } from "@ant-design/icons";
+import { createOrder, getProductsAPI, getCustomersAPI } from "../../../service/api";
 
 const { Text } = Typography;
 
@@ -24,6 +24,16 @@ interface IProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   refreshTable: () => void;
+}
+
+interface ICustomer {
+  id: number;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+  };
 }
 
 const getProductImageUrl = (image: string | undefined | null): string => {
@@ -40,10 +50,16 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
   const { message, notification } = App.useApp();
   const [isSubmit, setIsSubmit] = useState(false);
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (open) {
+      loadProducts();
+      loadCustomers();
+    }
+  }, [open]);
 
   const loadProducts = async () => {
     try {
@@ -54,16 +70,62 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
     }
   };
 
+  const loadCustomers = async () => {
+    setLoadingCustomers(true);
+    try {
+      const res = await getCustomersAPI("");
+      if (res?.data?.data?.result) {
+        const list = res.data.data.result.map((c: any) => ({
+          label: c.user?.name || `Customer #${c.id}`,
+          value: c.id,
+          customer: c,
+        }));
+        setCustomers(list);
+      }
+    } catch {
+      notification.error({ message: "Lỗi", description: "Không tải được danh sách khách hàng" });
+    } finally {
+      setLoadingCustomers(false);
+    }
+  };
+
+  const handleCustomerSelect = (customerId: number, option: any) => {
+    const customer = option?.customer;
+    if (customer) {
+      setSelectedCustomer(customer);
+      // Lưu userId vào form (ẩn)
+      form.setFieldsValue({
+        userId: customer.user?.id,
+      });
+      // Auto-fill phone nếu có
+      if (customer.user?.phone) {
+        form.setFieldsValue({
+          phone: customer.user.phone,
+        });
+      }
+    }
+  };
+
   const onFinish = async (values: any) => {
     setIsSubmit(true);
+    
+    // Lấy userId từ selectedCustomer
+    const userId = selectedCustomer?.user?.id;
+    
+    if (!userId) {
+      notification.error({
+        message: "Lỗi",
+        description: "Không tìm thấy thông tin user của khách hàng",
+      });
+      setIsSubmit(false);
+      return;
+    }
+    
     const payload = {
-      customerDTO: {
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
-      },
+      userId: userId, // userId từ customer.user.id
       shipAddress: values.address,
       note: values.note || "",
+      estimatedDate: new Date().toISOString(), // Thêm estimatedDate
       orderDetails: values.orderDetails
         .filter((d: any) => d.productId && d.quantity > 0)
         .map((d: any) => ({
@@ -76,6 +138,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
       await createOrder(payload);
       message.success("Tạo đơn hàng thành công!");
       form.resetFields();
+      setSelectedCustomer(null);
       setOpen(false);
       refreshTable();
     } catch (err: any) {
@@ -95,6 +158,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
       onOk={() => form.submit()}
       onCancel={() => {
         form.resetFields();
+        setSelectedCustomer(null);
         setOpen(false);
       }}
       okText="Tạo đơn hàng"
@@ -107,30 +171,97 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
       <Form form={form} onFinish={onFinish} layout="vertical" className="mt-4">
         {/* Thông tin khách hàng */}
         <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin khách hàng</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Form.Item name="name" label="Họ tên" rules={[{ required: true }]}>
-              <Input size="large" placeholder="Nguyễn Văn A" className="rounded-lg" />
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <UserOutlined className="mr-2" />
+            Thông tin khách hàng
+          </h3>
+          
+          <div className="grid grid-cols-1 gap-5">
+            {/* Hidden field để lưu userId */}
+            <Form.Item name="userId" hidden>
+              <Input />
             </Form.Item>
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[{ required: true, type: "email" }]}
+            
+            {/* Chọn khách hàng */}
+            <Form.Item 
+              name="customerId" 
+              label="Chọn khách hàng" 
+              rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
             >
-              <Input size="large" placeholder="khach@example.com" className="rounded-lg" />
+              <Select
+                showSearch
+                size="large"
+                placeholder="Tìm khách hàng theo tên..."
+                optionFilterProp="children"
+                loading={loadingCustomers}
+                className="w-full"
+                onChange={handleCustomerSelect}
+                filterOption={(input, option) => {
+                  const label = option?.label?.toString().toLowerCase() || "";
+                  return label.includes(input.toLowerCase());
+                }}
+                options={customers}
+              />
             </Form.Item>
+
+            {/* Hiển thị thông tin khách hàng đã chọn */}
+            {selectedCustomer?.user && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <Space direction="vertical" size="small" className="w-full">
+                  <div>
+                    <Text type="secondary" className="text-xs">Họ tên:</Text>
+                    <Text strong className="block text-base">{selectedCustomer.user.name}</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" className="text-xs">Email:</Text>
+                    <Text className="block">{selectedCustomer.user.email}</Text>
+                  </div>
+                  {selectedCustomer.user.phone && (
+                    <div>
+                      <Text type="secondary" className="text-xs">Số điện thoại:</Text>
+                      <Text className="block">{selectedCustomer.user.phone}</Text>
+                    </div>
+                  )}
+                </Space>
+              </div>
+            )}
+
+            {/* Số điện thoại (nếu chưa có) */}
             <Form.Item
               name="phone"
-              label="Số điện thoại"
-              rules={[{ required: true, pattern: /^0\d{9}$/, message: "SĐT không hợp lệ" }]}
+              label="Số điện thoại giao hàng (nếu khác)"
+              rules={[
+                { pattern: /^0\d{9}$/, message: "SĐT không hợp lệ" }
+              ]}
             >
-              <Input size="large" placeholder="0901234567" className="rounded-lg" />
+              <Input 
+                size="large" 
+                placeholder="0901234567" 
+                className="rounded-lg"
+              />
             </Form.Item>
-            <Form.Item name="address" label="Địa chỉ giao hàng" rules={[{ required: true }]}>
-              <Input.TextArea rows={2} size="large" placeholder="123 Đường Láng, Hà Nội..." />
+
+            {/* Địa chỉ giao hàng */}
+            <Form.Item 
+              name="address" 
+              label="Địa chỉ giao hàng" 
+              rules={[{ required: true, message: "Vui lòng nhập địa chỉ giao hàng" }]}
+            >
+              <Input.TextArea 
+                rows={3} 
+                size="large" 
+                placeholder="123 Đường Láng, Đống Đa, Hà Nội..." 
+                className="rounded-lg"
+              />
             </Form.Item>
-            <Form.Item name="note" label="Ghi chú (tùy chọn)" className="md:col-span-2">
-              <Input.TextArea rows={2} placeholder="Giao buổi chiều, gọi trước khi đến..." />
+
+            {/* Ghi chú */}
+            <Form.Item name="note" label="Ghi chú (tùy chọn)">
+              <Input.TextArea 
+                rows={2} 
+                placeholder="Giao buổi chiều, gọi trước khi đến..." 
+                className="rounded-lg"
+              />
             </Form.Item>
           </div>
         </div>
@@ -148,7 +279,11 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
                   <div key={key} className="mb-6 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
                     <div className="flex flex-wrap items-start gap-4">
                       {/* Chọn sản phẩm */}
-                      <Form.Item name={[name, "productId"]} rules={[{ required: true }]} className="mb-0 flex-1 min-w-64">
+                      <Form.Item 
+                        name={[name, "productId"]} 
+                        rules={[{ required: true, message: "Chọn sản phẩm" }]} 
+                        className="mb-0 flex-1 min-w-64"
+                      >
                         <Select
                           showSearch
                           size="large"
@@ -181,13 +316,23 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
                       </Form.Item>
 
                       {/* Số lượng */}
-                      <Form.Item name={[name, "quantity"]} initialValue={1} rules={[{ required: true }]} className="mb-0">
+                      <Form.Item 
+                        name={[name, "quantity"]} 
+                        initialValue={1} 
+                        rules={[{ required: true, message: "Nhập số lượng" }]} 
+                        className="mb-0"
+                      >
                         <InputNumber min={1} size="large" className="w-32" />
                       </Form.Item>
 
                       {/* Xóa */}
                       {fields.length > 1 && (
-                        <Button danger size="large" icon={<DeleteOutlined />} onClick={() => remove(name)} />
+                        <Button 
+                          danger 
+                          size="large" 
+                          icon={<DeleteOutlined />} 
+                          onClick={() => remove(name)} 
+                        />
                       )}
                     </div>
 
@@ -256,7 +401,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
 
             return (
               <div className="mt-8 p-6 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl text-white">
-                <Text className="text-2xl font-bold block text-right">
+                <Text className="text-2xl font-bold block text-right text-white">
                   Tổng tiền: {formatPrice(total)}
                 </Text>
               </div>

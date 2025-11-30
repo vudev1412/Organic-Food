@@ -1,6 +1,5 @@
 package com.example.backend.domain;
 
-import com.example.backend.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -39,8 +38,11 @@ public class User {
     private Instant createAt;
     private Instant updateAt;
 
-    @Enumerated(EnumType.STRING)
-    private Role userRole;
+    private boolean active;
+
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private Role role;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;

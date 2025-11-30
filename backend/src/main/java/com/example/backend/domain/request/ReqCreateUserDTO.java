@@ -1,5 +1,6 @@
 package com.example.backend.domain.request;
 
+import com.example.backend.domain.Role;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,5 +11,5 @@ public class ReqCreateUserDTO {
     private String email;
     private String password;
     private String phone;
-    private String role;
+    private  String roleName;
 }

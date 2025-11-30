@@ -58,6 +58,7 @@ public class Product {
     private String createBy;
 
     private String updateBy;
+    
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")

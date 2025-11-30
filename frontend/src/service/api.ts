@@ -61,14 +61,15 @@ export const createUserAPI = (
   name: string,
   email: string,
   phone: string,
-  role: string
+  role?:string
+
 ) => {
   const urlBackend = `/api/v1/users`;
   return axios.post<IBackendRes<IRegister>>(urlBackend, {
     name,
     email,
     phone,
-    role,
+    role
   });
 };
 
@@ -762,6 +763,35 @@ export const PaymentAPI = {
     return response.data;
   },
 };
+
+export const getVouchersAPI = (query: string) => {
+  const url = `/api/v1/vouchers?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<IResVoucherDTO>>>(url);
+};
+
+export const createVoucherAPI = (payload: any) => {
+  const url = `/api/v1/vouchers`;
+  return axios.post(url, payload);
+};
+
+export const updateVoucherAPI = (id: number, payload: any) => {
+  const url = `/api/v1/vouchers/${id}`;
+  return axios.patch(url, payload);
+};
+
+export const deleteVoucherAPI = (id: number) => {
+  const url = `/api/v1/vouchers/${id}`;
+  return axios.delete(url);
+};
+
+export const getVoucherByIdAPI = (id: number) => {
+  const url = `/api/v1/vouchers/${id}`;
+  return axios.get(url);
+};
+
+
+
+=======
 /**
  * API Đặt hàng dành cho User (Checkout)
  * Endpoint: POST /api/v1/orders/place-order
@@ -799,3 +829,4 @@ export const getUserById = (id: number) => {
   const urlBackend = `/api/v1/users/${id}`;
   return axios.get<IBackendRes<IUser>>(urlBackend);
 };
+

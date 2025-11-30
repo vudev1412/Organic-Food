@@ -23,6 +23,8 @@ public class EmployeeProfile {
 
     private Instant hireDate;
 
+    private Instant birth;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;

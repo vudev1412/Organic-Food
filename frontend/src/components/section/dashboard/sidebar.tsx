@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -12,7 +11,9 @@ import {
   MessageSquareWarning,
   ChevronLeft,
   ChevronRight,
+  TicketPercent,
 } from "lucide-react";
+import { Tag } from "antd";
 
 // Đổi từ React.ReactElement → React.ComponentType (đúng kiểu cho icon component)
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;
@@ -47,7 +48,13 @@ const Sidebar: React.FC = () => {
       icon: MessageSquareWarning,
       to: "complaints",
     },
-     {
+    {
+      id: "voucher",
+      text: "Quản lý khuyến mãi",
+      icon: TicketPercent,
+      to: "voucher",
+    },
+    {
       id: "backup",
       text: "Khôi phục sao lưu",
       icon: MessageSquareWarning,

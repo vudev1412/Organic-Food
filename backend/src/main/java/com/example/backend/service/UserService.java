@@ -7,17 +7,13 @@ import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.domain.response.ResUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
-import com.example.backend.enums.Role;
 import com.example.backend.util.error.IdInvalidException;
 import com.example.backend.util.error.InvalidOtpException;
 import com.example.backend.util.error.UserNotFoundException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public interface UserService {
     boolean isEmailExist(String email);

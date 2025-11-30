@@ -28,21 +28,33 @@ import UpdateProduct from "./update.product";
 
 const { Text } = Typography;
 
+// 👇 Khai báo search type
+type TSearch = {
+  id: string;
+  name?: string;
+  unit: string;
+  active?: boolean;
+};
+
 const TableProduct = () => {
   const actionRef = useRef<ActionType>(null);
   const [openViewDetail, setOpenViewDetail] = useState(false);
   const [dataViewDetail, setDataViewDetail] = useState<IProduct | null>(null);
-
   const [openModalCreate, setOpenModalCreate] = useState(false);
-  const { message, notification } = App.useApp();
   const [openModelUpdate, setOpenModelUpdate] = useState(false);
-  const [dataUpdate, setDataUpdate] = useState<any>(null);
+  const [dataUpdate, setDataUpdate] = useState<IProduct | null>(null);
+  const { message, notification } = App.useApp();
 
   const formatProductId = (id: number) => {
     if (id < 10) return `SP000${id}`;
     if (id < 100) return `SP00${id}`;
     if (id < 1000) return `SP0${id}`;
     return `SP${id}`;
+  };
+  const parseProductId = (code: string) => {
+    if (!code.startsWith("SP")) return NaN;
+    const numPart = code.slice(2);
+    return parseInt(numPart, 10);
   };
 
   const handleDelete = async (productId: number) => {
@@ -60,8 +72,6 @@ const TableProduct = () => {
     }
   };
 
-  const unitNames = ["", "Kg", "Gram", "Lít", "Hộp", "Cái"];
-
   const columns: ProColumns<IProduct>[] = [
     {
       title: "Mã SP",
@@ -72,7 +82,6 @@ const TableProduct = () => {
       defaultSortOrder: "ascend",
       render: (_, record) => <a>{formatProductId(record.id)}</a>,
     },
-
     {
       title: "Sản phẩm",
       dataIndex: "name",
@@ -84,7 +93,9 @@ const TableProduct = () => {
             shape="square"
             src={
               record.image
-                ? `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${record.image}`
+                ? `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${
+                    record.image
+                  }`
                 : undefined
             }
             icon={<SafetyCertificateOutlined />}
@@ -99,16 +110,12 @@ const TableProduct = () => {
         </Space>
       ),
     },
-
-    // 👉 Đơn vị tính (tách riêng)
     {
       title: "Đơn vị",
       dataIndex: "unit",
       width: 90,
-      render: (_, record) => unitNames[record.unit?.id || 0] || "Đơn vị",
+      render: (_, record) => record.unit || "Đơn vị",
     },
-
-    // 👉 Số lượng — căn phải
     {
       title: "Số lượng",
       dataIndex: "quantity",
@@ -118,8 +125,6 @@ const TableProduct = () => {
         <Text strong>{Number(record.quantity).toLocaleString("vi-VN")}</Text>
       ),
     },
-
-    // 👉 Giá bán — căn phải
     {
       title: "Giá bán",
       dataIndex: "price",
@@ -132,7 +137,6 @@ const TableProduct = () => {
         </Text>
       ),
     },
-
     {
       title: "Chứng nhận",
       dataIndex: "certificates",
@@ -156,7 +160,6 @@ const TableProduct = () => {
         );
       },
     },
-
     {
       title: "Trạng thái",
       dataIndex: "active",
@@ -173,7 +176,6 @@ const TableProduct = () => {
         </Tag>
       ),
     },
-
     {
       title: "Thao tác",
       width: 130,
@@ -190,7 +192,6 @@ const TableProduct = () => {
               }}
             />
           </Tooltip>
-
           <Tooltip title="Chỉnh sửa">
             <Button
               type="text"
@@ -202,20 +203,15 @@ const TableProduct = () => {
               }}
             />
           </Tooltip>
-
           <Popconfirm
-            title="Xóa sản phẩm?"
-            description={`Xóa "${record.name}" vĩnh viễn?`}
+            title="Xác nhận xóa sản phẩm?"
             onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
+            okText="Xác nhận"
             cancelText="Hủy"
-            okButtonProps={{ danger: true }}
           >
             <Button
-              danger
               type="text"
               icon={<DeleteTwoTone twoToneColor="#ff4d4f" />}
-              onClick={(e) => e.stopPropagation()}
             />
           </Popconfirm>
         </Space>
@@ -225,7 +221,7 @@ const TableProduct = () => {
 
   return (
     <>
-      <ProTable
+      <ProTable<IProduct, TSearch>
         columns={columns}
         actionRef={actionRef}
         cardBordered
@@ -233,12 +229,20 @@ const TableProduct = () => {
         scroll={{ x: 1300 }}
         headerTitle={
           <Space>
-            <SafetyCertificateOutlined style={{ fontSize: 20, color: "#1890ff" }} />
-            <Text strong style={{ fontSize: 20 }}>Quản lý sản phẩm</Text>
+            <SafetyCertificateOutlined
+              style={{ fontSize: 20, color: "#1890ff" }}
+            />
+            <Text strong style={{ fontSize: 20 }}>
+              Quản lý sản phẩm
+            </Text>
           </Space>
         }
         toolBarRender={() => [
-          <Button key="reload" icon={<ReloadOutlined />} onClick={() => actionRef.current?.reload()}>
+          <Button
+            key="reload"
+            icon={<ReloadOutlined />}
+            onClick={() => actionRef.current?.reload()}
+          >
             Làm mới
           </Button>,
           <Button
@@ -254,13 +258,37 @@ const TableProduct = () => {
         request={async (params, sort, filter) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
 
-          if (params.name) query += `&filter=name~'*${params.name}*'`;
-          if (filter.active?.length) {
-            const status = filter.active[0] === "true" ? "true" : "false";
-            query += `&filter=active==${status}`;
+          const filters: string[] = [];
+
+          // Tìm theo mã SP / ID
+          if (params.id) {
+            const idNum = parseProductId(params.id);
+            if (!isNaN(idNum)) {
+              filters.push(`id=${idNum}`);
+            }
           }
 
-          if (Object.keys(sort).length > 0) {
+          // Tên sản phẩm
+          if (params.name) {
+            filters.push(`name~'*${params.name}*'`);
+          }
+          if(params.unit){
+            filters.push(`name~'*${params.unit}*'`);
+          }
+
+          // Trạng thái
+          if (filter.active?.length) {
+            const status = filter.active[0] === "true" ? "true" : "false";
+            filters.push(`active==${status}`);
+          }
+
+          // Nếu có filter -> nối bằng dấu ;
+          if (filters.length > 0) {
+            query += `&filter=${filters.join(";")}`;
+          }
+
+          // Sort
+          if (sort && Object.keys(sort).length > 0) {
             const field = Object.keys(sort)[0];
             const order = sort[field] === "ascend" ? "ASC" : "DESC";
             query += `&sort=${field},${order}`;
@@ -269,13 +297,17 @@ const TableProduct = () => {
           }
 
           const res = await getProductsAPI(query);
+
           const rawData = res.data?.data.result || [];
           const mapProduct: Record<number, IProduct> = {};
 
           rawData.forEach((item) => {
             const id = item.id;
             if (!mapProduct[id]) {
-              mapProduct[id] = { ...item, certificates: item.certificates || [] };
+              mapProduct[id] = {
+                ...item,
+                certificates: item.certificates || [],
+              };
             } else {
               mapProduct[id].certificates = [
                 ...(mapProduct[id].certificates || []),
@@ -290,17 +322,15 @@ const TableProduct = () => {
             total: res.data?.data.meta.total || 0,
           };
         }}
-        rowClassName={(record) => (!record.active ? "row-disabled" : "")}
-        search={{
-          labelWidth: "auto",
-          collapseRender: (collapsed) =>
-            collapsed ? "Mở rộng tìm kiếm" : "Thu gọn",
-        }}
-        options={{ reload: false, density: false, setting: false }}
-        pagination={{
+         pagination={{
           defaultPageSize: 5,
           showSizeChanger: true,
-          pageSizeOptions: ["5", "10", "20", "50"],
+          pageSizeOptions: ["10", "20", "50", "100"],
+          showTotal: (total, range) => (
+            <span style={{ fontSize: 15, color: "#595959" }}>
+              Hiển thị <strong>{range[0]}-{range[1]}</strong> trong <strong style={{ color: "#1677ff" }}>{total}</strong> đơn hàng
+            </span>
+          ),
         }}
       />
 

@@ -101,13 +101,6 @@ const TableEmployee = () => {
           : "-",
     },
     {
-      title: "Lương",
-      dataIndex: "salary",
-      align: "right",
-      hideInSearch: true,
-      render: (_, record) => record.salary.toLocaleString("vi-VN") + " VNĐ",
-    },
-    {
       title: "Action",
       hideInSearch: true,
       render: (_, record) => (

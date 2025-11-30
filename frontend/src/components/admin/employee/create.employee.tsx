@@ -1,7 +1,7 @@
 // src/components/admin/employee/create.employee.tsx
 
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, DatePicker, Select, App, InputNumber } from "antd";
+import { Modal, Form, Input, DatePicker, Select, App, Button } from "antd";
 import {
   User,
   Mail,
@@ -10,7 +10,6 @@ import {
   MapPin,
   Calendar,
   Home,
-  DollarSign,
 } from "lucide-react";
 import {
   createUserAPI,
@@ -34,7 +33,6 @@ const CreateEmployee: React.FC<IProps> = ({
   const { message, notification } = App.useApp();
   const [isSubmit, setIsSubmit] = useState(false);
 
-  // Dữ liệu địa chỉ
   const [provinces, setProvinces] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
   const [wards, setWards] = useState<any[]>([]);
@@ -48,7 +46,6 @@ const CreateEmployee: React.FC<IProps> = ({
       .then((data) => setProvinces(data));
   }, []);
 
-  // Khi chọn Tỉnh → load Quận/Huyện
   const handleProvinceChange = (value: string) => {
     const selectedProvince = provinces.find((p) => p.Name === value);
     setDistricts(selectedProvince?.Districts || []);
@@ -56,12 +53,16 @@ const CreateEmployee: React.FC<IProps> = ({
     form.setFieldsValue({ district: undefined, ward: undefined });
   };
 
-  // Khi chọn Quận/Huyện → load Phường/Xã
   const handleDistrictChange = (value: string) => {
     const selectedDistrict = districts.find((d) => d.Name === value);
     setWards(selectedDistrict?.Wards || []);
     form.setFieldsValue({ ward: undefined });
   };
+
+  const getFullAddress = (values: any) =>
+    [values.street, values.ward, values.district, values.province]
+      .filter(Boolean)
+      .join(", ");
 
   const onFinish = async (values: any) => {
     setIsSubmit(true);
@@ -78,21 +79,11 @@ const CreateEmployee: React.FC<IProps> = ({
 
       const userId = resUser.data.data.id;
 
-      // Ghép địa chỉ đầy đủ
-      const fullAddress = [
-        values.street,
-        values.ward,
-        values.district,
-        values.province,
-      ]
-        .filter(Boolean)
-        .join(", ");
-
       await createEmployeeProfileAPI({
         user: { id: userId },
         hireDate: values.hireDate?.toISOString(),
-        salary: values.salary,
-        address: fullAddress || values.street,
+        birth: values.birthDate?.toISOString(),
+        address: getFullAddress(values) || values.street,
       });
 
       message.success("Thêm nhân viên thành công!");
@@ -131,7 +122,7 @@ const CreateEmployee: React.FC<IProps> = ({
       closeIcon={<div className="p-2 hover:bg-gray-100 rounded-full text-xl">×</div>}
     >
       <Form form={form} layout="vertical" onFinish={onFinish} className="mt-6">
-        {/* Dòng 1: Họ tên + Email */}
+        {/* Họ tên + Email */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Form.Item
             name="name"
@@ -153,7 +144,7 @@ const CreateEmployee: React.FC<IProps> = ({
           </Form.Item>
         </div>
 
-        {/* Dòng 2: SĐT + Mật khẩu */}
+        {/* SĐT + Mật khẩu */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Form.Item
             name="phone"
@@ -175,7 +166,7 @@ const CreateEmployee: React.FC<IProps> = ({
           </Form.Item>
         </div>
 
-        {/* Dòng 3: Ngày vào làm + Lương */}
+        {/* Ngày vào làm + Ngày sinh */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Form.Item
             name="hireDate"
@@ -191,30 +182,26 @@ const CreateEmployee: React.FC<IProps> = ({
           </Form.Item>
 
           <Form.Item
-            name="salary"
-            label="Lương cơ bản (VND)"
-            rules={[{ required: true, message: "Vui lòng nhập lương" }]}
+            name="birthDate"
+            label="Ngày sinh"
+            rules={[{ required: true, message: "Vui lòng chọn ngày sinh" }]}
           >
-            <InputNumber
-              min={0}
-              step={100000}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-              parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
-              placeholder="10,000,000"
-              className="w-full"
-              style={{ height: "44px" }}
+            <DatePicker
+              format="DD/MM/YYYY"
+              placeholder="Chọn ngày"
+              className="w-full h-11"
+              suffixIcon={<Calendar size={16} className="text-gray-400" />}
             />
           </Form.Item>
         </div>
 
-        {/* PHẦN ĐỊA CHỈ - RÀNG BUỘC CHẶT */}
+        {/* Địa chỉ */}
         <div className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200">
           <div className="flex items-center gap-2 text-indigo-800 font-bold text-lg mb-4">
             <MapPin size={22} />
             Địa chỉ cư trú (bắt buộc)
           </div>
 
-          {/* Tỉnh/Thành */}
           <Form.Item
             name="province"
             rules={[{ required: true, message: "Vui lòng chọn Tỉnh/Thành phố" }]}
@@ -227,14 +214,11 @@ const CreateEmployee: React.FC<IProps> = ({
               className="h-11"
             >
               {provinces.map((p) => (
-                <Option key={p.Id} value={p.Name}>
-                  {p.Name}
-                </Option>
+                <Option key={p.Id} value={p.Name}>{p.Name}</Option>
               ))}
             </Select>
           </Form.Item>
 
-          {/* Quận/Huyện */}
           <Form.Item
             name="district"
             rules={[{ required: true, message: "Vui lòng chọn Quận/Huyện" }]}
@@ -247,14 +231,11 @@ const CreateEmployee: React.FC<IProps> = ({
               className="h-11"
             >
               {districts.map((d) => (
-                <Option key={d.Id} value={d.Name}>
-                  {d.Name}
-                </Option>
+                <Option key={d.Id} value={d.Name}>{d.Name}</Option>
               ))}
             </Select>
           </Form.Item>
 
-          {/* Phường/Xã */}
           <Form.Item
             name="ward"
             rules={[{ required: true, message: "Vui lòng chọn Phường/Xã" }]}
@@ -266,14 +247,11 @@ const CreateEmployee: React.FC<IProps> = ({
               className="h-11"
             >
               {wards.map((w) => (
-                <Option key={w.Id} value={w.Name}>
-                  {w.Name}
-                </Option>
+                <Option key={w.Id} value={w.Name}>{w.Name}</Option>
               ))}
             </Select>
           </Form.Item>
 
-          {/* Địa chỉ cụ thể */}
           <Form.Item
             name="street"
             rules={[{ required: true, message: "Vui lòng nhập số nhà, tên đường" }]}
@@ -288,25 +266,24 @@ const CreateEmployee: React.FC<IProps> = ({
 
         {/* Nút hành động */}
         <div className="flex justify-end gap-4 mt-8">
-          <button
-            type="button"
+          <Button
+            type="default"
             onClick={() => {
               form.resetFields();
               setDistricts([]);
               setWards([]);
               setOpenModalCreate(false);
             }}
-            className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
           >
             Hủy bỏ
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmit}
-            className="px-8 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 shadow-lg flex items-center gap-2 disabled:opacity-60"
+          </Button>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isSubmit}
           >
-            {isSubmit ? "Đang tạo..." : "Tạo nhân viên"}
-          </button>
+            Tạo nhân viên
+          </Button>
         </div>
       </Form>
     </Modal>
