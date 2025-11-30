@@ -785,7 +785,7 @@ export const getOrderByIdV2API = (id: number) => {
  */
 export const getCustomerInfoAPI = (userId: number) => {
   const URL_API = `/api/v1/customer/info/${userId}`;
-  return axios.get<IBackendRes<IResCustomerInfo>>(URL_API);
+  return axios.get<IBackendRes<ICustomerProfile>>(URL_API);
 };
 
 /**
@@ -793,5 +793,9 @@ export const getCustomerInfoAPI = (userId: number) => {
  * Endpoint: POST /api/v1/payments/create-membership
  */
 export const createMembershipPaymentAPI = (data: IReqMembership) => {
-    return axios.post(`/api/v1/payments/create-membership`, data);
+  return axios.post(`/api/v1/payments/create-membership`, data);
+};
+export const getUserById = (id: number) => {
+  const urlBackend = `/api/v1/users/${id}`;
+  return axios.get<IBackendRes<IUser>>(urlBackend);
 };

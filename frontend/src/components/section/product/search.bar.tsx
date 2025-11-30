@@ -125,13 +125,14 @@ const ProductSearch = ({ onSearch }: ProductSearchProps) => {
           ref={inputRef}
           type="text"
           id="product-search"
+          autoComplete="off"
+          name="search_input_unique_123"
           placeholder="Tìm sản phẩm..."
           className="flex-1 px-3 py-3 outline-none text-gray-700 bg-transparent text-sm font-medium placeholder:text-gray-400 min-w-0"
           value={searchTerm}
           onChange={handleChange}
           onKeyPress={handleKeyPress}
           onFocus={handleFocus}
-          autoComplete="off"
         />
 
         <div className="flex items-center pr-2 gap-1 flex-shrink-0">

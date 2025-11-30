@@ -9,6 +9,7 @@ import {
   fetchAccountAPI,
   clearCartAPI,
   getCustomerInfoAPI,
+  getUserById,
 } from "../../service/api";
 
 // ✅ IMPORT TOAST STYLES
@@ -97,32 +98,48 @@ export const AppProvider = ({ children }: Tprops) => {
         try {
           const res = await fetchAccountAPI();
 
-          if (res && res.data?.data?.user) {
-            let fetchedUser = res.data.data.user;
+          // Kiểm tra xem res.data.data có tồn tại không
+          if (res && res.data && res.data.data && res.data.data.user) {
+            const basicUser = res.data.data.user;
 
-            // Nếu là CUSTOMER thì gọi API lấy thông tin customer info
-            if (fetchedUser.role === "CUSTOMER") {
-              try {
-                const customerRes = await getCustomerInfoAPI(fetchedUser.id);
-                console.log("Customer info:", customerRes.data.data);
-                // API bạn trả về dạng:
-                // { id, name, email, phone, image, member }
-                if (customerRes?.data?.data) {
-                  fetchedUser = {
-                    ...fetchedUser,
-                    ...customerRes.data.data, // Gộp vào user
-                  };
+            // Gọi API lấy chi tiết User
+            const userDetailRes = await getUserById(basicUser.id);
+
+            // 👇 SỬA Ở ĐÂY: Phải chọc vào 2 lớp .data
+            if (
+              userDetailRes &&
+              userDetailRes.data &&
+              userDetailRes.data.data
+            ) {
+              // Lấy object user thật sự từ bên trong
+              let fetchedUser = userDetailRes.data.data;
+              // Nếu là CUSTOMER thì lấy thêm info
+              if (fetchedUser.userRole === "CUSTOMER") {
+                try {
+                  const customerRes = await getCustomerInfoAPI(fetchedUser.id);
+                  // 👇 SỬA CẢ CHỖ NÀY: Cũng phải chọc vào 2 lớp .data
+                  if (
+                    customerRes &&
+                    customerRes.data &&
+                    customerRes.data.data
+                  ) {
+                    fetchedUser = {
+                      ...fetchedUser,
+                      customerProfile: customerRes.data.data,
+                    };
+                  }
+                } catch (e) {
+                  console.log("Lỗi lấy customer info:", e);
                 }
-              } catch (e) {
-                console.log("Không lấy được customer info:", e);
               }
-            }
 
-            setUser(fetchedUser);
-            setIsAuthenticated(true);
+              // Cập nhật state
+              setUser(fetchedUser);
+              setIsAuthenticated(true);
+            }
           }
         } catch (error) {
-          console.log("Token hết hạn hoặc không hợp lệ");
+          console.log("Lỗi xác thực:", error);
           localStorage.removeItem("access_token");
           setUser(null);
           setIsAuthenticated(false);

@@ -42,10 +42,14 @@ declare global {
     id: number;
     email: string;
     name: string;
+    phone: string;
     image: string;
     role: string;
+    createAt?: string;
+    updateAt?: string;
     customerProfile?: ICustomerProfile | null;
   }
+
   interface IFetchAccount {
     data: {
       user: IUser;
