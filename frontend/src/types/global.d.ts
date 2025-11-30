@@ -44,6 +44,7 @@ declare global {
     name: string;
     image: string;
     role: string;
+    customerProfile?: ICustomerProfile | null;
   }
   interface IFetchAccount {
     data: {
@@ -335,11 +336,9 @@ declare global {
     };
   }
   interface ICustomerProfile {
-    data: {
-      id: number;
-      member: boolean;
-      userId: number;
-    };
+    id: number;
+    member: boolean;
+    userId: number;
   }
 
   // Interface cho Chứng chỉ
@@ -802,5 +801,20 @@ declare global {
 
     // Chi tiết sản phẩm
     orderDetails: IResOrderDetailItem[];
+  }
+  // Kiểu dữ liệu trả về từ API lấy thông tin khách hàng
+  interface IResCustomerInfo {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    image: string;
+    isMember: boolean; // Đây là trường quan trọng nhất để check VIP
+  }
+
+  // Kiểu dữ liệu gửi đi khi tạo thanh toán Membership
+  interface IReqMembership {
+    userId: number;
+    amount: number;
   }
 }

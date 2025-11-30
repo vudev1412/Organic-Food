@@ -9,6 +9,7 @@ import { PaymentAPI, placeOrderAPI } from "../../../service/api";
 import PaymentForm from "./PaymentForm";
 import PaymentQrScan from "./PaymentQrScan";
 import PaymentSuccess from "./PaymentSuccess";
+import { formatOrderCode } from "../../../utils/format";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -125,7 +126,7 @@ const PaymentModal = ({
       const resPayment = await PaymentAPI.createPayment({
         orderId,
         amount,
-        description: `Thanh toan don ${orderId}`,
+        description: `Thanh toan don${formatOrderCode(orderId)}`,
         buyerName: formData.receiverName,
         buyerPhone: formData.receiverPhone,
       });

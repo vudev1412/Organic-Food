@@ -779,3 +779,19 @@ export const getOrderByIdV2API = (id: number) => {
   const urlBackend = `/api/v1/orders/user/${id}`;
   return axios.get<IBackendRes<IResOrderDTO>>(urlBackend);
 };
+/**
+ * Lấy thông tin chi tiết khách hàng (bao gồm trạng thái Member)
+ * URL: /api/v1/customers/info/{userId}
+ */
+export const getCustomerInfoAPI = (userId: number) => {
+  const URL_API = `/api/v1/customer/info/${userId}`;
+  return axios.get<IBackendRes<IResCustomerInfo>>(URL_API);
+};
+
+/**
+ * Gọi API tạo thanh toán Membership
+ * Endpoint: POST /api/v1/payments/create-membership
+ */
+export const createMembershipPaymentAPI = (data: IReqMembership) => {
+    return axios.post(`/api/v1/payments/create-membership`, data);
+};

@@ -14,7 +14,7 @@ import {
 import { Spin, Result, Button, Divider, Tag } from "antd";
 import dayjs from "dayjs";
 import { getOrderByIdV2API } from "../../../service/api";
-import { formatCurrency } from "../../../utils/format";
+import { formatCurrency, formatOrderCode } from "../../../utils/format";
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
@@ -81,7 +81,9 @@ const SuccessPage = () => {
           </h1>
           <p className="text-gray-500 mb-4">
             Cảm ơn bạn đã mua sắm. Mã đơn hàng của bạn là{" "}
-            <span className="font-bold text-gray-900">#{order.id}</span>
+            <span className="font-bold text-gray-900">
+              {formatOrderCode(order.id)}
+            </span>
           </p>
 
           <div className="flex justify-center gap-3">
@@ -89,14 +91,14 @@ const SuccessPage = () => {
               type="primary"
               size="large"
               className="bg-green-600 hover:bg-green-700 font-semibold px-8 h-12 flex items-center gap-2 rounded-xl shadow-lg shadow-green-200"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/san-pham")}
             >
               <HomeOutlined /> Tiếp tục mua sắm
             </Button>
             <Button
               size="large"
               className="px-6 h-12 flex items-center gap-2 rounded-xl border-gray-300 text-gray-600 hover:text-green-600 hover:border-green-600"
-              onClick={() => navigate("/tai-khoan/lich-su-mua-hang")}
+              onClick={() => navigate("/tai-khoan/don-hang")}
             >
               <HistoryOutlined /> Đơn hàng của tôi
             </Button>
@@ -140,11 +142,11 @@ const SuccessPage = () => {
                   </div>
                   <Tag
                     color={
-                      order.paymentStatus === "PAID" ? "success" : "warning"
+                      order.paymentStatus === "SUCCESS" ? "success" : "warning"
                     }
                     className="font-semibold"
                   >
-                    {order.paymentStatus === "PAID"
+                    {order.paymentStatus === "SUCCESS"
                       ? "ĐÃ THANH TOÁN"
                       : "CHƯA THANH TOÁN"}
                   </Tag>
@@ -285,7 +287,7 @@ const SuccessPage = () => {
               <p className="text-blue-800 font-semibold mb-1">Cần hỗ trợ?</p>
               <p className="text-blue-600 text-sm mb-3">
                 Liên hệ hotline +84 800 456 478 để được giải đáp
-              </p>  
+              </p>
             </div>
           </div>
         </div>

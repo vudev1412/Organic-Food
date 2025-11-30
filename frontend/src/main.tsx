@@ -11,7 +11,6 @@ import HomePage from "./pages/client/home";
 import AboutPage from "./pages/client/about";
 import SingUp from "./pages/auth/signup";
 import SingIn from "./pages/auth/signin";
-import Cart from "./pages/client/payment";
 import Profile from "./pages/account/profile";
 import ProfileHeader from "./components/layout/profile/app.header";
 import ProductDetail from "./pages/client/product-detail";
@@ -46,6 +45,8 @@ import OrderHistoryPage from "./pages/account/order.history";
 import BackupRestorePage from "./pages/admin/backup.restore";
 import Payment from "./pages/client/payment";
 import SuccessPage from "./components/section/payment/SuccessPage";
+import MembershipPage from "./pages/client/MembershipPage";
+import MembershipSuccessPage from "./pages/client/MembershipSuccessPage";
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,32 @@ const router = createBrowserRouter([
       {
         path: "/quen-mat-khau",
         element: <ForgotPassword />,
+      },
+      {
+        path: "/dang-ky-thanh-vien",
+        element: (
+          // Nên bọc ProtectedRoute để bắt buộc đăng nhập mới được xem/mua
+          <ProtectedRoute>
+            <MembershipPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/membership-success",
+        element: (
+          <ProtectedRoute>
+            <MembershipSuccessPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/membership-cancel",
+        // Nếu hủy thì quay lại trang đăng ký ban đầu
+        element: (
+          <ProtectedRoute>
+            <MembershipPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/san-pham",
@@ -175,13 +202,11 @@ const router = createBrowserRouter([
   },
 ]);
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App>
-      <AppProvider>
-        <ConfigProvider locale={viVN}>
-          <RouterProvider router={router} />
-        </ConfigProvider>
-      </AppProvider>
-    </App>
-  </StrictMode>
+  <App>
+    <AppProvider>
+      <ConfigProvider locale={viVN}>
+        <RouterProvider router={router} />
+      </ConfigProvider>
+    </AppProvider>
+  </App>
 );

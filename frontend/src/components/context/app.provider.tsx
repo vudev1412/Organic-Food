@@ -8,6 +8,7 @@ import {
   updateCartAPI,
   fetchAccountAPI,
   clearCartAPI,
+  getCustomerInfoAPI,
 } from "../../service/api";
 
 // ✅ IMPORT TOAST STYLES
@@ -89,30 +90,51 @@ export const AppProvider = ({ children }: Tprops) => {
   // === THÊM ĐOẠN NÀY: Khôi phục User khi F5 ===
   useEffect(() => {
     const fetchAccount = async () => {
-      setIsAppLoading(true); // Bắt đầu loading
+      setIsAppLoading(true);
       const token = localStorage.getItem("access_token");
 
       if (token) {
         try {
-          // Gọi API lấy thông tin user từ token
           const res = await fetchAccountAPI();
-          if (res && res.data) {
-            setUser(res.data.data.user); // Lưu info user vào state
-            setIsAuthenticated(true); // Đã đăng nhập
+
+          if (res && res.data?.data?.user) {
+            let fetchedUser = res.data.data.user;
+
+            // Nếu là CUSTOMER thì gọi API lấy thông tin customer info
+            if (fetchedUser.role === "CUSTOMER") {
+              try {
+                const customerRes = await getCustomerInfoAPI(fetchedUser.id);
+                console.log("Customer info:", customerRes.data.data);
+                // API bạn trả về dạng:
+                // { id, name, email, phone, image, member }
+                if (customerRes?.data?.data) {
+                  fetchedUser = {
+                    ...fetchedUser,
+                    ...customerRes.data.data, // Gộp vào user
+                  };
+                }
+              } catch (e) {
+                console.log("Không lấy được customer info:", e);
+              }
+            }
+
+            setUser(fetchedUser);
+            setIsAuthenticated(true);
           }
         } catch (error) {
-          // Token lỗi hoặc hết hạn -> Xóa sạch
           console.log("Token hết hạn hoặc không hợp lệ");
           localStorage.removeItem("access_token");
           setUser(null);
           setIsAuthenticated(false);
         }
       }
-      setIsAppLoading(false); // Kết thúc loading
+
+      setIsAppLoading(false);
     };
 
     fetchAccount();
-  }, []); // [] rỗng để chỉ chạy 1 lần khi mount
+  }, []);
+  // [] rỗng để chỉ chạy 1 lần khi mount
   // ============================================
   // ==================== CART EFFECTS ====================
 
