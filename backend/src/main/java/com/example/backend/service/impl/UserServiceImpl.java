@@ -1,9 +1,6 @@
 package com.example.backend.service.impl;
 
-import com.example.backend.domain.Order;
-import com.example.backend.domain.Return;
-import com.example.backend.domain.Role;
-import com.example.backend.domain.User;
+import com.example.backend.domain.*;
 import com.example.backend.domain.request.ReqCreateUserDTO;
 import com.example.backend.domain.request.ReqResetPasswordDTO;
 import com.example.backend.domain.request.ReqUserDTO;
@@ -18,7 +15,6 @@ import com.example.backend.util.error.IdInvalidException;
 import com.example.backend.util.error.InvalidOtpException;
 import com.example.backend.util.error.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.support.BeanDefinitionDsl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -136,16 +132,13 @@ public class UserServiceImpl implements UserService {
         // 7. Lưu DB
         User saved = userRepository.save(currentUser);
 
-        // 8. Gửi email
-        mailService.sendWelcomeEmail(
-                saved.getEmail(),
-                saved.getName(),
-                saved.getEmail(),
-                rawPassword,
-                saved.getRole().getName(),
-                isDefaultPassword
-        );
 
+
+
+
+
+
+        sendWelcomeEmail(saved, rawPassword, isDefaultPassword);
         return mapper.toResUserDTO(saved);
     }
 
@@ -174,7 +167,7 @@ public class UserServiceImpl implements UserService {
             emailContent.append("- Nên đổi mật khẩu định kỳ để đảm bảo an toàn\n\n");
         }
 
-        emailContent.append("🌐 Link đăng nhập: https://yourwebsite.com/login\n\n");
+        emailContent.append("🌐 Link đăng nhập: http://localhost:5173/login\n\n");
         emailContent.append("Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ.\n\n");
         emailContent.append("Trân trọng,\n");
         emailContent.append("Ban quản trị hệ thống");

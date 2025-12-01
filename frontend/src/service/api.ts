@@ -62,14 +62,19 @@ export const createUserAPI = (
   name: string,
   email: string,
   phone: string,
-  role?: string
+  roleName?:string,
+  password?:string
+
 ) => {
   const urlBackend = `/api/v1/users`;
   return axios.post<IBackendRes<IRegister>>(urlBackend, {
     name,
     email,
     phone,
-    role,
+
+    roleName,
+    password
+
   });
 };
 
@@ -844,6 +849,7 @@ export const uploadReturnFileAPI = (file: File, folder: string) => {
   formData.append("file", file);
   formData.append("folder", folder);
 
+
   return axios.post<string>(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/files`,
     formData,
@@ -879,3 +885,80 @@ export const callFetchProductsByPromotionId = async (
   );
   return response as any;
 };
+
+export const getAllRolesAPI = () => {
+  return axios.get<IBackendRes<IRole[]>>("/api/v1/roles");
+};
+export const createRoleAPI = (roleName: string) => {
+  return axios.post<IRole>(`/api/v1/roles/${roleName}`);
+};
+export const deleteRoleAPI = (roleName: string) => {
+  return axios.delete(`/api/v1/roles/${roleName}`);
+};
+export const addPermissionToRoleAPI = (roleName: string, permissionName: string) => {
+  return axios.post(`/api/v1/roles/${roleName}/permissions/${permissionName}`);
+};
+export const updatePermissionsForRoleAPI = (roleName: string, permissions: string[]) => {
+  return axios.put(`/api/v1/roles/${roleName}/permissions`, permissions);
+};
+export const getAllPermissionsAPI = () => {
+  return axios.get("/api/v1/permissions");
+};
+
+
+export const getNewCustomersThisMonthAPI = (month: number, year: number) => {
+  return axios.get(`/api/v1/dashboard/stats/new-customers?month=${month}&year=${year}`);
+};
+
+export const getOrderMonthAPI = (month: number, year: number) => {
+  return axios.get(`/api/v1/dashboard/orders?month=${month}&year=${year}`);
+};
+export const getReceiptsAPI = (query: string) => {
+  const url = `/api/v1/receipts?${query}`;
+  return axios.get<IBackendRes<IModelPaginate<ResReceiptDTO>>>(url);
+};
+export const getTopSellingProductsAPI = (
+  month: number,
+  year: number,
+  top = 5
+) => {
+  return axios.get<IBackendRes<TopProductDTO[]>>(
+    `/api/v1/dashboard/top-selling?month=${month}&year=${year}&top=${top}`
+  );
+};
+
+export const getMonthlyRevenueAPI = (year: number) => {
+  return axios.get<IBackendRes<MonthlyRevenueDTO[]>>(
+    `/api/v1/dashboard/monthly-revenue?year=${year}`
+  );
+};
+export const createReceiptAPI = (payload: IReceipt) => {
+  const url = `/api/v1/receipts`;
+  return axios.post(url, payload);
+};
+
+export const updateReceiptAPI = (id: number, payload: IReceipt) => {
+  const url = `/api/v1/receipts/${id}`;
+  return axios.patch(url, payload);
+};
+
+export const deleteReceiptAPI = (id: number) => {
+  const url = `/api/v1/receipts/${id}`;
+  return axios.delete(url);
+};
+
+export const getReceiptByIdAPI = (id: number) => {
+  const url = `/api/v1/receipts/${id}`;
+  return axios.get<ResReceiptDTO>(url);
+};
+export const getRecentOrdersAPI = () => {
+  return axios.get<IBackendRes<IOrderDTO[]>>("/api/v1/dashboard/orders/recent");
+};
+
+export interface IOrderDTO {
+  id: number;
+  customer: string;
+  total: number;
+  status: string;
+}
+

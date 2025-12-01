@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class VoucherController {
     private final VoucherService voucherService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL KhuyenMai')")
     public ResponseEntity<ResVoucherDTO> createVoucher(@RequestBody Voucher voucher) {
         Voucher createdVoucher = voucherService.handleCreateVoucher(voucher);
         return ResponseEntity.ok(voucherService.handleGetVoucherById(createdVoucher.getId()));
@@ -42,6 +44,7 @@ public class VoucherController {
 
     // Update voucher (patch-like update)
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL KhuyenMai')")
     public ResponseEntity<ResVoucherDTO> updateVoucher(@PathVariable Long id, @RequestBody Voucher voucher) {
         ResVoucherDTO updatedVoucher = voucherService.handleUpdateVoucher(id, voucher);
         return ResponseEntity.ok(updatedVoucher);
@@ -49,6 +52,7 @@ public class VoucherController {
 
     // Delete voucher
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL KhuyenMai')")
     public ResponseEntity<Void> deleteVoucher(@PathVariable Long id) {
         voucherService.handleDeleteVoucher(id);
         return ResponseEntity.noContent().build();

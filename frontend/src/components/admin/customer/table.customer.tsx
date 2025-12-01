@@ -6,6 +6,7 @@ import {
   deleteUserAPI,
   deleteUserProfileAPI,
   getCustomersAPI,
+  updateUserDTOAPI,
 } from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
@@ -39,16 +40,8 @@ const MyTable = () => {
 
   const [isDeleteUser, setIsDeleteUser] = useState(false);
   const { message, notification } = App.useApp();
-  const formatUserId = (entity: ICustomerTable) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-
-    if (id < 10) return `KH00${id}`;
-    if (id < 100) return `KH0${id}`;
-    if (id < 1000) return `KH${id}`;
-
-    return `KH${id}`;
+  const formatUserId = (id: number) => {
+    return `KH${id.toString().padStart(6, "0")}`;
   };
 
   // ========================= DELETE =========================
@@ -101,7 +94,7 @@ const MyTable = () => {
       dataIndex: ["user", "id"],
       key: "id",
       hideInSearch: true,
-      render: (_, entity) => <a>{formatUserId(entity)}</a>,
+      render: (_, entity) => <a>{formatUserId(entity.id)}</a>,
     },
     {
       title: "Tên",
@@ -134,6 +127,17 @@ const MyTable = () => {
       ),
     },
     {
+      title: "Hoạt động",
+      dataIndex: ["user", "active"],
+      key: "active",
+      hideInSearch: true,
+      render: (_, entity: ICustomerTable) => (
+        <Tag color={entity.user.active ? "green" : "red"}>
+          {entity.user.active ? "Đang hoạt động" : "Ngưng hoạt động"}
+        </Tag>
+      ),
+    },
+    {
       title: "Thao tác",
       hideInSearch: true,
       render: (_, entity) => (
@@ -147,6 +151,33 @@ const MyTable = () => {
               e.stopPropagation();
             }}
           />
+          <Button
+            type="link"
+            style={{ marginRight: 15 }}
+            onClick={async (e) => {
+              e.stopPropagation(); // tránh click row
+              try {
+                // Gọi API update user, toggle active boolean
+                await updateUserDTOAPI(entity.user.id, {
+                  active: !entity.user.active,
+                });
+                message.success(
+                  `User đã ${
+                    entity.user.active ? "ngưng hoạt động" : "kích hoạt"
+                  } thành công`
+                );
+                refreshTable(); // load lại bảng
+              } catch (error: any) {
+                notification.error({
+                  message: "Xảy ra lỗi",
+                  description:
+                    error.response?.data?.message || error.message || "Lỗi",
+                });
+              }
+            }}
+          >
+            {entity.user.active ? "Ngưng hoạt động" : "Kích hoạt"}
+          </Button>
 
           <Popconfirm
             placement="leftTop"

@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ReceiptMapper {
 
-    @Mapping(source = "supplier.id", target = "supplierId")
-    @Mapping(source = "user.id", target = "userId")
+
     ResReceiptDTO toResReceiptDTO(Receipt receipt);
 }

@@ -5,7 +5,7 @@ import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { deleteUserAPI, getEmployeesAPI } from "../../../service/api";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm } from "antd";
+import { App, Button, Popconfirm, Tag } from "antd";
 import DetailEmployee from "./employee.detail";
 import CreateEmployee from "./create.employee";
 import UpdateEmployee from "./update.employee";
@@ -28,16 +28,9 @@ const TableEmployee = () => {
 
   const { message, notification } = App.useApp();
 
-  const formatUserId = (entity: ICustomerTable) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-
-    if (id < 10) return `NV00${id}`;
-    if (id < 100) return `NV0${id}`;
-    if (id < 1000) return `NV${id}`;
-
-    return `NV${id}`;
+  const formatUserId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `NV${id.toString().padStart(6, "0")}`;
   };
 
   // Xóa user
@@ -67,7 +60,7 @@ const TableEmployee = () => {
       title: "Mã",
       dataIndex: "id",
       hideInSearch: true,
-      render: (_, entity) => <a>{formatUserId(entity)}</a>,
+      render: (_, entity) => <a>{formatUserId(entity.id)}</a>,
     },
     {
       title: "Tên",
@@ -99,6 +92,17 @@ const TableEmployee = () => {
         record.hireDate
           ? new Date(record.hireDate).toLocaleDateString("vi-VN")
           : "-",
+    },
+    {
+      title: "Hoạt động",
+      dataIndex: ["user", "active"],
+      key: "active",
+      hideInSearch: true,
+      render: (_, entity: IEmployee) => (
+        <Tag color={entity.user.active ? "green" : "red"}>
+          {entity.user.active ? "Đang hoạt động" : "Ngưng hoạt động"}
+        </Tag>
+      ),
     },
     {
       title: "Action",

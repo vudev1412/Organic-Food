@@ -45,11 +45,9 @@ const TableOrder = () => {
 
   const { message, notification } = App.useApp();
 
-  const formatOrderId = (id: number) => {
-    if (id < 10) return `DH000${id}`;
-    if (id < 100) return `DH00${id}`;
-    if (id < 1000) return `DH0${id}`;
-    return `DH${id}`;
+   const formatOrderId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `DH${id.toString().padStart(6, "0")}`;
   };
   
 

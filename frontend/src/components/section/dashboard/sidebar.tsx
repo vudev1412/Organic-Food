@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   TicketPercent,
+  UserCog,
+  Receipt,
 } from "lucide-react";
 import { Tag } from "antd";
 
@@ -36,6 +38,7 @@ const Sidebar: React.FC = () => {
     { id: "products", text: "Sản phẩm", icon: Package, to: "products" },
     { id: "categories", text: "Loại sản phẩm", icon: Boxes, to: "categories" },
     { id: "suppliers", text: "Nhà cung cấp", icon: Building, to: "suppliers" },
+    { id: "receipts", text: "Quản lý nhập hàng", icon: Receipt, to: "receipts" },
     {
       id: "orders",
       text: "Quản lý đơn hàng",
@@ -53,6 +56,12 @@ const Sidebar: React.FC = () => {
       text: "Quản lý khuyến mãi",
       icon: TicketPercent,
       to: "voucher",
+    },
+    {
+      id: "permission",
+      text: "Quản lý quyền",
+      icon: UserCog,
+      to: "permission",
     },
     {
       id: "backup",

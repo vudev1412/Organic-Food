@@ -9,6 +9,11 @@ interface IProps {
   dataViewDetail: ICustomerTable | null;
   setDataViewDetail: (v: ICustomerTable | null) => void;
 }
+const formatUserId = (id?: number | null) => {
+  if (id == null) return "-";
+  return `KH${id.toString().padStart(6, "0")}`;
+};
+
 const DetailUser = (props: IProps) => {
   const {
     openViewDetail,
@@ -30,7 +35,7 @@ const DetailUser = (props: IProps) => {
       >
         <Descriptions title="Thông tin user" bordered column={2}>
           <Descriptions.Item label="Mã" span={2}>
-            {dataViewDetail?.id}
+            {formatUserId(dataViewDetail?.id)}
           </Descriptions.Item>
           <Descriptions.Item label="Tên" span={2}>
             {dataViewDetail?.user.name}

@@ -46,23 +46,15 @@ const TableSupplier = () => {
     setIsDeleting(false);
   };
 
-  const formatSupplierId = (entity: ISupplier) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-
-    if (id < 10) return `NCC00${id}`;
-    if (id < 100) return `NCC0${id}`;
-    if (id < 1000) return `NCC${id}`;
-
-    return `NCC${id}`;
+  const formatSupplierId = (id: number) => {
+    return `NCC${id.toString().padStart(6, "0")}`;
   };
   const columns: ProColumns<ISupplier>[] = [
     {
       title: "Mã",
       dataIndex: "id",
       hideInSearch: true,
-      render: (_, entity) => <a>{formatSupplierId(entity)}</a>,
+      render: (_, entity) => <a>{formatSupplierId(entity.id)}</a>,
     },
     { title: "Tên", dataIndex: "name", sorter: true, copyable: true },
     { title: "Điện thoại", dataIndex: "phone", copyable: true },

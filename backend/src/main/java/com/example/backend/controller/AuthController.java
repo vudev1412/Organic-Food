@@ -89,7 +89,7 @@ public class AuthController {
                 userCurr.getId(),
                 userCurr.getEmail(),
                 userCurr.getName(),
-                userCurr.getRole().getName(),
+                userCurr.getRole(),
                 userCurr.getPhone(),
                 userCurr.getImage()
         );
@@ -140,7 +140,7 @@ public class AuthController {
             userLogin.setId(userCurr.getId());
             userLogin.setName(userCurr.getName());
             userLogin.setEmail(userCurr.getEmail());
-            userLogin.setRole(userCurr.getRole().getName());
+            userLogin.setRole(userCurr.getRole());
 
             // ===> CẬP NHẬT THÊM TẠI ĐÂY <===
             userLogin.setPhone(userCurr.getPhone());   // Đảm bảo Entity User có getPhone()
@@ -180,7 +180,7 @@ public class AuthController {
                     userCurr.getId(),
                     userCurr.getEmail(),
                     userCurr.getName(),
-                    userCurr.getRole().getName(),
+                    userCurr.getRole(),
                     userCurr.getPhone(),
                     userCurr.getImage()
             );

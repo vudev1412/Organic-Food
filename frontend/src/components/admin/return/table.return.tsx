@@ -41,22 +41,13 @@ const TableReturn = () => {
     }
     setIsDeleting(false);
   };
-  const formatReturnId = (entity: IReturn) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-
-    if (id < 10) return `RT00${id}`;
-    if (id < 100) return `RT0${id}`;
-    if (id < 1000) return `RT${id}`;
-
-    return `RT${id}`;
+  const formatReturnId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `RT${id.toString().padStart(6, "0")}`;
   };
-  const formatORId = (orderId: number | undefined) => {
-    if (!orderId) return "Không có ID";
-    if (orderId < 10) return `HD00${orderId}`;
-    if (orderId < 100) return `HD0${orderId}`;
-    return `HD${orderId}`;
+  const formatORId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `DH${id.toString().padStart(6, "0")}`;
   };
 
   const columns: ProColumns<IReturn>[] = [
@@ -64,7 +55,7 @@ const TableReturn = () => {
       title: "Mã hoàn trả",
       dataIndex: "id",
       hideInSearch: true,
-      render: (_, entity) => <a>{formatReturnId(entity)}</a>,
+      render: (_, entity) => <a>{formatReturnId(entity.id)}</a>,
     },
     {
       title: "Mã đơn hàng",

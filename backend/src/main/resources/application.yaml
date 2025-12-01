@@ -56,7 +56,9 @@ lhv:
 lehienvu:
   upload-file:
     base-path: "file:../upload/"
-    base-uri: "C:/Users/Sang/Desktop/KhoaLuan/Organic-Food/upload/"
+
+    base-uri: "D:/KhoaLuan/E-Commerce_Web/upload/"
+
 
 payment:
   vnPay:

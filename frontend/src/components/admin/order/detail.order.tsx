@@ -75,11 +75,9 @@ const DetailOrder = ({ open, onClose, data }: IProps) => {
 
   if (!data) return null;
 
-  const orderCode = (id: number) => {
-    if (id < 10) return `DH000${id}`;
-    if (id < 100) return `DH00${id}`;
-    if (id < 1000) return `DH0${id}`;
-    return `DH${id}`;
+  const formatOrderId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `DH${id.toString().padStart(6, "0")}`;
   };
 
   const formatPrice = (price: number) =>
@@ -176,7 +174,7 @@ const DetailOrder = ({ open, onClose, data }: IProps) => {
               Chi tiết đơn hàng
             </Text>
             <Tag className="text-2xl px-8 py-3 font-bold rounded-full shadow-lg" color="blue">
-              {orderCode(data.id)}
+              {formatOrderId(data.id)}
             </Tag>
           </Space>
         </div>
