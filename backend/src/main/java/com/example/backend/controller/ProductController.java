@@ -11,6 +11,7 @@
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
+    import org.springframework.security.access.prepost.PreAuthorize;
     import org.springframework.web.bind.annotation.*;
 
     import java.util.List;
@@ -24,7 +25,7 @@
             this.productService = productService;
         }
 
-
+        @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL SanPham')")
         @PostMapping("/products")
         public ResponseEntity<ResGetAllProductDTO> createProduct(@Valid @RequestBody ReqProductDTO dto) {
             return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(dto));
@@ -47,11 +48,13 @@
 
 
         @PatchMapping("/products/{id}")
+        @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL SanPham')")
         public ResponseEntity<ResGetAllProductDTO> updateProduct(@PathVariable Long id, @RequestBody ReqProductDTO product){
             return ResponseEntity.ok().body(this.productService.handleUpdateProduct(id, product));
         }
 
         @DeleteMapping("/products/{id}")
+        @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL SanPham')")
         public ResponseEntity<Void> deleteProduct(@PathVariable Long id){
             this.productService.handleDeleteProduct(id);
             return ResponseEntity.noContent().build();

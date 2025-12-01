@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,16 +41,19 @@ public class ReturnController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('NV ThuNgan') or hasAuthority('QL DoiTra')")
     public ResponseEntity<ResReturnDTO> create(@RequestBody ReqReturnDTO dto) {
         return ResponseEntity.ok(returnService.createReturn(dto));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('NV ThuNgan') or hasAuthority('QL DoiTra')")
     public ResponseEntity<ResReturnDTO> update(@PathVariable Long id, @RequestBody ReqReturnDTO dto) {
         return ResponseEntity.ok(returnService.updateReturn(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('NV ThuNgan') or hasAuthority('QL DoiTra')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         this.returnService.deleteReturn(id);
         return ResponseEntity.noContent().build();

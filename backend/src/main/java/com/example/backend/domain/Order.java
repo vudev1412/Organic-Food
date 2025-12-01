@@ -51,5 +51,10 @@ public class Order {
             orphanRemoval = true)
     @JsonIgnore
     private List<Return> returns;
+    @PrePersist
+    public void handleCreateAt(){
+
+        this.orderAt = Instant.now();
+    }
 
 }

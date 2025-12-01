@@ -41,10 +41,7 @@ const DetailProduct = ({
     ) || [];
 
   const formatProductId = (id: number) => {
-    if (id < 10) return `SP000${id}`;
-    if (id < 100) return `SP00${id}`;
-    if (id < 1000) return `SP0${id}`;
-    return `SP${id}`;
+    return `SP${id.toString().padStart(6, "0")}`;
   };
 
   return (

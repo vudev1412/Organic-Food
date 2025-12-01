@@ -2,8 +2,10 @@ package com.example.backend.util.error;
 
 
 import com.example.backend.domain.RestResponse;
+import com.example.backend.domain.response.ResReturnDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
@@ -24,7 +26,13 @@ public class GlobalException {
 
 
 
-
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<RestResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage("Bạn không có quyền thực hiện hành động này!");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
     @ExceptionHandler(value = {
                 UsernameNotFoundException.class,
                 BadCredentialsException.class,

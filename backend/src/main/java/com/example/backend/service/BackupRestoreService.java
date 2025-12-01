@@ -68,37 +68,42 @@ public class BackupRestoreService {
         throw new RuntimeException("Không tìm thấy mysqldump/mysql.exe. Vui lòng cài MySQL client hoặc thêm vào PATH!");
     }
 
-    public String backupDatabase(String backupFilePath) {
-        // Tạo thư mục cha nếu chưa có
-        try {
-            Path backupPath = Paths.get(backupFilePath).toAbsolutePath();
-            if (backupPath.getParent() != null) {
-                Files.createDirectories(backupPath.getParent());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Không thể tạo thư mục: " + e.getMessage());
-        }
+    public BackupInfo backupDatabase() {
+        String userHome = System.getProperty("user.home");
+        String backupDir = userHome + File.separator + "backups";
+
+        File folder = new File(backupDir);
+        if (!folder.exists()) folder.mkdirs();
+
+        String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")
+                .format(new java.util.Date());
+        String backupFile = backupDir + File.separator + "backup_" + timestamp + ".sql";
 
         String dbName = extractDbName();
         String mysqldump = findExecutable("mysqldump", "mysqldump.exe");
 
-        List<String> command = new ArrayList<>();
-        command.add(mysqldump);
-        command.add("--user=" + dbUser);
-        command.add("--password=" + dbPassword);  // MySQL 8.0+ vẫn chấp nhận, nhưng có warning → ok cho tool
-        command.add("--host=localhost");
-        command.add("--port=3306");
-        command.add("--single-transaction=TRUE");
-        command.add("--routines");
-        command.add("--triggers");
-        command.add("--add-drop-table");
-        command.add("--hex-blob");
-        command.add("--default-character-set=utf8mb4");
-        command.add("--result-file=" + backupFilePath);  // TỐT HƠN -r trên Windows
-        command.add(dbName);
+        List<String> command = List.of(
+                mysqldump,
+                "--user=" + dbUser,
+                "--password=" + dbPassword,
+                "--add-drop-table",
+                "--routines",
+                "--triggers",
+                "--single-transaction",
+                "--default-character-set=utf8mb4",
+                "--result-file=" + backupFile,
+                dbName
+        );
 
-        return executeCommand(command, "Backup", backupFilePath);
+        executeCommand(command, "Backup", backupFile);
+
+        return new BackupInfo(
+                backupFile,
+                new File(backupFile).length(),
+                new java.util.Date().toString()
+        );
     }
+
 
     public String restoreDatabase(String backupFilePath) {
         Path filePath = Paths.get(backupFilePath);
@@ -170,4 +175,9 @@ public class BackupRestoreService {
             throw new RuntimeException(action + " thất bại: " + e.getMessage());
         }
     }
+    public record BackupInfo(
+            String absolutePath,
+            long fileSize,
+            String createdAt
+    ) {}
 }

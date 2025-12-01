@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,15 +36,18 @@ public class CategoryController {
     }
 
     @PostMapping("/categories")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL LoaiSP')")
     public ResponseEntity<Category> createCategory(@RequestBody ReqCategoryDTO category){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.categoryService.handleCreateCategory(category));
     }
     @PutMapping("/categories/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL LoaiSP')")
     public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody ReqCategory category){
         return ResponseEntity.ok().body(this.categoryService.handleUpdateCategory(id,category));
     }
 
     @DeleteMapping("/categories/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL LoaiSP')")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id){
         return ResponseEntity.ok().body(this.categoryService.handleDeleteCategory(id));
     }

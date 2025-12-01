@@ -87,7 +87,7 @@ declare global {
     employeeCode: string;
     address: string;
     hireDate: string;
-    birth:string;
+    birth: string;
     user: ICustomer;
   }
   interface IRegister {
@@ -835,6 +835,79 @@ declare global {
   interface IReqMembership {
     userId: number;
     amount: number;
+  }
+  export interface IPermission {
+    id: number;
+    name: string; // <-- backend dùng name (String)
+    category?: string;
+  }
 
+  export interface IRole {
+    id: number;
+    name: string; // <-- tên role (String) là key
+    permissions: IPermission[];
+    userCount?: number;
+  }
+
+  export interface IProduct {
+    id: number;
+    name: string;
+    price: number;
+  }
+
+  export interface ISupplier {
+    id: number;
+    name: string;
+    code?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+  }
+
+  export interface IUserReceipt {
+    id: number;
+    username: string;
+    email?: string;
+  }
+
+  export interface IReceiptDetail {
+    productId: number;
+    quantity: number;
+    importPrice: number;
+  }
+
+  export interface IReceipt {
+    id?: number;
+    deliverName: string;
+    discount?: number;
+    totalAmount?: number;
+    shipDate: string; // ISO string
+    supplierId: number;
+    userId: number;
+    receiptDetails: IReceiptDetail[];
+  }
+
+  export interface ResReceiptDTO {
+    id: number;
+    deliverName: string;
+    discount: number;
+    totalAmount: number;
+    shipDate: string;
+    supplier: ISupplier;
+    user: IUserReceipt;
+    receiptDetails: {
+      quantity: number;
+      importPrice: number;
+      product: IProduct;
+    }[];
+  }
+  export interface TopProductDTO {
+    productId: number;
+    productName: string;
+    quantitySold: number;
+  }
+  export interface MonthlyRevenueDTO {
+    month: number;
+    revenue: number;
   }
 }

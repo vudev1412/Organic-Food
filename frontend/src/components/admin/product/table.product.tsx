@@ -46,11 +46,9 @@ const TableProduct = () => {
   const { message, notification } = App.useApp();
 
   const formatProductId = (id: number) => {
-    if (id < 10) return `SP000${id}`;
-    if (id < 100) return `SP00${id}`;
-    if (id < 1000) return `SP0${id}`;
-    return `SP${id}`;
+    return `SP${id.toString().padStart(6, "0")}`;
   };
+
   const parseProductId = (code: string) => {
     if (!code.startsWith("SP")) return NaN;
     const numPart = code.slice(2);
@@ -272,7 +270,7 @@ const TableProduct = () => {
           if (params.name) {
             filters.push(`name~'*${params.name}*'`);
           }
-          if(params.unit){
+          if (params.unit) {
             filters.push(`name~'*${params.unit}*'`);
           }
 
@@ -322,13 +320,18 @@ const TableProduct = () => {
             total: res.data?.data.meta.total || 0,
           };
         }}
-         pagination={{
+        pagination={{
           defaultPageSize: 5,
           showSizeChanger: true,
           pageSizeOptions: ["10", "20", "50", "100"],
           showTotal: (total, range) => (
             <span style={{ fontSize: 15, color: "#595959" }}>
-              Hiển thị <strong>{range[0]}-{range[1]}</strong> trong <strong style={{ color: "#1677ff" }}>{total}</strong> đơn hàng
+              Hiển thị{" "}
+              <strong>
+                {range[0]}-{range[1]}
+              </strong>{" "}
+              trong <strong style={{ color: "#1677ff" }}>{total}</strong> đơn
+              hàng
             </span>
           ),
         }}

@@ -30,13 +30,19 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
 @Configuration
-@EnableMethodSecurity(securedEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfiguration {
     @Value("${lhv.jwt.base64-secret}")
     private String jwtKey;
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
+    }
+
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+
+    public SecurityConfiguration(CustomAccessDeniedHandler accessDeniedHandler) {
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
@@ -83,6 +89,7 @@ public class SecurityConfiguration {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .formLogin(f -> f.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -120,7 +127,7 @@ public class SecurityConfiguration {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
         // Bỏ prefix "ROLE_" nếu bạn muốn giữ nguyên tên role trong token
-        grantedAuthoritiesConverter.setAuthorityPrefix("");
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
 
         // Lấy danh sách quyền từ claim cụ thể (thường là "roles" hoặc "authorities")
         grantedAuthoritiesConverter.setAuthoritiesClaimName("permission"); // ví dụ: "roles"

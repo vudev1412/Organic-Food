@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class EmployeeProfileController {
     private final EmployeeProfileService employeeProfileService;
 
     @PostMapping("/employee/profile")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL NhanVien')")
     public ResponseEntity<EmployeeProfile> createEmployeeProfile(@RequestBody EmployeeProfile employeeProfile){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.employeeProfileService.handleCreateEmployeeProfile(employeeProfile));
     }
@@ -36,6 +38,7 @@ public class EmployeeProfileController {
     public ResponseEntity<ResultPaginationDTO> getAllEmployeeProfile(@Filter Specification<EmployeeProfile> spec, Pageable pageable){
         return ResponseEntity.ok().body(this.employeeProfileService.handleGetAllEmployeeProfile(spec, pageable));
     }
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL NhanVien')")
     @PatchMapping("/employee/profile/{id}")
     public ResponseEntity<ResEmployeeProfile> updateEmployeeProfile(@PathVariable Long id,@RequestBody ReqUpdateEmployeeProfile employeeProfile){
         return ResponseEntity.ok().body(this.employeeProfileService.handleUpdateEmployeeProfile(id,employeeProfile));

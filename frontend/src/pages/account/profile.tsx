@@ -237,7 +237,7 @@ const Profile = () => {
 
     try {
       showToast("Đang tải ảnh lên...", "info");
-      const uploadedUrl = await uploadFileAvatarAPI(file, "avatar");
+      const uploadedUrl = await uploadFileAvatarAPI(file, "images/avatar");
       console.log(uploadedUrl);
       setAvatar(uploadedUrl.data);
       showToast("Cập nhật ảnh đại diện thành công!", "success");
@@ -349,7 +349,7 @@ const Profile = () => {
 
     fetchUser();
   }, [userID]);
-
+  console.log(`${import.meta.env.VITE_BACKEND_AVATAR_IMAGE_URL}${user?.image}`);
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">

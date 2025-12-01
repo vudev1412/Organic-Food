@@ -11,21 +11,16 @@ interface IProps {
 }
 
 // Format Mã hoàn trả
-const formatReturnId = (entity: IReturn | null) => {
-  if (!entity?.id) return "Không có ID";
-  const id = entity.id;
-  if (id < 10) return `RT00${id}`;
-  if (id < 100) return `RT0${id}`;
-  return `RT${id}`;
-};
+const formatORId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `RT${id.toString().padStart(6, "0")}`;
+  };
 
 // Format Mã hóa đơn
-const formatORId = (orderId: number | undefined) => {
-  if (!orderId) return "Không có ID";
-  if (orderId < 10) return `HD00${orderId}`;
-  if (orderId < 100) return `HD0${orderId}`;
-  return `HD${orderId}`;
-};
+const formatReturnId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `RT${id.toString().padStart(6, "0")}`;
+  };
 
 // Format ngày giờ
 const formatDate = (dateStr?: string | null) => {
@@ -46,7 +41,7 @@ const DetailReturn = ({ open, setOpen, data, setData }: IProps) => {
     >
       <Descriptions bordered column={1}>
         <Descriptions.Item label="Mã hoàn trả">
-          {formatReturnId(data)}
+          {formatReturnId(data?.id)}
         </Descriptions.Item>
         <Descriptions.Item label="Mã hóa đơn">
           {formatORId(data?.orderId)}

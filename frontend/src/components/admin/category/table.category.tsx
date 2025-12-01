@@ -28,16 +28,8 @@ const TableCategory = () => {
     fetchParentCategories();
   }, []);
 
-  const formatCateId = (entity: ICategoryTable) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-
-    if (id < 10) return `CT00${id}`;
-    if (id < 100) return `CT0${id}`;
-    if (id < 1000) return `CT${id}`;
-
-    return `CT${id}`;
+  const formatCateId = (id: number) => {
+    return `CT${id.toString().padStart(6, "0")}`;
   };
   const fetchParentCategories = async () => {
     try {
@@ -76,7 +68,7 @@ const TableCategory = () => {
       title: "Mã",
       dataIndex: "id",
       hideInSearch: true,
-      render: (_, entity) => <a>{formatCateId(entity)}</a>,
+      render: (_, entity) => <a>{formatCateId(entity.id)}</a>,
     },
     { title: "Tên", dataIndex: "name" },
     {

@@ -2,11 +2,18 @@ package com.example.backend.controller;
 
 import com.example.backend.service.BackupRestoreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 @RestController
@@ -18,26 +25,37 @@ public class BackupRestoreController {
     private final BackupRestoreService backupRestoreService;
 
     @PostMapping("/backup")
-    public ResponseEntity<ApiResponse<BackupInfo>> backup(@RequestParam String path) {
+    public ResponseEntity<ApiResponse<BackupRestoreService.BackupInfo>> backup() {
         try {
-            String filePath = backupRestoreService.backupDatabase(path);
-
-            // Lấy thông tin file
-            File file = new File(filePath);
-            BackupInfo info = new BackupInfo(
-                    file.getAbsolutePath(),
-                    file.length(),
-                    new java.util.Date().toString()
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(info)
-            );
+            BackupRestoreService.BackupInfo info = backupRestoreService.backupDatabase();
+            return ResponseEntity.ok(ApiResponse.success(info));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Backup thất bại: " + e.getMessage()));
         }
     }
+    @GetMapping("/download")
+    public ResponseEntity<Resource> downloadBackup(@RequestParam String path) throws IOException {
+        File file = new File(path);
+        if (!file.exists()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Trả thẳng Resource, KHÔNG bao ApiResponse
+        Path filePath = file.toPath();
+        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(filePath));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + file.getName() + "\"")
+                .contentLength(file.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+
+
+
 
     @PostMapping("/restore")
     public ResponseEntity<ApiResponse<String>> restore(@RequestParam String path) {

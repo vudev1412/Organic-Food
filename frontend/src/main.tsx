@@ -50,6 +50,8 @@ import Voucher from "./pages/admin/voucher";
 import SuccessPage from "./components/section/payment/SuccessPage";
 import MembershipPage from "./pages/client/MembershipPage";
 import MembershipSuccessPage from "./pages/client/MembershipSuccessPage";
+import RolePermissionManager from "./pages/admin/permisstion";
+import Receipt from "./pages/admin/receipt";
 
 
 const router = createBrowserRouter([
@@ -199,6 +201,9 @@ const router = createBrowserRouter([
       { path: "orders", element: <CustomerOrders /> }, // Trang /admin
       { path: "complaints", element: <ReturnRequests /> },
       { path: "voucher", element: <Voucher /> },
+      { path: "permission", element: <RolePermissionManager /> },
+      { path: "receipts", element: <Receipt /> },
+      
 
       { path: "backup", element: <BackupRestorePage /> }, // Trang /admin
       // { path: "users", element: <ManageUsers /> }, // Trang /admin/users

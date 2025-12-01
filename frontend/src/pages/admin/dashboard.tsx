@@ -1,6 +1,6 @@
 // File path: /src/pages/admin/dashboard.tsx
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Users, DollarSign, ShoppingCart } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -15,50 +15,94 @@ import {
 
 import StatusBadge from "../../components/section/dashboard/status.badge";
 import StatCard from "../../components/section/dashboard/state.card";
+import {
+  getMonthlyRevenueAPI,
+  getNewCustomersThisMonthAPI,
+  getOrderMonthAPI,
+  getTopSellingProductsAPI,
+  getRecentOrdersAPI // <-- mới
+} from "../../service/api";
+
+export interface TopProductDTO {
+  productId: number;
+  productName: string;
+  quantitySold: number;
+}
+
+export interface RecentOrderDTO {
+  id: string;
+  customer: string;
+  total: string;
+  status: string;
+}
 
 const Dashboard: React.FC = () => {
-  // --- Dữ liệu giả ---
-  const dashboardStats = {
-    newCustomers: { value: "124", change: "+12%" },
-    monthlyRevenue: { value: "58.200.000₫", change: "+8%" },
-    monthlyOrders: { value: "342", change: "-5%" },
-  };
+  const [dashboardStats, setDashboardStats] = useState({
+    newCustomers: "--",
+    monthlyRevenue: "--",
+    monthlyOrders: "--",
+  });
 
-  const revenueChartData = [
-    { name: "T1", DoanhThu: 12000000 },
-    { name: "T2", DoanhThu: 18000000 },
-    { name: "T3", DoanhThu: 15000000 },
-    { name: "T4", DoanhThu: 20000000 },
-    { name: "T5", DoanhThu: 30000000 },
-    { name: "T6", DoanhThu: 25000000 },
-    { name: "T7", DoanhThu: 35000000 },
-    { name: "T8", DoanhThu: 40000000 },
-    { name: "T9", DoanhThu: 37000000 },
-    { name: "T10", DoanhThu: 42000000 },
-    { name: "T11", DoanhThu: 46000000 },
-    { name: "T12", DoanhThu: 50000000 },
-  ];
+  const [topProducts, setTopProducts] = useState<TopProductDTO[]>([]);
+  const [revenueChartData, setRevenueChartData] = useState(
+    Array.from({ length: 12 }, (_, i) => ({
+      name: `T${i + 1}`,
+      DoanhThu: 0,
+    }))
+  );
 
-  const mockOrders = [
-    {
-      id: "#OD001",
-      customer: "Nguyễn Văn A",
-      total: "1.200.000₫",
-      status: "Đã giao",
-    },
-    {
-      id: "#OD002",
-      customer: "Trần Thị B",
-      total: "950.000₫",
-      status: "Đang xử lý",
-    },
-    {
-      id: "#OD003",
-      customer: "Phạm Văn C",
-      total: "2.100.000₫",
-      status: "Đã huỷ",
-    },
-  ];
+  const [recentOrders, setRecentOrders] = useState<RecentOrderDTO[]>([]);
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const year = now.getFullYear();
+
+        // --- Khách hàng mới ---
+        const resCustomers = await getNewCustomersThisMonthAPI(month, year);
+        setDashboardStats((prev) => ({
+          ...prev,
+          newCustomers: resCustomers.data?.data ?? 0,
+        }));
+
+        // --- Đơn hàng tháng ---
+        const resOrders = await getOrderMonthAPI(month, year);
+        setDashboardStats((prev) => ({
+          ...prev,
+          monthlyOrders: resOrders.data?.data ?? 0,
+        }));
+
+        // --- Top sản phẩm ---
+        const resTopProducts = await getTopSellingProductsAPI(month, year, 5);
+        setTopProducts(resTopProducts.data?.data ?? []);
+
+        // --- Doanh thu 12 tháng ---
+        const resRevenue = await getMonthlyRevenueAPI(year);
+        const chartData = Array.from({ length: 12 }, (_, i) => ({
+          name: `T${i + 1}`,
+          DoanhThu: resRevenue.data?.data[i] ?? 0,
+        }));
+        setRevenueChartData(chartData);
+
+        // --- Doanh thu tháng hiện tại ---
+        setDashboardStats((prev) => ({
+          ...prev,
+          monthlyRevenue: resRevenue.data?.data[month - 1] ?? 0,
+        }));
+
+        // --- 10 đơn hàng gần đây ---
+        const resRecentOrders = await getRecentOrdersAPI();
+        console.log(resRecentOrders)
+        setRecentOrders(resRecentOrders.data?.data ?? []);
+      } catch (error) {
+        console.error("Error loading dashboard stats: ", error);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -68,28 +112,28 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Khách hàng mới (tháng)"
-          value={dashboardStats.newCustomers.value}
-          change={dashboardStats.newCustomers.change}
+          value={dashboardStats.newCustomers}
+          change="+0%"
           icon={<Users size={24} className="text-indigo-500" />}
           iconColor="bg-indigo-100"
         />
         <StatCard
           title="Doanh thu (tháng)"
-          value={dashboardStats.monthlyRevenue.value}
-          change={dashboardStats.monthlyRevenue.change}
+          value={dashboardStats.monthlyRevenue}
+          change="+0%"
           icon={<DollarSign size={24} className="text-green-500" />}
           iconColor="bg-green-100"
         />
         <StatCard
           title="Đơn hàng (tháng)"
-          value={dashboardStats.monthlyOrders.value}
-          change={dashboardStats.monthlyOrders.change}
+          value={dashboardStats.monthlyOrders}
+          change="+0%"
           icon={<ShoppingCart size={24} className="text-blue-500" />}
           iconColor="bg-blue-100"
         />
       </div>
 
-      {/* --- Biểu đồ + Đơn hàng gần đây --- */}
+      {/* Biểu đồ + Đơn hàng & Sản phẩm bán chạy */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Biểu đồ doanh thu */}
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
@@ -117,23 +161,70 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Đơn hàng gần đây */}
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">
-            Đơn hàng gần đây
-          </h3>
-          <div className="space-y-4">
-            {mockOrders.map((order) => (
-              <div key={order.id} className="flex justify-between items-center">
-                <div>
-                  <p className="font-medium text-gray-800">{order.customer}</p>
-                  <p className="text-sm text-gray-500">
-                    {order.id} - {order.total}
-                  </p>
-                </div>
-                <StatusBadge status={order.status} />
-              </div>
-            ))}
+        {/* Cột bên phải: Đơn hàng & Top sản phẩm */}
+        <div className="space-y-6">
+          {/* Đơn hàng gần đây */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              Đơn hàng gần đây
+            </h3>
+            <div className="space-y-4">
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="flex justify-between items-center"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {order.customer}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {order.id} - {order.total}
+                      </p>
+                    </div>
+                    <StatusBadge status={order.status} />
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-center py-4">
+                  Không có dữ liệu
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Sản phẩm bán chạy */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              Sản phẩm bán chạy (tháng)
+            </h3>
+            <div className="space-y-3">
+              {topProducts.length > 0 ? (
+                topProducts.map((product, index) => (
+                  <div
+                    key={product.productId}
+                    className="flex justify-between items-center bg-gray-50 rounded-md p-3 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="w-8 text-gray-600 font-medium text-center">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 px-3 truncate">
+                      <p className="font-medium text-gray-800">
+                        {product.productName}
+                      </p>
+                    </div>
+                    <div className="w-20 text-right text-sm text-gray-500">
+                      {product.quantitySold} bán
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-center py-4">
+                  Không có dữ liệu
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
