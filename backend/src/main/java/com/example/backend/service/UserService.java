@@ -39,5 +39,5 @@ public interface UserService {
     ResultPaginationDTO getAllUserByRole(Specification<User> spec, Pageable pageable);
     ResultPaginationDTO getAllUserByEmployee(Specification<User> spec, Pageable pageable);
     void handleResetPassword(ReqResetPasswordDTO request) throws UserNotFoundException, InvalidOtpException;
-
+    Long getCurrentUserId();
 }

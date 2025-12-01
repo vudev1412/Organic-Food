@@ -68,7 +68,7 @@ const ProtectedRouter = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (user?.role !== "ADMIN") {
+  if (user?.role.name !== "ADMIN") {
     return (
       <Result
         status="403"

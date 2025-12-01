@@ -14,7 +14,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/returns")
@@ -53,5 +55,19 @@ public class ReturnController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         this.returnService.deleteReturn(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/check/{orderId}")
+    public ResponseEntity<?> checkReturn(@PathVariable Long orderId) {
+
+        Map<String, Object> data = returnService.checkReturnRequest(orderId);
+
+        return ResponseEntity.ok(
+                new HashMap() {{
+                    put("statusCode", 200);
+                    put("error", null);
+                    put("message", "CHECK RETURN SUCCESS");
+                    put("data", data);
+                }}
+        );
     }
 }

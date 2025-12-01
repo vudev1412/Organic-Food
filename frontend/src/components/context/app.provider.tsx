@@ -104,7 +104,7 @@ export const AppProvider = ({ children }: Tprops) => {
 
             // Gọi API lấy chi tiết User
             const userDetailRes = await getUserById(basicUser.id);
-
+            console.log("User Detail Response:", userDetailRes);
             // 👇 SỬA Ở ĐÂY: Phải chọc vào 2 lớp .data
             if (
               userDetailRes &&
@@ -113,8 +113,9 @@ export const AppProvider = ({ children }: Tprops) => {
             ) {
               // Lấy object user thật sự từ bên trong
               let fetchedUser = userDetailRes.data.data;
+              console.log("Fetched User Details:", fetchedUser);
               // Nếu là CUSTOMER thì lấy thêm info
-              if (fetchedUser.userRole === "CUSTOMER") {
+              if (fetchedUser.role.name === "CUSTOMER") {
                 try {
                   const customerRes = await getCustomerInfoAPI(fetchedUser.id);
                   // 👇 SỬA CẢ CHỖ NÀY: Cũng phải chọc vào 2 lớp .data

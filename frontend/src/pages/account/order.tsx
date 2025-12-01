@@ -1,7 +1,7 @@
 // File path: /src/pages/account/order.tsx
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CarOutlined,
   CheckCircleOutlined,
@@ -16,8 +16,8 @@ import {
 } from "@ant-design/icons";
 import { Tag, Space, Typography, Button, message } from "antd";
 import { useCurrentApp } from "../../components/context/app.context";
-import { getOrderByUserId } from "../../service/api";
-
+import { checkReturnByOrderIdAPI, getOrderByUserId } from "../../service/api";
+import ReturnRequestModal from "../../components/section/reutrn/ReturnRequestModal";
 
 const { Text } = Typography;
 
@@ -30,32 +30,38 @@ export enum StatusOrder {
   CANCELLED = "CANCELLED",
 }
 
-interface IOrderDetail {
-  id: number;
-  quantity: number;
-  price: number;
-  productId: number;
-  productName: string;
-  productImage: string;
-  productPrice: number;
-}
-
-interface IOrder {
-  id: number;
-  orderAt: string;
-  note?: string;
-  statusOrder: string;
-  shipAddress: string;
-  estimatedDate?: string;
-  actualDate?: string;
-  userId?: number;
-  userName?: string;
-  orderDetails?: IOrderDetail[];
-}
-
 // === HELPER ===
+const isWithinReturnPeriod = (order: IOrder): boolean => {
+  if (order.statusOrder !== StatusOrder.DELIVERED || !order.actualDate) {
+    return false; // Chỉ áp dụng cho đơn đã giao thành công và có ngày giao thực tế
+  }
+
+  const actualDate = new Date(order.actualDate);
+  const today = new Date();
+
+  // Kiểm tra tính hợp lệ của ngày tháng
+  if (isNaN(actualDate.getTime())) {
+    console.error(
+      `Order DH${String(order.id).padStart(
+        6,
+        "0"
+      )}: Invalid actualDate format! Value: ${order.actualDate}`
+    );
+    return false;
+  }
+
+  // Tính số ngày chênh lệch (đơn vị miligiây)
+  const timeDifference = today.getTime() - actualDate.getTime();
+  const dayDifference = timeDifference / (1000 * 3600 * 24); // Chuyển sang ngày
+
+  // Cho phép khiếu nại trong vòng 7 ngày
+  return dayDifference >= 0 && dayDifference <= 7;
+};
+
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    amount
+  );
 
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("vi-VN", {
@@ -63,12 +69,14 @@ const formatDate = (dateString: string) =>
     month: "2-digit",
     year: "numeric",
   });
+
 const formatPrice = (price: number): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
   }).format(price);
 };
+
 const calculateOrderTotal = (items: IOrderDetail[]) =>
   items.reduce((sum, item) => sum + item.price, 0);
 
@@ -103,8 +111,9 @@ const CustomProgressBar = ({ status }: { status: string }) => {
     { key: "DELIVERED", label: "Hoàn tất", icon: <CheckCircleOutlined /> },
   ];
 
-  const currentIndex = steps.findIndex(s => s.key === status);
-  const progress = currentIndex >= 0 ? (currentIndex / (steps.length - 1)) * 100 : 0;
+  const currentIndex = steps.findIndex((s) => s.key === status);
+  const progress =
+    currentIndex >= 0 ? (currentIndex / (steps.length - 1)) * 100 : 0;
 
   return (
     <div className="w-full px-4">
@@ -121,13 +130,25 @@ const CustomProgressBar = ({ status }: { status: string }) => {
             <div key={idx} className="flex flex-col items-center z-10">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all duration-500
-                  ${completed ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-300 text-gray-400"}
-                  ${idx === currentIndex ? "ring-4 ring-green-100 scale-110" : ""}
+                  ${
+                    completed
+                      ? "bg-green-600 border-green-600 text-white"
+                      : "bg-white border-gray-300 text-gray-400"
+                  }
+                  ${
+                    idx === currentIndex
+                      ? "ring-4 ring-green-100 scale-110"
+                      : ""
+                  }
                 `}
               >
                 <span className="text-lg">{step.icon}</span>
               </div>
-              <span className={`text-xs mt-2 font-medium ${completed ? "text-green-700" : "text-gray-400"}`}>
+              <span
+                className={`text-xs mt-2 font-medium ${
+                  completed ? "text-green-700" : "text-gray-400"
+                }`}
+              >
                 {step.label}
               </span>
             </div>
@@ -138,66 +159,14 @@ const CustomProgressBar = ({ status }: { status: string }) => {
   );
 };
 
-// === MODAL CHI TIẾT ===
-const OrderDetailModal = ({ order, onClose }: { order: IOrder | null; onClose: () => void }) => {
-  if (!order) return null;
-
-  const total = calculateOrderTotal(order.orderDetails || []);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fade-in-up"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">Chi tiết đơn hàng</h3>
-            <Text type="secondary" className="text-sm">Mã đơn: DH{String(order.id).padStart(6, "0")}</Text>
-          </div>
-          <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
-        </div>
-
-        <div className="p-6 space-y-6">
-          {order.orderDetails?.map((item) => (
-            <div key={item.id} className="flex gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <img
-                src={item.productImage.startsWith("http") ? item.productImage : `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${item.productImage}`}
-                alt={item.productName}
-                className="w-24 h-24 object-cover rounded-lg border"
-              />
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 text-lg">{item.productName}</h4>
-                <div className="flex justify-between items-end mt-4">
-                  <span className="text-sm font-medium bg-gray-200 px-3 py-1 rounded-full">
-                    Số lượng: {item.quantity}
-                  </span>
-                  <span className="text-xl font-bold text-green-600">
-                    {formatCurrency(item.price)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="sticky bottom-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-b-2xl">
-          <div className="flex justify-between items-center">
-            <span className="text-xl font-bold">Tổng thanh toán</span>
-            <span className="text-3xl font-bold">{formatCurrency(total)}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // === MAIN PAGE ===
 const OrderTrackingPage = () => {
-  const { user } = useCurrentApp();
+  const { user, showToast } = useCurrentApp();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
+
+  const [returnOrder, setReturnOrder] = useState<IOrder | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -210,7 +179,7 @@ const OrderTrackingPage = () => {
     try {
       setLoading(true);
       const res = await getOrderByUserId(user.id);
-      console.log(res)
+      console.log(res);
       setOrders(res.data?.data || []);
     } catch (error) {
       message.error("Không tải được đơn hàng");
@@ -220,14 +189,39 @@ const OrderTrackingPage = () => {
   };
 
   const activeOrders = useMemo(
-    () => orders.filter(o => ["PENDING", "PROCESSING", "SHIPPING"].includes(o.statusOrder)),
+    () =>
+      orders.filter((o) =>
+        ["PENDING", "PROCESSING", "SHIPPING"].includes(o.statusOrder)
+      ),
     [orders]
   );
 
   const historyOrders = useMemo(
-    () => orders.filter(o => ["DELIVERED", "CANCELLED"].includes(o.statusOrder)),
+    () =>
+      orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.statusOrder)),
     [orders]
   );
+
+  const handleClickReturn = async (order: IOrder) => {
+    try {
+      const res = await checkReturnByOrderIdAPI(order.id);
+      console.log(res.data.data.data.hasReturnRequest);
+      if (res.data?.data.data.hasReturnRequest === true) {
+        // Đã khiếu nại → show toast warning
+        showToast("Bạn đã gửi yêu cầu đổi trả cho đơn hàng này rồi", "warning");
+        return;
+      }
+
+      // Chưa khiếu nại → mở modal
+      setReturnOrder(order);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Không thể kiểm tra trạng thái khiếu nại";
+      showToast(msg, "error");
+    }
+  };
 
   if (!user) {
     return (
@@ -245,7 +239,10 @@ const OrderTrackingPage = () => {
             <ShoppingCartOutlined className="text-green-600 text-4xl" />
             Đơn hàng của tôi
           </h1>
-          <Link to="/" className="text-green-600 hover:text-green-700 font-semibold flex items-center gap-2">
+          <Link
+            to="/"
+            className="text-green-600 hover:text-green-700 font-semibold flex items-center gap-2"
+          >
             Tiếp tục mua sắm <RightOutlined />
           </Link>
         </div>
@@ -258,10 +255,16 @@ const OrderTrackingPage = () => {
         ) : orders.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-16 text-center border-2 border-dashed border-gray-200">
             <InboxOutlined className="text-6xl text-gray-300 mb-6" />
-            <h3 className="text-2xl font-semibold text-gray-700 mb-3">Chưa có đơn hàng nào</h3>
+            <h3 className="text-2xl font-semibold text-gray-700 mb-3">
+              Chưa có đơn hàng nào
+            </h3>
             <p className="text-gray-500 mb-8">Hãy mua sắm ngay hôm nay!</p>
             <Link to="/">
-              <Button type="primary" size="large" className="h-12 px-8 text-lg font-semibold">
+              <Button
+                type="primary"
+                size="large"
+                className="h-12 px-8 text-lg font-semibold"
+              >
                 Bắt đầu mua sắm
               </Button>
             </Link>
@@ -273,23 +276,36 @@ const OrderTrackingPage = () => {
               <section className="mb-12">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-2 h-8 bg-green-600 rounded-full"></div>
-                  <h2 className="text-2xl font-bold text-gray-800">Đơn hàng đang thực hiện</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Đơn hàng đang thực hiện
+                  </h2>
                 </div>
                 <div className="space-y-6">
-                  {activeOrders.map(order => {
+                  {activeOrders.map((order) => {
                     const total = calculateOrderTotal(order.orderDetails || []);
                     return (
-                      <div key={order.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all">
+                      <div
+                        key={order.id}
+                        className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all"
+                      >
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                           <div className="flex items-center gap-4">
                             <Text strong className="text-xl text-blue-700">
                               DH{String(order.id).padStart(6, "0")}
                             </Text>
-                            <Text type="secondary" className="text-sm flex items-center gap-2">
-                              <ClockCircleOutlined /> {formatDate(order.orderAt)}
+                            <Text
+                              type="secondary"
+                              className="text-sm flex items-center gap-2"
+                            >
+                              <ClockCircleOutlined />{" "}
+                              {formatDate(order.orderAt)}
                             </Text>
                           </div>
-                          <Tag className={`text-base px-5 py-2 font-bold rounded-full ${getStatusStyles(order.statusOrder)}`}>
+                          <Tag
+                            className={`text-base px-5 py-2 font-bold rounded-full ${getStatusStyles(
+                              order.statusOrder
+                            )}`}
+                          >
                             {getStatusLabel(order.statusOrder)}
                           </Tag>
                         </div>
@@ -300,36 +316,67 @@ const OrderTrackingPage = () => {
                           </div>
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            {order.orderDetails?.slice(0, 4).map((item, idx) => (
-                              <div key={idx} className="text-center">
-                                <img
-                                  src={item.productImage.startsWith("http") ? item.productImage : `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${item.productImage}`}
-                                  alt={item.productName}
-                                  className="w-20 h-20 object-cover rounded-xl mx-auto mb-2 border-2 border-gray-100 shadow"
-                                />
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.productName}</p>
-                                <p className="text-xs font-medium mt-1">x{item.quantity}</p>
-                              </div>
-                            ))}
-                            {order.orderDetails && order.orderDetails.length > 4 && (
-                              <div className="flex items-center justify-center text-gray-500 font-medium">
-                                +{order.orderDetails.length - 4} món
-                              </div>
-                            )}
+                            {order.orderDetails
+                              ?.slice(0, 4)
+                              .map((item, idx) => (
+                                <div key={idx} className="text-center">
+                                  <img
+                                    src={
+                                      item.productImage.startsWith("http")
+                                        ? item.productImage
+                                        : `${
+                                            import.meta.env
+                                              .VITE_BACKEND_PRODUCT_IMAGE_URL
+                                          }${item.productImage}`
+                                    }
+                                    alt={item.productName}
+                                    className="w-20 h-20 object-cover rounded-xl mx-auto mb-2 border-2 border-gray-100 shadow"
+                                  />
+                                  <p className="text-xs text-gray-600 line-clamp-2">
+                                    {item.productName}
+                                  </p>
+                                  <p className="text-xs font-medium mt-1">
+                                    x{item.quantity}
+                                  </p>
+                                </div>
+                              ))}
+                            {order.orderDetails &&
+                              order.orderDetails.length > 4 && (
+                                <div className="flex items-center justify-center text-gray-500 font-medium">
+                                  +{order.orderDetails.length - 4} món
+                                </div>
+                              )}
                           </div>
 
                           <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                             <div>
-                              <Text className="text-gray-600">Tổng thanh toán:</Text>
-                              <Text strong className="text-2xl text-green-600 ml-3 font-bold">
+                              <Text className="text-gray-600">
+                                Tổng thanh toán:
+                              </Text>
+                              <Text
+                                strong
+                                className="text-2xl text-green-600 ml-3 font-bold"
+                              >
                                 {formatPrice(total)}
                               </Text>
                             </div>
                             <Space size="middle">
-                              <Button size="large" icon={<EyeOutlined />} onClick={() => setSelectedOrder(order)}>
+                              <Button
+                                size="large"
+                                icon={<EyeOutlined />}
+                                onClick={() =>
+                                  navigate(
+                                    `/thanh-toan/thanh-cong?orderId=${order.id}`
+                                  )
+                                }
+                              >
                                 Xem chi tiết
                               </Button>
-                              <Button type="primary" size="large" className="font-medium">
+                              <Button
+                                type="primary"
+                                size="large"
+                                className="font-medium"
+                              >
                                 Theo dõi vận chuyển
                               </Button>
                             </Space>
@@ -347,40 +394,70 @@ const OrderTrackingPage = () => {
               <section>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-2 h-8 bg-gray-400 rounded-full"></div>
-                  <h2 className="text-2xl font-bold text-gray-700">Lịch sử đơn hàng</h2>
+                  <h2 className="text-2xl font-bold text-gray-700">
+                    Lịch sử đơn hàng
+                  </h2>
                 </div>
                 <div className="space-y-5">
-                  {historyOrders.map(order => {
+                  {historyOrders.map((order) => {
                     const total = calculateOrderTotal(order.orderDetails || []);
-                    const isCancelled = order.statusOrder === "CANCELLED";
+                    const isCancelled =
+                      order.statusOrder === StatusOrder.CANCELLED;
+                    const canClaim = isWithinReturnPeriod(order);
 
                     return (
                       <div
                         key={order.id}
                         className={`bg-white rounded-2xl p-6 shadow-md border-l-8 transition-all hover:shadow-lg
-                          ${isCancelled ? "border-l-gray-400" : "border-l-green-600"}
+                          ${
+                            isCancelled
+                              ? "border-l-gray-400"
+                              : "border-l-green-600"
+                          }
                         `}
                       >
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-full ${isCancelled ? "bg-gray-100" : "bg-green-100"}`}>
-                              {isCancelled ? <CloseCircleOutlined className="text-2xl text-gray-500" /> : <CheckCircleOutlined className="text-2xl text-green-600" />}
+                            <div
+                              className={`p-3 rounded-full ${
+                                isCancelled ? "bg-gray-100" : "bg-green-100"
+                              }`}
+                            >
+                              {isCancelled ? (
+                                <CloseCircleOutlined className="text-2xl text-gray-500" />
+                              ) : (
+                                <CheckCircleOutlined className="text-2xl text-green-600" />
+                              )}
                             </div>
                             <div>
                               <div className="flex items-center gap-3 mb-2">
-                                <Text strong className="text-xl">DH{String(order.id).padStart(6, "0")}</Text>
-                                <Tag className={`px-4 py-1 text-sm font-medium rounded-full ${getStatusStyles(order.statusOrder)}`}>
+                                <Text strong className="text-xl">
+                                  DH{String(order.id).padStart(6, "0")}
+                                </Text>
+                                <Tag
+                                  className={`px-4 py-1 text-sm font-medium rounded-full ${getStatusStyles(
+                                    order.statusOrder
+                                  )}`}
+                                >
                                   {getStatusLabel(order.statusOrder)}
                                 </Tag>
                               </div>
-                              <Text type="secondary" className="text-sm flex items-center gap-2">
-                                <ClockCircleOutlined /> {formatDate(order.orderAt)}
+                              <Text
+                                type="secondary"
+                                className="text-sm flex items-center gap-2"
+                              >
+                                <ClockCircleOutlined />{" "}
+                                {formatDate(order.orderAt)}
                               </Text>
                               <p className="text-gray-700 mt-2">
                                 {order.orderDetails?.[0]?.productName}
-                                {order.orderDetails && order.orderDetails.length > 1 && (
-                                  <span className="text-gray-500 italic"> +{order.orderDetails.length - 1} sản phẩm</span>
-                                )}
+                                {order.orderDetails &&
+                                  order.orderDetails.length > 1 && (
+                                    <span className="text-gray-500 italic">
+                                      {" "}
+                                      +{order.orderDetails.length - 1} sản phẩm
+                                    </span>
+                                  )}
                               </p>
                             </div>
                           </div>
@@ -390,7 +467,24 @@ const OrderTrackingPage = () => {
                               {formatPrice(total)}
                             </Text>
                             <Space>
-                              <Button size="large" onClick={() => setSelectedOrder(order)}>
+                              {canClaim && (
+                                <Button
+                                  size="large"
+                                  danger
+                                  className="font-medium"
+                                  onClick={() => handleClickReturn(order)}
+                                >
+                                  Khiếu nại/Đổi trả
+                                </Button>
+                              )}
+                              <Button
+                                size="large"
+                                onClick={() =>
+                                  navigate(
+                                    `/thanh-toan/thanh-cong?orderId=${order.id}`
+                                  )
+                                }
+                              >
                                 Xem chi tiết
                               </Button>
                               {!isCancelled && (
@@ -411,7 +505,14 @@ const OrderTrackingPage = () => {
         )}
       </div>
 
-      {selectedOrder && <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />}
+      {returnOrder && (
+        <ReturnRequestModal
+          order={returnOrder}
+          visible={!!returnOrder}
+          onClose={() => setReturnOrder(null)}
+          onSuccess={fetchOrders} // reload danh sách đơn hàng sau khi tạo return
+        />
+      )}
     </div>
   );
 };

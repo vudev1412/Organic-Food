@@ -1,5 +1,8 @@
 package com.example.backend.service;
 
+import com.example.backend.domain.ProductDTO;
+import com.example.backend.domain.ProductWithPromotionDTO;
+import com.example.backend.domain.PromotionDTO;
 import com.example.backend.domain.request.ReqPromotionDTO;
 import com.example.backend.domain.response.ResPromotionDTO;
 
@@ -11,4 +14,6 @@ public interface PromotionService {
     ResPromotionDTO create(ReqPromotionDTO dto);
     ResPromotionDTO update(long id, ReqPromotionDTO dto);
     void delete(long id);
+    List<PromotionDTO> getActivePromotions();
+    List<ProductWithPromotionDTO> getProductsByPromotionId(Long promotionId);
 }

@@ -203,7 +203,7 @@ const Profile = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
   const isMember = user?.customerProfile?.member === true;
-
+  console.log("User Data:", user);
   useEffect(() => {
     if (user) {
       setId(user.id || 0);
@@ -237,7 +237,7 @@ const Profile = () => {
 
     try {
       showToast("Đang tải ảnh lên...", "info");
-      const uploadedUrl = await uploadFileAvatarAPI(file, "avatar");
+      const uploadedUrl = await uploadFileAvatarAPI(file, "images/avatar");
       console.log(uploadedUrl);
       setAvatar(uploadedUrl.data);
       showToast("Cập nhật ảnh đại diện thành công!", "success");

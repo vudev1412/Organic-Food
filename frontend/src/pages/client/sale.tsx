@@ -1,5 +1,3 @@
-// File path: /src/pages/client/sale.tsx
-
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -10,70 +8,26 @@ import {
   CheckCircleFilled,
   LoadingOutlined,
   FilterOutlined,
-  CopyOutlined, // Giữ lại icon Copy
+  CopyOutlined,
 } from "@ant-design/icons";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-// API (Cần giữ lại đường dẫn import này)
-import { getAvailableVouchersAPI } from "../../service/api";
-import salebanner from "../../assets/jpg/sale_banner.jpg";
-import axios from "axios";
 
-// Components đã tách ra (theo file thứ 2)
+// --- IMPORT API TỪ SERVICE ---
+// Đảm bảo bạn đã export 2 hàm mới này trong file api.ts
+import {
+  getAvailableVouchersAPI,
+  callFetchActivePromotions,
+  callFetchProductsByPromotionId,
+} from "../../service/api";
+
+import salebanner from "../../assets/jpg/sale_banner.jpg";
+
+// Components
 import ProductCard from "../../components/common/product.card";
 import QuantityModal from "../../components/section/product/QuantityModal";
 import { useCurrentApp } from "../../components/context/app.context";
 
-// --- 1. INTERFACES VÀ TYPES (Tối ưu từ cả 2 file) ---
-
-export interface IBackendRes<T> {
-  data: T;
-  message?: string;
-  status?: number;
-}
-
-export type VoucherType = "PERCENT" | "FIXED_AMOUNT" | "FREESHIP";
-
-export interface IResVoucherDTO {
-  id: number;
-  code: string;
-  description?: string;
-  typeVoucher: VoucherType;
-  value: number;
-  maxDiscountAmount: number;
-  minOrderValue: number;
-  startDate: string;
-  endDate: string;
-  quantity: number;
-  usedCount: number;
-  active: boolean;
-}
-
-export interface IDiscount {
-  type: "PERCENT" | "FIXED_AMOUNT";
-  value: number;
-}
-
-export interface IProductCard {
-  id: number;
-  name: string;
-  slug: string;
-  // Cần thêm imageUrl/imagePath tùy theo ProductCard component nhận prop gì
-  imageUrl: string; // Sử dụng imageUrl để nhất quán với file thứ 2
-  altText?: string;
-  price: number; // originalPrice
-  quantity: number; // stock quantity
-  discount?: IDiscount;
-}
-
-interface IPromotion {
-  id: number;
-  name: string;
-  active: boolean;
-}
-
-// --- 2. UTILS ---
-
-// Giữ lại vì không được import từ nơi khác
+// --- UTILS ---
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -81,7 +35,6 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Giữ lại Hook useInterval vì là logic nội bộ
 const useInterval = (callback: () => void, delay: number | null) => {
   const savedCallback = useRef(callback);
 
@@ -100,8 +53,7 @@ const useInterval = (callback: () => void, delay: number | null) => {
   }, [delay]);
 };
 
-// --- 3. VOUCHER COMPONENTS (Giữ lại vì không được import) ---
-
+// --- VOUCHER COMPONENTS ---
 const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
   const { color, icon, name } = useMemo(() => {
     switch (promo.typeVoucher) {
@@ -167,7 +119,6 @@ const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
     <div
       className={`bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col justify-between transition-all hover:shadow-xl hover:-translate-y-1 duration-300 flex-shrink-0 w-full snap-center sm:w-[280px]`}
     >
-      {/* Header Compact */}
       <div className="flex items-center gap-3 mb-2">
         <div
           className={`text-xl ${classes.text} ${classes.iconBg} p-2 rounded-lg shrink-0`}
@@ -186,7 +137,6 @@ const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
         </div>
       </div>
 
-      {/* Phần Code và Copy Icon */}
       <div className="mt-1 pt-2 border-t border-dashed border-gray-200">
         <div
           className={`${classes.bgLight} p-1.5 px-3 rounded-md flex items-center justify-between mb-2 border ${classes.border}`}
@@ -197,7 +147,6 @@ const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
             {promo.code}
           </span>
 
-          {/* NÚT COPY DẠNG ICON */}
           <button
             onClick={handleCopy}
             title="Sao chép mã"
@@ -207,7 +156,6 @@ const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
           </button>
         </div>
 
-        {/* Thông tin chi tiết (Font nhỏ, layout gọn) */}
         <div className="space-y-1 text-[10px] text-gray-500 font-medium">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1">
@@ -232,11 +180,13 @@ const VoucherCard: React.FC<{ promo: IResVoucherDTO }> = ({ promo }) => {
   );
 };
 
-// --- COMPONENT: VoucherFilter ---
+// --- VOUCHER FILTER ---
 interface IVoucherFilterProps {
   currentFilter: VoucherType | "ALL";
   setFilter: (filter: VoucherType | "ALL") => void;
 }
+
+type VoucherType = "PERCENT" | "FIXED_AMOUNT" | "FREESHIP";
 
 const VoucherFilter: React.FC<IVoucherFilterProps> = ({
   currentFilter,
@@ -293,20 +243,17 @@ const VoucherFilter: React.FC<IVoucherFilterProps> = ({
   );
 };
 
-// --- 4. MAIN PAGE: SalePage (Tối ưu hóa logic API và Product Card) ---
+// --- MAIN PAGE ---
 const SalePage: React.FC = () => {
   const { addToCart } = useCurrentApp();
 
-  // ------------------
   // Quantity Modal State
-  // ------------------
   const [selectedProduct, setSelectedProduct] = useState<IProductCard | null>(
     null
   );
   const [selectedDiscount, setSelectedDiscount] = useState<IDiscount>();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mở modal, nhận ProductCard object đã được ánh xạ
   const openModal = (p: IProductCard, discount?: IDiscount) => {
     setSelectedProduct(p);
     setSelectedDiscount(discount);
@@ -315,85 +262,74 @@ const SalePage: React.FC = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const handleConfirmAdd = (product: IProductCard, quantity: number) => {
-    // ProductCard từ QuantityModal đã bao gồm discount trong prop
     addToCart(product, quantity);
     closeModal();
   };
 
-  // ------------------
-  // Promotions + Products State & Fetching
-  // ------------------
+  // --- PROMOTIONS STATE ---
   const [promotions, setPromotions] = useState<IPromotion[]>([]);
-  const [promoProducts, setPromoProducts] =
-    useState<{ promotion: IPromotion; items: IProductCard[] }[]>();
+  const [promotionProducts, setPromotionProducts] = useState<
+    Map<number, IPromotionProduct[]>
+  >(new Map());
+  const [isLoadingPromotions, setIsLoadingPromotions] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
-  const fetchPromotions = async () => {
-    try {
-      const res = await axios.get("/api/v1/promotions");
-      setPromotions(res.data.data || []);
-    } catch (error) {
-      console.error("Lỗi khi tải promotions:", error);
-      setPromotions([]);
-    }
-  };
-
-  const fetchPromoProducts = async (allPromotions: IPromotion[]) => {
-    setIsLoadingProducts(true);
-    const active = allPromotions.filter((p) => p.active);
-
-    const result: { promotion: IPromotion; items: IProductCard[] }[] = [];
-
-    for (const promo of active) {
-      try {
-        const api = `/api/v1/products/promotion/${promo.id}?page=1&size=50`;
-        const res = await axios.get(api);
-
-        // DTO từ API: Giữ nguyên cấu trúc ánh xạ của file thứ 2
-        const items: any[] = res.data.data.result;
-
-        const mapped: IProductCard[] = items.map((p) => ({
-          id: p.productId,
-          name: p.productName,
-          slug: p.slug,
-          imageUrl: `/images/${p.image}`,
-          altText: p.productName,
-          price: p.originalPrice, // originalPrice
-          quantity: p.quantity, // stock quantity
-          discount: {
-            type: p.promotionType,
-            value: p.promotionValue,
-          },
-        }));
-
-        result.push({ promotion: promo, items: mapped });
-      } catch (error) {
-        console.error(`Lỗi khi tải sản phẩm cho KM ${promo.id}:`, error);
-        // Bỏ qua nếu có lỗi
-      }
-    }
-
-    setPromoProducts(result);
-    setIsLoadingProducts(false);
-  };
-
-  // 1. Fetch Promotions ban đầu
+  // Fetch Active Promotions
   useEffect(() => {
+    const fetchPromotions = async () => {
+      setIsLoadingPromotions(true);
+      try {
+        // GỌI HÀM IMPORT TỪ SERVICE
+        const res = await callFetchActivePromotions();
+        const data = res.data?.data || res.data || [];
+        setPromotions(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setPromotions([]);
+      } finally {
+        setIsLoadingPromotions(false);
+      }
+    };
+
     fetchPromotions();
   }, []);
 
-  // 2. Fetch Products khi Promotions thay đổi
+  // Fetch Products for each Promotion
   useEffect(() => {
-    if (promotions.length > 0) {
-      fetchPromoProducts(promotions);
-    } else if (promotions.length === 0 && promoProducts) {
-      setPromoProducts(undefined); // Reset nếu không có KM nào
-    }
-  }, [promotions]); // Chỉ chạy khi danh sách promotions được set
+    const fetchAllProducts = async () => {
+      if (promotions.length === 0) {
+        setPromotionProducts(new Map());
+        return;
+      }
 
-  // ------------------
-  // VOUCHER LOGIC
-  // ------------------
+      setIsLoadingProducts(true);
+      const productMap = new Map<number, IPromotionProduct[]>();
+
+      try {
+        await Promise.all(
+          promotions.map(async (promo) => {
+            try {
+              // GỌI HÀM IMPORT TỪ SERVICE
+              const res = await callFetchProductsByPromotionId(promo.id);
+              const data = res.data?.data || res.data || [];
+              productMap.set(promo.id, Array.isArray(data) ? data : []);
+            } catch (error) {
+              productMap.set(promo.id, []);
+            }
+          })
+        );
+
+        setPromotionProducts(productMap);
+      } catch (error) {
+        // Handle error silently
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchAllProducts();
+  }, [promotions]);
+
+  // --- VOUCHER STATE ---
   const [availableVouchers, setAvailableVouchers] = useState<IResVoucherDTO[]>(
     []
   );
@@ -403,17 +339,14 @@ const SalePage: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  // load vouchers
   useEffect(() => {
     const loadVoucher = async () => {
       setIsLoadingVouchers(true);
       try {
         const res = await getAvailableVouchersAPI();
-        // Xử lý dữ liệu trả về theo 2 kiểu có thể (của file gốc)
         const data = res.data.data || res.data;
         setAvailableVouchers(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Lỗi khi tải vouchers:", err);
         setAvailableVouchers([]);
       } finally {
         setIsLoadingVouchers(false);
@@ -435,11 +368,10 @@ const SalePage: React.FC = () => {
     });
   };
 
-  // AUTO SCROLL
   useInterval(() => {
     if (
       isPaused ||
-      isLoadingVouchers || // Thêm check loading
+      isLoadingVouchers ||
       filteredVouchers.length <= 3 ||
       !scrollContainerRef.current
     )
@@ -462,7 +394,7 @@ const SalePage: React.FC = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans">
-      {/* --- HERO BANNER --- */}
+      {/* HERO BANNER */}
       <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
         <img
           src={mockBanner.image}
@@ -495,7 +427,7 @@ const SalePage: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-4 py-12">
-        {/* --- SECTION VOUCHER --- */}
+        {/* SECTION VOUCHER */}
         <section id="voucher-container" className="mb-20 scroll-mt-24">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2">
@@ -539,7 +471,6 @@ const SalePage: React.FC = () => {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              {/* --- NÚT PREV (LUÔN HIỆN) --- */}
               <button
                 onClick={() => scroll("left")}
                 className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white text-gray-600 shadow-lg rounded-full flex items-center justify-center border border-gray-100 hover:text-green-600 hover:scale-110 active:scale-95 transition-all duration-300"
@@ -548,7 +479,6 @@ const SalePage: React.FC = () => {
                 <ChevronLeft size={24} />
               </button>
 
-              {/* --- SLIDER CONTAINER --- */}
               <div
                 ref={scrollContainerRef}
                 className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-6 pt-2 px-4 scrollbar-hide scroll-smooth"
@@ -559,7 +489,6 @@ const SalePage: React.FC = () => {
                 ))}
               </div>
 
-              {/* --- NÚT NEXT (LUÔN HIỆN) --- */}
               <button
                 onClick={() => scroll("right")}
                 className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white text-gray-600 shadow-lg rounded-full flex items-center justify-center border border-gray-100 hover:text-green-600 hover:scale-110 active:scale-95 transition-all duration-300"
@@ -571,50 +500,37 @@ const SalePage: React.FC = () => {
           )}
         </section>
 
-        {/* =============================================================
-        🟢 KHỐI SẢN PHẨM THEO KHUYẾN MÃI 🟢
-       ============================================================= */}
+        {/* SECTION SẢN PHẨM KHUYẾN MÃI */}
         <section className="mt-20">
-          <h2 className="text-3xl font-bold mb-8 flex items-center gap-2">
+          <h2 className="text-3xl font-bold mb-8 flex items-center justify-center gap-2">
             <GiftOutlined className="text-green-600" /> Sản phẩm đang khuyến mãi
           </h2>
-
-          {isLoadingProducts && (
+          {isLoadingPromotions || isLoadingProducts ? (
             <div className="flex flex-col items-center justify-center py-10 bg-white rounded-xl shadow-sm">
               <LoadingOutlined className="text-3xl text-green-600 mb-2" />
               <p className="text-gray-500">Đang tải danh sách sản phẩm...</p>
             </div>
-          )}
+          ) : promotions.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
+              <p className="text-gray-500 font-medium">
+                Hiện không có chương trình khuyến mãi nào đang diễn ra.
+              </p>
+            </div>
+          ) : (
+            promotions.map((promo) => {
+              const products = promotionProducts.get(promo.id) || [];
 
-          {!isLoadingProducts &&
-            (!promoProducts || promoProducts.length === 0) && (
-              <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
-                <p className="text-gray-500 font-medium">
-                  Hiện không có chương trình khuyến mãi nào đang diễn ra.
-                </p>
-              </div>
-            )}
-
-          {!isLoadingProducts &&
-            promoProducts &&
-            promoProducts.map((block) => {
-              // Lọc các block KM không phù hợp với filter đang chọn
-              const relatedVoucher = availableVouchers.find(
-                (v) => v.code === block.promotion.name // Giả định Tên KM = Code Voucher
-              );
-
-              // Lọc chỉ hiển thị các block nếu filter đang được bật
-              // (Sửa logic lọc của file gốc: Áp dụng filter voucher cho cả product section)
-              if (
-                activeFilter !== "ALL" &&
-                relatedVoucher?.typeVoucher !== activeFilter
-              ) {
-                // Nếu không tìm thấy voucher liên quan hoặc voucher không khớp filter
-                return null;
-              }
+              // Lọc sản phẩm theo ngày hiệu lực
+              const now = new Date();
+              const validProducts = products.filter((item) => {
+                const startDate = new Date(item.startDate);
+                const endDate = new Date(item.endDate);
+                const isValid = now >= startDate && now <= endDate;
+                return isValid;
+              });
 
               return (
-                <div key={block.promotion.id} className="mb-16 animate-fade-in">
+                <div key={promo.id} className="mb-16 animate-fade-in">
                   <div className="flex items-center justify-between mb-6 px-2">
                     <div className="flex items-center gap-3">
                       <div className="bg-green-100 p-2 rounded-lg text-green-700">
@@ -622,16 +538,16 @@ const SalePage: React.FC = () => {
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-gray-800">
-                          {block.promotion.name}
+                          {promo.name}
                         </h3>
-                        {relatedVoucher && (
-                          <p className="text-sm text-gray-500">
-                            Áp dụng mã:{" "}
-                            <span className="font-bold text-red-500">
-                              {relatedVoucher.code}
-                            </span>
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-500">
+                          Giảm giá:{" "}
+                          <span className="font-bold text-red-500">
+                            {promo.type === "PERCENT"
+                              ? `${promo.value}%`
+                              : formatCurrency(promo.value)}
+                          </span>
+                        </p>
                       </div>
                     </div>
                     <Link
@@ -642,31 +558,57 @@ const SalePage: React.FC = () => {
                     </Link>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                    {block.items.map((item) => (
-                      // Đảm bảo ProductCard nhận đúng props
-                      <ProductCard
-                        key={item.id}
-                        id={item.id}
-                        imageUrl={item.imageUrl}
-                        altText={item.altText || item.name}
-                        name={item.name}
-                        price={item.price}
-                        quantity={item.quantity}
-                        slug={item.slug}
-                        discount={item.discount}
-                        // Thêm onAddToCart cho ProductCard để mở modal
-                        onAddToCart={() => openModal(item, item.discount)}
-                      />
-                    ))}
-                  </div>
+                  {validProducts.length === 0 ? (
+                    <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">
+                        Chưa có sản phẩm nào trong chương trình này
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                      {validProducts.map((item) => {
+                        const mappedProduct: IProductCard = {
+                          id: item.id,
+                          name: item.name,
+                          slug: item.slug,
+                          image: `${
+                            import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL
+                          }${item.image}`,
+                          price: item.price,
+                          quantity: (item as any).quantity || 0,
+                          discount: {
+                            type: item.promotionType,
+                            value: item.promotionValue,
+                          },
+                        };
+
+                        return (
+                          <ProductCard
+                            key={item.id}
+                            id={mappedProduct.id}
+                            imageUrl={mappedProduct.image}
+                            altText={mappedProduct.name}
+                            name={mappedProduct.name}
+                            price={mappedProduct.price}
+                            quantity={mappedProduct.quantity}
+                            slug={mappedProduct.slug}
+                            discount={mappedProduct.discount}
+                            onAddToCart={() =>
+                              openModal(mappedProduct, mappedProduct.discount)
+                            }
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
-            })}
+            })
+          )}
         </section>
       </div>
 
-      {/* --- MODAL SỐ LƯỢNG GIỎ HÀNG --- */}
+      {/* MODAL SỐ LƯỢNG */}
       {isModalOpen && selectedProduct && (
         <QuantityModal
           product={selectedProduct}
