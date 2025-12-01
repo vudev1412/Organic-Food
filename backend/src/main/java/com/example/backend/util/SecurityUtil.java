@@ -1,5 +1,6 @@
 package com.example.backend.util;
 
+import com.example.backend.domain.Permission;
 import com.example.backend.domain.User;
 import com.example.backend.domain.response.RestLoginDTO;
 import com.example.backend.service.UserService;
@@ -21,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,12 +43,16 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
         User user = this.userService.handleGetUserByUsername(email);
-        List<String> listAuthority = List.of("ROLE_" + user.getRole().getName());
+        List<String> permissions = user.getRole().getPermissions()
+                .stream()
+                .map(Permission::getName)
+                .collect(Collectors.toList());
+        permissions.add(0,  user.getRole().getName());
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
-                .claim("roles", listAuthority)
+                .claim("permission", permissions)
                 .claim("user",restLoginDTO)
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

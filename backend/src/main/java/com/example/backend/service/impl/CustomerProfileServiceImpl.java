@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
     private final UserRepository userRepository;
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL KhachHang')")
     public CustomerProfile handleCreateCustomerProfile(CustomerProfile customerProfile) {
         User user = userRepository.findById(customerProfile.getUser().getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -41,7 +43,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
         return this.customerProfileRepository.save(customerProfile);
     }
 
-
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL KhachHang')")
     public void handleDeleteCustomerProfile(Long id) {
 
         CustomerProfile profile = customerProfileRepository.findById(id)
@@ -85,7 +87,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
         return customerProfile;
     }
 
-
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL KhachHang')")
     public ResCustomerProfile handleUpdateCustomerProfile(Long id, ReqUpdateCustomerProfile req) {
 
         CustomerProfile currentProfile = customerProfileRepository.findById(id)

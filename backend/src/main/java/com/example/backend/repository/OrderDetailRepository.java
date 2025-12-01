@@ -4,6 +4,7 @@ package com.example.backend.repository;
 import com.example.backend.domain.Order;
 import com.example.backend.domain.OrderDetail;
 import com.example.backend.domain.key.OrderDetailKey;
+import com.example.backend.domain.response.TopProductDTO;
 import com.example.backend.enums.StatusInvoice;
 import com.example.backend.enums.StatusOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderDetailKey>, JpaSpecificationExecutor<OrderDetail> {
@@ -34,5 +36,24 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderD
             @Param("orderStatus") StatusOrder orderStatus // Thêm tham số này
     );
     List<OrderDetail> findByOrderId(Long orderId);
+
+    @Query("SELECT od.product.id, od.product.name, SUM(od.quantity) " +
+            "FROM OrderDetail od " +
+            "WHERE od.order.orderAt BETWEEN :start AND :end " +
+            "GROUP BY od.product.id, od.product.name " +
+            "ORDER BY SUM(od.quantity) DESC")
+    List<Object[]> findTopSellingProductsInPeriod(@Param("start") Instant start,
+                                                  @Param("end") Instant end);
+
+    @Query("SELECT MONTH(od.order.orderAt) as month, SUM(od.price * od.quantity) as revenue " +
+            "FROM OrderDetail od " +
+            "WHERE od.order.statusOrder = com.example.backend.enums.StatusOrder.DELIVERED " +
+            "AND YEAR(od.order.orderAt) = :year " +
+            "GROUP BY MONTH(od.order.orderAt)")
+    List<Object[]> getMonthlyRevenue(@Param("year") int year);
+
+
+
+
 
 }

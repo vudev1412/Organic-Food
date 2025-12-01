@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class SupplierController {
     private final SupplierService supplierService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL NhaCC')")
     public ResponseEntity<ResSupplierDTO> createSupplier(@RequestBody Supplier supplier) {
         Supplier createdSupplier = supplierService.handleCreateSupplier(supplier);
         return ResponseEntity.ok(supplierService.handleGetSupplierById(createdSupplier.getId()));
@@ -44,11 +46,13 @@ public class SupplierController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL NhaCC')")
     public ResponseEntity<ResSupplierDTO> updateSupplier(@PathVariable Long id, @RequestBody Supplier supplier) {
         return ResponseEntity.ok(supplierService.handleUpdateSupplier(id, supplier));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL NhaCC')")
     public ResponseEntity<Void> deleteSupplier(@PathVariable Long id) {
         supplierService.handleDeleteSupplier(id);
         return ResponseEntity.noContent().build();

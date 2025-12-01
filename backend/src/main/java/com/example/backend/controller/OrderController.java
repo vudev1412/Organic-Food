@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import  com.example.backend.util.SecurityUtil;
 
@@ -29,6 +30,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('NV ThuNgan') or hasAuthority('QL DonHang')")
     public ResponseEntity<ResOrderDTO> createOrder( @Valid @RequestBody ReqCreateOrderDTO reqDTO) {
         ResOrderDTO createdOrder = orderService.handleCreateOrder(reqDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
@@ -49,11 +51,13 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('NV ThuNgan') or hasAuthority('QL DonHang')")
     public ResponseEntity<ResOrderDTO> updateOrder(@PathVariable Long id, @RequestBody ReqUpdateOrderDTO order) {
         return ResponseEntity.ok(orderService.handleUpdateOrder(id, order));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('NV ThuNgan') or hasAuthority('QL DonHang')")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.handleDeleteOrder(id, false);
         return ResponseEntity.noContent().build();

@@ -34,9 +34,10 @@ import {
   getUnits,
   getAllCategoriesAPI,
 } from "../../../service/api";
+import { parseProductDescription } from "../../../utils/productHelper";
 
 const { TextArea } = Input;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface IProps {
   openModelUpdate: boolean;
@@ -54,6 +55,17 @@ interface CertificateForm {
   fileList: any[];
 }
 
+interface DescriptionItem {
+  subtitle: string;
+  text: string;
+}
+
+interface DescriptionSection {
+  heading: string;
+  items: DescriptionItem[];
+  key: number;
+}
+
 const UpdateProduct: React.FC<IProps> = ({
   openModelUpdate,
   setOpenModelUpdate,
@@ -66,61 +78,30 @@ const UpdateProduct: React.FC<IProps> = ({
 
   const [mainImageList, setMainImageList] = useState<any[]>([]);
   const [subImageList, setSubImageList] = useState<any[]>([]);
-  const [certOptions, setCertOptions] = useState<
-    { id: number; name: string }[]
-  >([]);
-
-  const [certList, setCertList] = useState<CertificateForm[]>([]);
-
-  const [units, setUnits] = useState<{ id: number; name: string }[]>([]);
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+  const [certOptions, setCertOptions] = useState<{ id: number; name: string }[]>(
     []
   );
+  const [certList, setCertList] = useState<CertificateForm[]>([]);
+  const [units, setUnits] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [descriptionSections, setDescriptionSections] = useState<
+    DescriptionSection[]
+  >([]);
 
+  // Fetch data: certificates, categories, units
   useEffect(() => {
-    const fetchCertificates = async () => {
-      try {
-        const res = await getCertificate();
-        setCertOptions(res?.data?.data || []);
-      } catch (error) {
-        console.error("Lỗi khi lấy chứng chỉ:", error);
-        setCertOptions([]);
-      }
-    };
-
-    fetchCertificates();
-  }, []);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await getAllCategoriesAPI();
-        if (res?.data?.data?.result) {
-          setCategories(res.data.data.result);
-        } else {
-          setCategories([]);
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy danh mục:", error);
-        setCategories([]);
-      }
-    };
-    fetchCategories();
+    getCertificate()
+      .then((res) => setCertOptions(res?.data?.data || []))
+      .catch(() => setCertOptions([]));
+    getAllCategoriesAPI()
+      .then((res) => setCategories(res?.data?.data?.result || []))
+      .catch(() => setCategories([]));
+    getUnits()
+      .then((res) => setUnits(res?.data?.data || []))
+      .catch(() => setUnits([]));
   }, []);
 
-  useEffect(() => {
-    const fetchUnits = async () => {
-      try {
-        const res = await getUnits();
-        if (res?.data?.data) setUnits(res.data.data);
-      } catch (error) {
-        console.error("Lỗi tải đơn vị:", error);
-      }
-    };
-
-    fetchUnits();
-  }, []);
-
-  // Load data khi mở modal update
+  // Load data when opening modal
   useEffect(() => {
     if (!dataUpdate) return;
 
@@ -129,7 +110,7 @@ const UpdateProduct: React.FC<IProps> = ({
       price: dataUpdate.price,
       quantity: dataUpdate.quantity,
       unitId: dataUpdate.unit,
-categoryId: dataUpdate.categoryId,
+      categoryId: dataUpdate.categoryId,
       origin_address: dataUpdate.origin_address,
       description: dataUpdate.description,
       active: dataUpdate.active,
@@ -137,70 +118,66 @@ categoryId: dataUpdate.categoryId,
       expDate: dataUpdate.expDate ? dayjs(dataUpdate.expDate) : null,
     });
 
-    // Ảnh chính
-    if (dataUpdate.image) {
-      setMainImageList([
-        {
-          uid: "-1",
-          name: "main.jpg",
-          status: "done",
-          url: `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${
-            dataUpdate.image
-          }`,
-        },
-      ]);
-    } else setMainImageList([]);
+    // Main image
+    setMainImageList(
+      dataUpdate.image
+        ? [
+            {
+              uid: "-1",
+              name: "main.jpg",
+              status: "done",
+              url: `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${dataUpdate.image}`,
+            },
+          ]
+        : []
+    );
 
-    // Ảnh phụ
-    if (dataUpdate.images?.length) {
-      setSubImageList(
-        dataUpdate.images.map((img, i) => ({
-          uid: `-${i + 1}`,
-          name: `sub-${i}.jpg`,
-          status: "done",
-          url: `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${img.imgUrl}`,
-        }))
-      );
-    } else setSubImageList([]);
+    // Sub images
+    setSubImageList(
+      dataUpdate.images?.length
+        ? dataUpdate.images.map((img, i) => ({
+            uid: `-${i + 1}`,
+            name: `sub-${i}.jpg`,
+            status: "done",
+            url: `${import.meta.env.VITE_BACKEND_PRODUCT_IMAGE_URL}${img.imgUrl}`,
+          }))
+        : []
+    );
 
-    // =============================
-    // FIXED: MAP CERTIFICATE CORRECTLY - Đảm bảo certificateId được parse đúng
-    // =============================
-    if (dataUpdate.certificates?.length) {
-      setCertList(
-        dataUpdate.certificates.map((c, i) => {
-          // Lấy certificateId từ nhiều nguồn có thể
-          let certId = c.certificateId || c.certificate?.id;
+    // Certificates
+    setCertList(
+      dataUpdate.certificates?.length
+        ? dataUpdate.certificates.map((c, i) => {
+            let certId = c.certificateId || c.certificate?.id;
+            if (certId !== undefined && certId !== null) certId = Number(certId);
+            return {
+              key: Date.now() + i,
+              certificateId: certId,
+              certNo: c.certNo || "",
+              certDate: c.date ? dayjs(c.date) : null,
+              fileList: c.imageUrl
+                ? [
+                    {
+                      uid: `cert-${i}`,
+                      name: "cert.jpg",
+                      status: "done",
+                      url: `${import.meta.env.VITE_BACKEND_CERS_IMAGE_URL}${c.imageUrl}`,
+                    },
+                  ]
+                : [],
+            };
+          })
+        : [{ key: Date.now(), certificateId: undefined, fileList: [] }]
+    );
 
-          // Đảm bảo convert sang number
-          if (certId !== undefined && certId !== null) {
-            certId = Number(certId);
-          }
-
-          return {
-            key: Date.now() + i,
-            certificateId: certId,
-            certNo: c.certNo || "",
-            certDate: c.date ? dayjs(c.date) : null,
-            fileList: c.imageUrl
-              ? [
-                  {
-                    uid: `cert-${i}`,
-                    name: "cert.jpg",
-                    status: "done",
-                    url: `${import.meta.env.VITE_BACKEND_CERS_IMAGE_URL}${
-                      c.imageUrl
-                    }`,
-                  },
-                ]
-              : [],
-          };
-        })
+    // Description sections
+    const parsedDesc = parseProductDescription(dataUpdate.description);
+    if (parsedDesc.type === "json" && parsedDesc.content.length > 0) {
+      setDescriptionSections(
+        parsedDesc.content.map((s, i) => ({ ...s, key: Date.now() + i }))
       );
     } else {
-      setCertList([
-        { key: Date.now(), certificateId: undefined, fileList: [] },
-      ]);
+      setDescriptionSections([{ heading: "", items: [{ subtitle: "", text: "" }], key: Date.now() }]);
     }
   }, [dataUpdate, form]);
 
@@ -210,28 +187,23 @@ categoryId: dataUpdate.categoryId,
         folder === "images/certs" ? uploadFileCertsAPI : uploadFileProductAPI;
       const res = await uploadAPI(file, folder);
       return res.data;
-    } catch (err) {
-      console.error("Upload failed:", err);
+    } catch {
       return null;
     }
   };
 
   const handleSubmit = async (values: any) => {
     if (!dataUpdate) return;
-
     if (mainImageList.length === 0) {
       message.error("Vui lòng chọn ảnh đại diện!");
       return;
     }
-
     setLoading(true);
-
     try {
-      // Ảnh chính
+      // Main image
       let mainImageUrl: string | null = null;
-
       if (mainImageList[0]?.originFileObj) {
-mainImageUrl = await uploadFileToServer(
+        mainImageUrl = await uploadFileToServer(
           mainImageList[0].originFileObj,
           "images/products"
         );
@@ -239,34 +211,24 @@ mainImageUrl = await uploadFileToServer(
         mainImageUrl = mainImageList[0].url.split("/").pop();
       }
 
-      // Ảnh phụ
+      // Sub images
       const productImagesUrls = await Promise.all(
         subImageList.map(async (f) => {
-          if (f.originFileObj) {
-            return await uploadFileToServer(f.originFileObj, "images/products");
-          } else if (f.url) {
-            return f.url.split("/").pop();
-          }
+          if (f.originFileObj) return await uploadFileToServer(f.originFileObj, "images/products");
+          if (f.url) return f.url.split("/").pop();
           return null;
         })
       );
 
-      // Chứng chỉ
+      // Certificates
       const certificatesPayload = await Promise.all(
         certList
           .filter((c) => c.certificateId)
           .map(async (c) => {
             let imageUrl: string | null = null;
-
-            if (c.fileList[0]?.originFileObj) {
-              imageUrl = await uploadFileToServer(
-                c.fileList[0].originFileObj,
-                "images/certs"
-              );
-            } else if (c.fileList[0]?.url) {
-              imageUrl = c.fileList[0].url.split("/").pop();
-            }
-
+            if (c.fileList[0]?.originFileObj)
+              imageUrl = await uploadFileToServer(c.fileList[0].originFileObj, "images/certs");
+            else if (c.fileList[0]?.url) imageUrl = c.fileList[0].url.split("/").pop();
             return {
               certificateId: Number(c.certificateId),
               certNo: c.certNo || "",
@@ -276,6 +238,14 @@ mainImageUrl = await uploadFileToServer(
           })
       );
 
+      // Merge description
+      const descriptionJSON = JSON.stringify(
+        descriptionSections.map((s) => ({
+          heading: s.heading,
+          items: s.items.map((i) => ({ subtitle: i.subtitle, text: i.text })),
+        }))
+      );
+
       const payload = {
         name: values.name,
         price: Number(values.price),
@@ -283,7 +253,7 @@ mainImageUrl = await uploadFileToServer(
         unit: Number(values.unitId),
         categoryId: Number(values.categoryId),
         origin_address: values.origin_address || null,
-        description: values.description || null,
+        description: descriptionJSON,
         active: values.active ?? true,
         mfgDate: values.mfgDate?.toISOString() || null,
         expDate: values.expDate?.toISOString() || null,
@@ -293,28 +263,38 @@ mainImageUrl = await uploadFileToServer(
       };
 
       await updateProductAPI(dataUpdate.id, payload);
-
       message.success("Cập nhật sản phẩm thành công!");
       setOpenModelUpdate(false);
       setDataUpdate(null);
       refreshTable();
     } catch (error: any) {
-      console.error("Lỗi cập nhật:", error);
       message.error(error.response?.data?.message || "Cập nhật thất bại");
     } finally {
       setLoading(false);
     }
   };
 
-  const addCert = () => {
-    setCertList([
-      ...certList,
-      { key: Date.now(), certificateId: undefined, fileList: [] },
+  const addDescriptionSection = () => {
+    setDescriptionSections([
+      ...descriptionSections,
+      { heading: "", items: [{ subtitle: "", text: "" }], key: Date.now() },
     ]);
   };
 
-  const removeCert = (key: number) => {
-    setCertList(certList.filter((c) => c.key !== key));
+  const removeDescriptionSection = (key: number) => {
+    setDescriptionSections(descriptionSections.filter((s) => s.key !== key));
+  };
+
+  const addItemToSection = (sectionIndex: number) => {
+    const updated = [...descriptionSections];
+    updated[sectionIndex].items.push({ subtitle: "", text: "" });
+    setDescriptionSections(updated);
+  };
+
+  const removeItemFromSection = (sectionIndex: number, itemIndex: number) => {
+    const updated = [...descriptionSections];
+    updated[sectionIndex].items.splice(itemIndex, 1);
+    setDescriptionSections(updated);
   };
 
   return (
@@ -331,53 +311,36 @@ mainImageUrl = await uploadFileToServer(
         form.resetFields();
         setMainImageList([]);
         setSubImageList([]);
-setCertList([]);
+        setCertList([]);
+        setDescriptionSections([]);
       }}
       footer={null}
       width={1100}
       destroyOnClose
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        {/* Basic product info */}
         <Divider orientation="left">Thông tin sản phẩm</Divider>
-
         <Row gutter={24}>
           <Col span={12}>
-            <Form.Item
-              name="name"
-              label="Tên sản phẩm"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên sản phẩm" },
-              ]}
-            >
+            {/* Name, price, quantity, unit, category, origin, mfg/exp date, active, description */}
+            <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
               <Input size="large" />
             </Form.Item>
 
             <Row gutter={12}>
               <Col span={12}>
-                <Form.Item
-                  name="price"
-                  label="Giá bán (₫)"
-                  rules={[{ required: true, message: "Vui lòng nhập giá" }]}
-                >
+                <Form.Item name="price" label="Giá bán (₫)" rules={[{ required: true }]}>
                   <InputNumber
                     style={{ width: "100%" }}
                     min={0}
                     size="large"
-                    formatter={(v) =>
-                      `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
+                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   />
                 </Form.Item>
               </Col>
-
               <Col span={12}>
-                <Form.Item
-                  name="quantity"
-                  label="Số lượng tồn"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập số lượng" },
-                  ]}
-                >
+                <Form.Item name="quantity" label="Số lượng tồn" rules={[{ required: true }]}>
                   <InputNumber style={{ width: "100%" }} min={0} size="large" />
                 </Form.Item>
               </Col>
@@ -385,11 +348,7 @@ setCertList([]);
 
             <Row gutter={12}>
               <Col span={12}>
-                <Form.Item
-                  name="unitId"
-                  label="Đơn vị"
-                  rules={[{ required: true, message: "Vui lòng chọn đơn vị" }]}
-                >
+                <Form.Item name="unitId" label="Đơn vị" rules={[{ required: true }]}>
                   <Select size="large">
                     {units.map((u) => (
                       <Select.Option key={u.id} value={u.id}>
@@ -399,15 +358,8 @@ setCertList([]);
                   </Select>
                 </Form.Item>
               </Col>
-
               <Col span={12}>
-                <Form.Item
-                  name="categoryId"
-                  label="Danh mục"
-                  rules={[
-                    { required: true, message: "Vui lòng chọn danh mục" },
-                  ]}
-                >
+                <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true }]}>
                   <Select size="large" placeholder="Chọn danh mục">
                     {categories.map((c) => (
                       <Select.Option key={c.id} value={c.id}>
@@ -422,9 +374,6 @@ setCertList([]);
             <Form.Item name="origin_address" label="Xuất xứ">
               <Input size="large" />
             </Form.Item>
-<Form.Item name="description" label="Mô tả sản phẩm">
-              <TextArea rows={3} />
-            </Form.Item>
 
             <Row gutter={12}>
               <Col span={12}>
@@ -432,7 +381,6 @@ setCertList([]);
                   <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
                 </Form.Item>
               </Col>
-
               <Col span={12}>
                 <Form.Item name="expDate" label="Hạn sử dụng">
                   <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
@@ -446,14 +394,13 @@ setCertList([]);
           </Col>
 
           <Col span={12}>
+            {/* Images */}
             <Form.Item label="Ảnh đại diện (bắt buộc)" required>
               <ImgCrop rotationSlider>
                 <Upload
                   listType="picture-card"
                   fileList={mainImageList}
-                  onChange={({ fileList }) =>
-                    setMainImageList(fileList.slice(-1))
-                  }
+                  onChange={({ fileList }) => setMainImageList(fileList.slice(-1))}
                   beforeUpload={() => false}
                   maxCount={1}
                 >
@@ -487,10 +434,100 @@ setCertList([]);
           </Col>
         </Row>
 
+        {/* Description Sections */}
+        <Divider orientation="left">Mô tả sản phẩm</Divider>
+        <Space direction="vertical" size={16} style={{ width: "100%" }}>
+          {descriptionSections.map((section, sIdx) => (
+            <Card
+              key={section.key}
+              size="small"
+              title={
+                <Input
+                  placeholder="Tiêu đề section"
+                  value={section.heading}
+                  onChange={(e) => {
+                    const updated = [...descriptionSections];
+                    updated[sIdx].heading = e.target.value;
+                    setDescriptionSections(updated);
+                  }}
+                />
+              }
+              extra={
+                descriptionSections.length > 1 && (
+                  <Popconfirm
+                    title="Xóa section này?"
+                    onConfirm={() => removeDescriptionSection(section.key)}
+                  >
+                    <Button danger size="small" icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                )
+              }
+            >
+              {section.items.map((item, iIdx) => (
+                <Card
+                  key={iIdx}
+                  type="inner"
+                  style={{ marginBottom: 8 }}
+                  title={
+                    <Input
+                      placeholder="Subtitle"
+                      value={item.subtitle}
+                      onChange={(e) => {
+                        const updated = [...descriptionSections];
+                        updated[sIdx].items[iIdx].subtitle = e.target.value;
+                        setDescriptionSections(updated);
+                      }}
+                    />
+                  }
+                  extra={
+                    section.items.length > 1 && (
+                      <Popconfirm
+                        title="Xóa item này?"
+                        onConfirm={() => removeItemFromSection(sIdx, iIdx)}
+                      >
+                        <Button danger size="small" icon={<DeleteOutlined />} />
+                      </Popconfirm>
+                    )
+                  }
+                >
+                  <TextArea
+                    placeholder="Text"
+                    value={item.text}
+                    onChange={(e) => {
+                      const updated = [...descriptionSections];
+                      updated[sIdx].items[iIdx].text = e.target.value;
+                      setDescriptionSections(updated);
+                    }}
+                    rows={2}
+                  />
+                </Card>
+              ))}
+              <Button
+                type="dashed"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => addItemToSection(sIdx)}
+                block
+              >
+                Thêm item
+              </Button>
+            </Card>
+          ))}
+        </Space>
+        <Button
+          type="dashed"
+          onClick={addDescriptionSection}
+          block
+          icon={<PlusOutlined />}
+          style={{ marginTop: 8 }}
+        >
+          Thêm section
+        </Button>
+
+        {/* Certificates */}
         <Divider orientation="left">
           <SafetyCertificateOutlined /> Chứng nhận sản phẩm
         </Divider>
-
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
           {certList.map((cert, index) => (
             <Card
@@ -501,34 +538,24 @@ setCertList([]);
                 certList.length > 1 && (
                   <Popconfirm
                     title="Xóa chứng chỉ này?"
-                    onConfirm={() => removeCert(cert.key)}
+                    onConfirm={() => setCertList(certList.filter((c) => c.key !== cert.key))}
                   >
                     <Button danger size="small" icon={<DeleteOutlined />} />
                   </Popconfirm>
                 )
               }
             >
-<Row gutter={16}>
+              <Row gutter={16}>
                 <Col span={8}>
                   <Select
                     placeholder="Chọn loại chứng chỉ"
                     value={cert.certificateId}
                     onChange={(v) => {
                       const updated = [...certList];
-                      updated[index] = {
-                        ...updated[index],
-                        certificateId: v,
-                      };
+                      updated[index].certificateId = v;
                       setCertList(updated);
                     }}
                     style={{ width: "100%" }}
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      (option?.children as string)
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
                   >
                     {certOptions.map((c) => (
                       <Select.Option key={c.id} value={c.id}>
@@ -537,22 +564,17 @@ setCertList([]);
                     ))}
                   </Select>
                 </Col>
-
                 <Col span={6}>
                   <Input
                     placeholder="Số chứng chỉ"
                     value={cert.certNo}
                     onChange={(e) => {
                       const updated = [...certList];
-                      updated[index] = {
-                        ...updated[index],
-                        certNo: e.target.value,
-                      };
+                      updated[index].certNo = e.target.value;
                       setCertList(updated);
                     }}
                   />
                 </Col>
-
                 <Col span={5}>
                   <DatePicker
                     style={{ width: "100%" }}
@@ -561,25 +583,18 @@ setCertList([]);
                     value={cert.certDate}
                     onChange={(d) => {
                       const updated = [...certList];
-                      updated[index] = {
-                        ...updated[index],
-                        certDate: d,
-                      };
+                      updated[index].certDate = d;
                       setCertList(updated);
                     }}
                   />
                 </Col>
-
                 <Col span={5}>
                   <Upload
                     listType="picture-card"
                     fileList={cert.fileList}
                     onChange={({ fileList }) => {
                       const updated = [...certList];
-                      updated[index] = {
-                        ...updated[index],
-                        fileList: fileList.slice(-1),
-                      };
+                      updated[index].fileList = fileList.slice(-1);
                       setCertList(updated);
                     }}
                     beforeUpload={() => false}
@@ -589,7 +604,7 @@ setCertList([]);
                     {cert.fileList.length === 0 && (
                       <div style={{ fontSize: 12 }}>
                         <UploadOutlined />
-<div style={{ marginTop: 4 }}>Ảnh/PDF</div>
+                        <div style={{ marginTop: 4 }}>Ảnh/PDF</div>
                       </div>
                     )}
                   </Upload>
@@ -598,15 +613,13 @@ setCertList([]);
             </Card>
           ))}
         </Space>
-
         <div style={{ marginTop: 16, textAlign: "center" }}>
-          <Button type="dashed" onClick={addCert} block icon={<PlusOutlined />}>
+          <Button type="dashed" onClick={() => setCertList([...certList, { key: Date.now(), certificateId: undefined, fileList: [] }])} block icon={<PlusOutlined />}>
             Thêm chứng chỉ
           </Button>
         </div>
 
         <Divider />
-
         <div style={{ textAlign: "right" }}>
           <Button
             onClick={() => {
@@ -617,13 +630,7 @@ setCertList([]);
           >
             Hủy
           </Button>
-
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-            size="large"
-          >
+          <Button type="primary" htmlType="submit" loading={loading} size="large">
             Cập nhật sản phẩm
           </Button>
         </div>

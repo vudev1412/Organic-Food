@@ -40,7 +40,7 @@ public class User {
 
     private boolean active;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
 
@@ -93,5 +93,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Review> reviews;
+
+    @PrePersist
+    public void handleCreateAt(){
+        this.createAt = Instant.now();
+        this.active = true;
+    }
 
 }

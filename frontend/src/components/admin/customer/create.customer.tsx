@@ -75,8 +75,9 @@ const CreateUser = (props: IProps) => {
         member: false,
         user: { id: userId },
       });
+      console.log(resProfile);
 
-      if (resProfile?.data?.success === false || !resProfile?.data?.data?.id) {
+      if (resProfile?.data?.statusCode !== 201) {
         const backendError =
           resProfile?.data?.message ||
           "Tạo CustomerProfile thất bại từ backend";

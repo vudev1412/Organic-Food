@@ -24,15 +24,10 @@ const DetailEmployee = (props: IProps) => {
     setDataViewDetail(null);
   };
 
-  const formatUserId = (entity: ICustomerTable) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-    if (id < 10) return `NV00${id}`;
-    if (id < 100) return `NV0${id}`;
-    if (id < 1000) return `NV${id}`;
-    return `NV${id}`;
-  };
+  const formatUserId = (id?: number | null) => {
+  if (id == null) return "-";
+  return `NV${id.toString().padStart(6, "0")}`;
+};
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "-";
@@ -48,7 +43,7 @@ const DetailEmployee = (props: IProps) => {
     >
       <Descriptions title="Thông tin user" bordered column={2}>
         <Descriptions.Item label="Mã" span={2}>
-          {formatUserId(dataViewDetail)}
+          {formatUserId(dataViewDetail?.id)}
         </Descriptions.Item>
 
         <Descriptions.Item label="Tên" span={2}>

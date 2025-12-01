@@ -9,17 +9,11 @@ interface IProps {
   setData: (v: ISupplier | null) => void;
 }
 const DetailSupplier = ({ open, setOpen, data, setData }: IProps) => {
-  const formatSupplierId = (entity: ISupplier) => {
-    if (!entity?.id) return "Không có ID";
-
-    const id = entity.id;
-
-    if (id < 10) return `NCC00${id}`;
-    if (id < 100) return `NCC0${id}`;
-    if (id < 1000) return `NCC${id}`;
-
-    return `NCC${id}`;
+  const formatSupplierId = (id?: number | null) => {
+    if (id == null) return "-";
+    return `NCC${id.toString().padStart(6, "0")}`;
   };
+
   return (
     <Drawer
       title="Chi tiết Supplier"
@@ -32,7 +26,7 @@ const DetailSupplier = ({ open, setOpen, data, setData }: IProps) => {
     >
       <Descriptions bordered column={1}>
         <Descriptions.Item label="Mã">
-          {formatSupplierId(data)}
+          {formatSupplierId(data?.id)}
         </Descriptions.Item>
         <Descriptions.Item label="Tên">{data?.name}</Descriptions.Item>
         {/* <Descriptions.Item label="Mã">{data?.code}</Descriptions.Item> */}
