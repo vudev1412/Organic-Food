@@ -7,6 +7,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 public class CorsConfig {
@@ -14,14 +15,20 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:4173",
-                "http://localhost:5173"
-        ));
+
+        // ✅ QUAN TRỌNG: Dùng setAllowedOriginPatterns thay vì setAllowedOrigins
+        // Dấu "*" ở đây nghĩa là chấp nhận mọi nguồn (Ngrok, LAN, Localhost...)
+        corsConfiguration.setAllowedOriginPatterns(Collections.singletonList("*"));
+
+        // Các method cho phép
         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        corsConfiguration.setAllowedHeaders(Arrays.asList("*"));
+
+        // Cho phép mọi header (bao gồm cả header riêng của Ngrok)
+        corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
+
+        // Cho phép gửi credentials (Cookie, Auth Header)
         corsConfiguration.setAllowCredentials(true);
+
         corsConfiguration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -29,4 +36,3 @@ public class CorsConfig {
         return source;
     }
 }
-
