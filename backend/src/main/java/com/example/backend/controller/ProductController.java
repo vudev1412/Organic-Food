@@ -1,11 +1,15 @@
     package com.example.backend.controller;
 
     import com.example.backend.domain.Product;
+    import com.example.backend.domain.ProductCertificate;
     import com.example.backend.domain.request.ReqProductDTO;
     import com.example.backend.domain.response.*;
     import com.example.backend.service.impl.ProductService;
     import com.example.backend.util.annotation.ApiMessage;
     import com.turkraft.springfilter.boot.Filter;
+    import jakarta.persistence.criteria.Predicate;
+    import jakarta.persistence.criteria.Root;
+    import jakarta.persistence.criteria.Subquery;
     import jakarta.validation.Valid;
     import org.springframework.data.domain.Pageable;
     import org.springframework.data.jpa.domain.Specification;
@@ -40,20 +44,43 @@
 
             return ResponseEntity.ok(productService.getAllProducts(spec, pageable));
         }
-        @GetMapping("/products/active")
-        @ApiMessage("fetch all active products with pagination")
+        @GetMapping("/products/active") // Hoặc endpoint category tương ứng
         public ResponseEntity<ResultPaginationDTO> getAllActiveProducts(
                 @Filter Specification<Product> spec,
-                Pageable pageable
+                Pageable pageable,
+                @RequestParam(required = false) List<Long> certificateIds
         ) {
-            // 1. Tạo điều kiện lọc: active = true
-            Specification<Product> isActiveSpec = (root, query, criteriaBuilder) ->
+            Specification<Product> conditions = (root, query, criteriaBuilder) ->
                     criteriaBuilder.equal(root.get("active"), true);
 
-            // 2. Kết hợp với các bộ lọc khác từ client (nếu có)
-            Specification<Product> finalSpec = spec != null ? spec.and(isActiveSpec) : isActiveSpec;
+            // [LOGIC MỚI] Lọc theo điều kiện AND (Phải có tất cả chứng chỉ)
+            if (certificateIds != null && !certificateIds.isEmpty()) {
+                Specification<Product> certificateSpec = (root, query, criteriaBuilder) -> {
+                    // Khởi tạo điều kiện AND ban đầu
+                    Predicate finalPredicate = criteriaBuilder.conjunction();
 
-            // 3. Gọi service (tái sử dụng hàm getAllProducts có sẵn vì nó nhận Specification)
+                    // Duyệt qua từng ID chứng chỉ được chọn
+                    for (Long certId : certificateIds) {
+                        // Tạo subquery kiểm tra sự tồn tại của từng chứng chỉ
+                        Subquery<Long> subquery = query.subquery(Long.class);
+                        Root<ProductCertificate> subRoot = subquery.from(ProductCertificate.class);
+
+                        subquery.select(subRoot.get("id")); // Select bất kỳ trường nào để check exists
+                        subquery.where(
+                                criteriaBuilder.equal(subRoot.get("product"), root), // Link bảng phụ về Product cha
+                                criteriaBuilder.equal(subRoot.get("certificate").get("id"), certId) // Check ID chứng chỉ
+                        );
+
+                        // Nối điều kiện: AND EXISTS (...)
+                        finalPredicate = criteriaBuilder.and(finalPredicate, criteriaBuilder.exists(subquery));
+                    }
+
+                    return finalPredicate;
+                };
+                conditions = conditions.and(certificateSpec);
+            }
+
+            Specification<Product> finalSpec = spec != null ? spec.and(conditions) : conditions;
             return ResponseEntity.ok(this.productService.getAllProducts(finalSpec, pageable));
         }
         @GetMapping("/products/{id}")
@@ -85,22 +112,37 @@
         ) {
             return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id, spec, pageable));
         }
+        // API lọc theo category tương tự
         @GetMapping("/product/category/{id}/active")
         @ApiMessage("fetch all active products by category id with pagination")
         public ResponseEntity<ResultPaginationDTO> getActiveProductByCategoryId(
                 @PathVariable Long id,
                 @Filter Specification<Product> spec,
-                Pageable pageable
+                Pageable pageable,
+                @RequestParam(required = false) List<Long> certificateIds
         ) {
-            // 1. Tạo điều kiện lọc: Trường 'active' trong Product Entity phải là true
-            Specification<Product> isActiveSpec = (root, query, criteriaBuilder) ->
+            Specification<Product> conditions = (root, query, criteriaBuilder) ->
                     criteriaBuilder.equal(root.get("active"), true);
 
-            // 2. Kết hợp với các bộ lọc khác (nếu có) từ client gửi lên (biến spec)
-            // Nếu spec ban đầu null thì chỉ dùng isActiveSpec, ngược lại thì dùng AND
-            Specification<Product> finalSpec = spec != null ? spec.and(isActiveSpec) : isActiveSpec;
+            if (certificateIds != null && !certificateIds.isEmpty()) {
+                Specification<Product> certificateSpec = (root, query, criteriaBuilder) -> {
+                    Predicate finalPredicate = criteriaBuilder.conjunction();
+                    for (Long certId : certificateIds) {
+                        Subquery<Long> subquery = query.subquery(Long.class);
+                        Root<ProductCertificate> subRoot = subquery.from(ProductCertificate.class);
+                        subquery.select(subRoot.get("id"));
+                        subquery.where(
+                                criteriaBuilder.equal(subRoot.get("product"), root),
+                                criteriaBuilder.equal(subRoot.get("certificate").get("id"), certId)
+                        );
+                        finalPredicate = criteriaBuilder.and(finalPredicate, criteriaBuilder.exists(subquery));
+                    }
+                    return finalPredicate;
+                };
+                conditions = conditions.and(certificateSpec);
+            }
 
-            // 3. Gọi service (Service sẽ xử lý việc lọc theo categoryId = id và finalSpec)
+            Specification<Product> finalSpec = spec != null ? spec.and(conditions) : conditions;
             return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id, finalSpec, pageable));
         }
         @GetMapping("/products/search")

@@ -1,17 +1,22 @@
 import React, { useState } from "react";
 import SortDropdown from "./SortDropdown";
+// Import component mới
+import CertificateDropdown from "./CertificateDropdown";
 import { formatCategoryName } from "../../../utils/format";
 import { Filter, RotateCcw } from "lucide-react";
 
 interface ProductListHeaderProps {
   onSortChange: (sortOption: string) => void;
   onFilterPrice?: (min: number | undefined, max: number | undefined) => void;
+  // Prop mới cho lọc chứng chỉ
+  onFilterCertificate?: (ids: number[]) => void;
   tilte: string;
 }
 
 const ProductListHeader = ({
   onSortChange,
   onFilterPrice,
+  onFilterCertificate,
   tilte,
 }: ProductListHeaderProps) => {
   // State nội bộ cho input giá
@@ -19,17 +24,19 @@ const ProductListHeader = ({
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  // State để reset component con SortDropdown (bằng cách thay đổi key)
-  const [sortResetKey, setSortResetKey] = useState(0);
+  // State nội bộ cho chứng chỉ
+  const [selectedCertIds, setSelectedCertIds] = useState<number[]>([]);
 
-  // Xử lý thay đổi input: Chặn số âm
+  // State để reset component con (bằng cách thay đổi key)
+  const [resetKey, setResetKey] = useState(0);
+
   const handleInputChange =
     (setter: React.Dispatch<React.SetStateAction<string>>) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       if (value === "" || Number(value) >= 0) {
         setter(value);
-        setError(""); // Xóa lỗi khi người dùng sửa
+        setError("");
       }
     };
 
@@ -39,14 +46,23 @@ const ProductListHeader = ({
       const min = minPrice ? Number(minPrice) : undefined;
       const max = maxPrice ? Number(maxPrice) : undefined;
 
-      // Validate logic
       if (min !== undefined && max !== undefined && min >= max) {
         setError("Giá tối đa phải lớn hơn tối thiểu");
         return;
       }
-
       onFilterPrice(min, max);
     }
+
+    // Áp dụng lọc chứng chỉ
+    if (onFilterCertificate) {
+      onFilterCertificate(selectedCertIds);
+    }
+  };
+
+  const handleCertificateChange = (ids: number[]) => {
+    setSelectedCertIds(ids);
+    // Tùy chọn: Có thể gọi lọc ngay lập tức hoặc đợi bấm nút "Áp dụng"
+    // Ở đây tôi chọn đợi bấm "Áp dụng" để đồng bộ với Giá
   };
 
   const handleClearAll = () => {
@@ -54,13 +70,15 @@ const ProductListHeader = ({
     setMinPrice("");
     setMaxPrice("");
     setError("");
+    setSelectedCertIds([]);
 
     // Gọi hàm reset lên cha
     if (onFilterPrice) onFilterPrice(undefined, undefined);
+    if (onFilterCertificate) onFilterCertificate([]);
     onSortChange("default");
 
-    // Force re-render SortDropdown về mặc định
-    setSortResetKey((prev) => prev + 1);
+    // Force re-render các dropdown
+    setResetKey((prev) => prev + 1);
   };
 
   return (
@@ -75,16 +93,17 @@ const ProductListHeader = ({
         </h2>
       </div>
 
-      {/* Toolbar: Bộ lọc giá & Sắp xếp */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-        {/* Khu vực Lọc giá */}
+      {/* Toolbar: Bộ lọc giá & Sắp xếp & Chứng chỉ */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+        {/* Khu vực Lọc */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mr-2">
+            <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mr-1">
               <Filter size={16} />
-              <span className="hidden sm:inline">Lọc giá:</span>
+              <span className="hidden sm:inline">Bộ lọc:</span>
             </div>
 
+            {/* Input Giá */}
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -92,7 +111,7 @@ const ProductListHeader = ({
                 value={minPrice}
                 onChange={handleInputChange(setMinPrice)}
                 min="0"
-                className={`w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 transition-colors ${
+                className={`w-20 sm:w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 transition-colors ${
                   error
                     ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                     : "border-gray-200 focus:border-[#3A5B22] focus:ring-[#3A5B22]"
@@ -105,7 +124,7 @@ const ProductListHeader = ({
                 value={maxPrice}
                 onChange={handleInputChange(setMaxPrice)}
                 min="0"
-                className={`w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 transition-colors ${
+                className={`w-20 sm:w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 transition-colors ${
                   error
                     ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                     : "border-gray-200 focus:border-[#3A5B22] focus:ring-[#3A5B22]"
@@ -113,7 +132,15 @@ const ProductListHeader = ({
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Dropdown Chứng chỉ */}
+            <CertificateDropdown
+              key={`cert-${resetKey}`}
+              selectedIds={selectedCertIds}
+              onCertificateChange={handleCertificateChange}
+            />
+
+            {/* Nút Action */}
+            <div className="flex items-center gap-2 ml-1">
               <button
                 onClick={handleApplyFilter}
                 className="px-4 py-2 bg-[#3A5B22] text-white text-sm font-medium rounded-lg hover:bg-[#2f4a1c] transition-colors shadow-sm active:scale-95 whitespace-nowrap"
@@ -121,8 +148,7 @@ const ProductListHeader = ({
                 Áp dụng
               </button>
 
-              {/* Nút Hủy Lọc */}
-              {(minPrice || maxPrice) && (
+              {(minPrice || maxPrice || selectedCertIds.length > 0) && (
                 <button
                   onClick={handleClearAll}
                   className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors tooltip-trigger"
@@ -134,20 +160,19 @@ const ProductListHeader = ({
             </div>
           </div>
 
-          {/* Thông báo lỗi */}
           {error && (
-            <span className="text-xs text-red-500 font-medium ml-[85px] animate-fade-in">
+            <span className="text-xs text-red-500 font-medium ml-[80px] animate-fade-in">
               {error}
             </span>
           )}
         </div>
 
         {/* Khu vực Sắp xếp */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 mt-2 xl:mt-0">
           <span className="text-sm text-gray-500 hidden sm:inline">
-            Sắp xếp theo:
+            Sắp xếp:
           </span>
-          <SortDropdown key={sortResetKey} onSortChange={onSortChange} />
+          <SortDropdown key={`sort-${resetKey}`} onSortChange={onSortChange} />
         </div>
       </div>
     </div>

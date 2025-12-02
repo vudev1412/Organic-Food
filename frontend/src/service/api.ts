@@ -230,16 +230,42 @@ export const getProductsByCategoryAPI = (
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
 };
 /**
- * Gọi API lấy TẤT CẢ sản phẩm đang Active (cho trang chủ hoặc trang Shop)
- * @param {object} params - Các tham số lọc và phân trang
- * @param {number} [params.page] - Trang hiện tại (bắt đầu từ 1)
- * @param {number} [params.size] - Số lượng item mỗi trang
- * @param {string} [params.sort] - Chuỗi sắp xếp (VD: 'price,asc', 'name,desc')
- * @param {number} [params.minPrice] - Giá thấp nhất
- * @param {number} [params.maxPrice] - Giá cao nhất
+ * Gọi API lấy TẤT CẢ sản phẩm đang Active
  */
 export const fetchAllActiveProducts = (params = {}) => {
-  const { page, size, sort, minPrice, maxPrice } = params;
+  const { page, size, sort, minPrice, maxPrice, certificateIds } = params;
+
+  // 1. Xử lý Filter (Turkraft)
+  const filterParts = [];
+  if (minPrice !== undefined && minPrice !== null) {
+    filterParts.push(`price >= ${minPrice}`);
+  }
+  if (maxPrice !== undefined && maxPrice !== null) {
+    filterParts.push(`price <= ${maxPrice}`);
+  }
+  const filterString = filterParts.join(" and ");
+
+  // 2. Tạo Query String
+  const queryParams = new URLSearchParams();
+
+  if (page) queryParams.append("page", page);
+  if (size) queryParams.append("size", size);
+  if (sort) queryParams.append("sort", sort);
+  if (filterString) queryParams.append("filter", filterString);
+
+  // [MỚI] Xử lý mảng certificateIds -> chuyển thành chuỗi cách nhau dấu phẩy
+  if (certificateIds && certificateIds.length > 0) {
+    queryParams.append("certificateIds", certificateIds.join(","));
+  }
+
+  return axios.get(`/api/v1/products/active?${queryParams.toString()}`);
+};
+
+/**
+ * Gọi API lấy sản phẩm Active theo Category
+ */
+export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
+  const { page, size, sort, minPrice, maxPrice, certificateIds } = params;
 
   // 1. Xử lý Filter
   const filterParts = [];
@@ -256,65 +282,21 @@ export const fetchAllActiveProducts = (params = {}) => {
 
   if (page) queryParams.append("page", page);
   if (size) queryParams.append("size", size);
+  if (sort) queryParams.append("sort", sort);
+  if (filterString) queryParams.append("filter", filterString);
 
-  if (sort) {
-    queryParams.append("sort", sort);
+  // [MỚI] Xử lý mảng certificateIds cho API theo Category
+  if (certificateIds && certificateIds.length > 0) {
+    queryParams.append("certificateIds", certificateIds.join(","));
   }
 
-  if (filterString) {
-    queryParams.append("filter", filterString);
-  }
-
-  // Gọi API lấy tất cả active
-  return axios.get(`/api/v1/products/active?${queryParams.toString()}`);
-};
-/**
- * Gọi API lấy sản phẩm Active theo Category
- * @param {number} categoryId - ID của danh mục
- * @param {object} params - Các tham số lọc và phân trang
- * @param {number} [params.page] - Trang hiện tại (bắt đầu từ 1)
- * @param {number} [params.size] - Số lượng item mỗi trang
- * @param {string} [params.sort] - Chuỗi sắp xếp (VD: 'price,asc', 'name,desc')
- * @param {number} [params.minPrice] - Giá thấp nhất
- * @param {number} [params.maxPrice] - Giá cao nhất
- */
-export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
-  const { page, size, sort, minPrice, maxPrice } = params;
-
-  // 1. Xử lý Filter (theo cú pháp Turkraft Spring Filter)
-  // Cú pháp thường gặp: "price >= 100000 and price <= 500000"
-  const filterParts = [];
-  if (minPrice !== undefined && minPrice !== null) {
-    filterParts.push(`price >= ${minPrice}`);
-  }
-  if (maxPrice !== undefined && maxPrice !== null) {
-    filterParts.push(`price <= ${maxPrice}`);
-  }
-  const filterString = filterParts.join(" and ");
-
-  // 2. Tạo Query String
-  const queryParams = new URLSearchParams();
-
-  // Mapping page của Spring bắt đầu từ 0, nếu frontend gửi từ 1 thì trừ đi 1
-  if (page) queryParams.append("page", page);
-  if (size) queryParams.append("size", size);
-
-  // Xử lý Sort (Spring Pageable format: field,direction)
-  // Frontend có thể truyền: 'price,asc', 'price,desc', 'name,asc'
-  if (sort) {
-    queryParams.append("sort", sort);
-  }
-
-  // Xử lý Filter
-  if (filterString) {
-    queryParams.append("filter", filterString);
-  }
-
-  // Gọi API
-  // Kết quả URL sẽ dạng: /api/v1/product/category/1/active?page=0&size=10&sort=price,desc&filter=price>=1000
   return axios.get(
     `/api/v1/product/category/${categoryId}/active?${queryParams.toString()}`
   );
+};
+
+export const getCertificatesAPI = () => {
+  return axios.get("/api/v1/certificates");
 };
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;

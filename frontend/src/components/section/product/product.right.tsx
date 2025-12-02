@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 // Import API mới từ service đã chỉnh sửa
-
+import {
+  fetchActiveProductsByCategory,
+  fetchAllActiveProducts,
+} from "../../../service/api";
 import { useCurrentApp } from "../../context/app.context";
 
 // Import các component con
@@ -8,10 +11,6 @@ import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
 import QuantityModal from "./QuantityModal";
 import ProductListHeader from "./ProductListHeader";
-import {
-  fetchActiveProductsByCategory,
-  fetchAllActiveProducts,
-} from "../../../service/api";
 
 interface ProductRightProps {
   selectedCategoryId: number | null;
@@ -26,15 +25,18 @@ const ProductRight = ({
 
   // --- STATE QUẢN LÝ ---
   const [products, setProducts] = useState<IProductCard[]>([]);
-  // Backend trang 1 -> UI trang 1 (để đồng bộ dễ hơn, ta khởi tạo là 1)
+  // Backend trang 1 -> UI trang 1
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(6);
   const [totalPages, setTotalPages] = useState(0);
   const [sortOption, setSortOption] = useState("default");
 
-  // State lọc giá [MỚI]
+  // State lọc giá
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+
+  // [MỚI] State lọc theo chứng chỉ
+  const [selectedCertIds, setSelectedCertIds] = useState<number[]>([]);
 
   const [selectedProduct, setSelectedProduct] = useState<IProductCard | null>(
     null
@@ -43,33 +45,37 @@ const ProductRight = ({
     IDiscount | undefined
   >(undefined);
 
-  // Khi danh mục thay đổi, reset về trang 1 và xóa bộ lọc giá (nếu muốn)
+  // Khi danh mục thay đổi, reset về trang 1
   useEffect(() => {
     setCurrentPage(1);
-    // setMinPrice(undefined); // Uncomment nếu muốn reset giá khi đổi danh mục
+    // Tùy chọn: Reset bộ lọc khi đổi danh mục
+    // setMinPrice(undefined);
     // setMaxPrice(undefined);
+    // setSelectedCertIds([]);
   }, [selectedCategoryId]);
 
   // --- LOGIC GỌI API ---
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Xử lý sort param chuẩn format Spring: field,direction
+        // Xử lý sort param
         let sortParam = "";
         if (sortOption === "price_asc") {
           sortParam = "price,asc";
         } else if (sortOption === "price_desc") {
           sortParam = "price,desc";
         } else if (sortOption === "name_asc") {
-          sortParam = "name,asc"; // Ví dụ thêm sort theo tên
+          sortParam = "name,asc";
         }
 
+        // Tạo object params chung
         const commonParams = {
           page: currentPage,
           size: pageSize,
           sort: sortParam,
           minPrice: minPrice,
           maxPrice: maxPrice,
+          certificateIds: selectedCertIds, // [MỚI] Truyền danh sách ID chứng chỉ
         };
 
         let response;
@@ -112,7 +118,8 @@ const ProductRight = ({
     selectedCategoryId,
     minPrice,
     maxPrice,
-  ]); // Thêm minPrice, maxPrice vào dependency
+    selectedCertIds, // [MỚI] Thêm dependency
+  ]);
 
   // --- HANDLERS ---
   const handleShowQuantityModal = (
@@ -148,21 +155,27 @@ const ProductRight = ({
 
   const handleSortChange = (option: string) => {
     setSortOption(option);
-    setCurrentPage(1); // Reset về trang 1 khi sort
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // [MỚI] Hàm xử lý khi người dùng lọc giá (truyền xuống Header hoặc Sidebar)
+  // Hàm xử lý khi lọc giá
   const handlePriceFilterChange = (
     min: number | undefined,
     max: number | undefined
   ) => {
     setMinPrice(min);
     setMaxPrice(max);
-    setCurrentPage(1); // Reset về trang 1 khi lọc
+    setCurrentPage(1);
+  };
+
+  // [MỚI] Hàm xử lý khi lọc chứng chỉ
+  const handleCertificateFilterChange = (ids: number[]) => {
+    setSelectedCertIds(ids);
+    setCurrentPage(1);
   };
 
   // --- RENDER ---
@@ -177,8 +190,9 @@ const ProductRight = ({
 
       <ProductListHeader
         onSortChange={handleSortChange}
-        // Thêm prop để lọc giá
         onFilterPrice={handlePriceFilterChange}
+        // [MỚI] Truyền handler lọc chứng chỉ xuống Header
+        onFilterCertificate={handleCertificateFilterChange}
         tilte={selectedCategoryId ? selectedCategoryName : "Tất cả sản phẩm"}
       />
 
@@ -186,12 +200,9 @@ const ProductRight = ({
 
       {totalPages > 1 && (
         <Pagination
-          currentPage={currentPage - 1} // Pagination component thường chạy từ 0 index UI, nhưng hiển thị +1. Tùy Pagination component của bạn.
-          // Nếu Pagination của bạn nhận prop currentPage là số hiển thị (1,2,3) thì để currentPage.
-          // Nếu nó nhận index (0,1,2) thì để currentPage - 1.
-          // Giả sử Pagination component của bạn dùng 0-indexed logic nội bộ:
+          currentPage={currentPage - 1} // Convert sang 0-index cho UI nếu cần
           totalPages={totalPages}
-          onPageChange={(page) => handlePageChange(page + 1)} // Convert từ 0-index UI về 1-index logic
+          onPageChange={(page) => handlePageChange(page + 1)} // Convert về 1-index cho Logic
         />
       )}
     </div>

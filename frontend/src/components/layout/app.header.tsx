@@ -154,7 +154,7 @@ const AppHeader = () => {
     ...(user?.role.name === "ADMIN"
       ? [
           {
-            key: "3",
+            key: "4",
             icon: <DashboardOutlined className="text-blue-500" />,
             label: (
               <Link to="/admin" className="font-medium">
@@ -168,7 +168,7 @@ const AppHeader = () => {
     { type: "divider" },
 
     {
-      key: "4",
+      key: "5",
       danger: true,
       icon: <LogoutOutlined />,
       // ✅ Sử dụng hàm logout mới
