@@ -4,6 +4,7 @@ import com.example.backend.domain.*;
 import com.example.backend.domain.key.ReceiptDetailKey;
 import com.example.backend.domain.request.ReqCreateReceiptDTO;
 import com.example.backend.domain.response.*;
+import com.example.backend.domain.response.ProductDTO;
 import com.example.backend.enums.StatusReceipt;
 import com.example.backend.mapper.ReceiptMapper;
 import com.example.backend.repository.ProductRepository;

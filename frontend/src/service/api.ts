@@ -62,9 +62,8 @@ export const createUserAPI = (
   name: string,
   email: string,
   phone: string,
-  roleName?:string,
-  password?:string
-
+  roleName?: string,
+  password?: string
 ) => {
   const urlBackend = `/api/v1/users`;
   return axios.post<IBackendRes<IRegister>>(urlBackend, {
@@ -73,8 +72,7 @@ export const createUserAPI = (
     phone,
 
     roleName,
-    password
-
+    password,
   });
 };
 
@@ -230,6 +228,93 @@ export const getProductsByCategoryAPI = (
   }
 
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+};
+/**
+ * Gọi API lấy TẤT CẢ sản phẩm đang Active (cho trang chủ hoặc trang Shop)
+ * @param {object} params - Các tham số lọc và phân trang
+ * @param {number} [params.page] - Trang hiện tại (bắt đầu từ 1)
+ * @param {number} [params.size] - Số lượng item mỗi trang
+ * @param {string} [params.sort] - Chuỗi sắp xếp (VD: 'price,asc', 'name,desc')
+ * @param {number} [params.minPrice] - Giá thấp nhất
+ * @param {number} [params.maxPrice] - Giá cao nhất
+ */
+export const fetchAllActiveProducts = (params = {}) => {
+  const { page, size, sort, minPrice, maxPrice } = params;
+
+  // 1. Xử lý Filter
+  const filterParts = [];
+  if (minPrice !== undefined && minPrice !== null) {
+    filterParts.push(`price >= ${minPrice}`);
+  }
+  if (maxPrice !== undefined && maxPrice !== null) {
+    filterParts.push(`price <= ${maxPrice}`);
+  }
+  const filterString = filterParts.join(" and ");
+
+  // 2. Tạo Query String
+  const queryParams = new URLSearchParams();
+
+  if (page) queryParams.append("page", page);
+  if (size) queryParams.append("size", size);
+
+  if (sort) {
+    queryParams.append("sort", sort);
+  }
+
+  if (filterString) {
+    queryParams.append("filter", filterString);
+  }
+
+  // Gọi API lấy tất cả active
+  return axios.get(`/api/v1/products/active?${queryParams.toString()}`);
+};
+/**
+ * Gọi API lấy sản phẩm Active theo Category
+ * @param {number} categoryId - ID của danh mục
+ * @param {object} params - Các tham số lọc và phân trang
+ * @param {number} [params.page] - Trang hiện tại (bắt đầu từ 1)
+ * @param {number} [params.size] - Số lượng item mỗi trang
+ * @param {string} [params.sort] - Chuỗi sắp xếp (VD: 'price,asc', 'name,desc')
+ * @param {number} [params.minPrice] - Giá thấp nhất
+ * @param {number} [params.maxPrice] - Giá cao nhất
+ */
+export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
+  const { page, size, sort, minPrice, maxPrice } = params;
+
+  // 1. Xử lý Filter (theo cú pháp Turkraft Spring Filter)
+  // Cú pháp thường gặp: "price >= 100000 and price <= 500000"
+  const filterParts = [];
+  if (minPrice !== undefined && minPrice !== null) {
+    filterParts.push(`price >= ${minPrice}`);
+  }
+  if (maxPrice !== undefined && maxPrice !== null) {
+    filterParts.push(`price <= ${maxPrice}`);
+  }
+  const filterString = filterParts.join(" and ");
+
+  // 2. Tạo Query String
+  const queryParams = new URLSearchParams();
+
+  // Mapping page của Spring bắt đầu từ 0, nếu frontend gửi từ 1 thì trừ đi 1
+  if (page) queryParams.append("page", page);
+  if (size) queryParams.append("size", size);
+
+  // Xử lý Sort (Spring Pageable format: field,direction)
+  // Frontend có thể truyền: 'price,asc', 'price,desc', 'name,asc'
+  if (sort) {
+    queryParams.append("sort", sort);
+  }
+
+  // Xử lý Filter
+  if (filterString) {
+    queryParams.append("filter", filterString);
+  }
+
+  // Gọi API
+  // Kết quả URL sẽ dạng: /api/v1/product/category/1/active?page=0&size=10&sort=price,desc&filter=price>=1000
+  return axios.get(
+    `/api/v1/product/category/${categoryId}/active?${queryParams.toString()}`
+  );
 };
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
@@ -849,7 +934,6 @@ export const uploadReturnFileAPI = (file: File, folder: string) => {
   formData.append("file", file);
   formData.append("folder", folder);
 
-
   return axios.post<string>(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/files`,
     formData,
@@ -895,19 +979,26 @@ export const createRoleAPI = (roleName: string) => {
 export const deleteRoleAPI = (roleName: string) => {
   return axios.delete(`/api/v1/roles/${roleName}`);
 };
-export const addPermissionToRoleAPI = (roleName: string, permissionName: string) => {
+export const addPermissionToRoleAPI = (
+  roleName: string,
+  permissionName: string
+) => {
   return axios.post(`/api/v1/roles/${roleName}/permissions/${permissionName}`);
 };
-export const updatePermissionsForRoleAPI = (roleName: string, permissions: string[]) => {
+export const updatePermissionsForRoleAPI = (
+  roleName: string,
+  permissions: string[]
+) => {
   return axios.put(`/api/v1/roles/${roleName}/permissions`, permissions);
 };
 export const getAllPermissionsAPI = () => {
   return axios.get("/api/v1/permissions");
 };
 
-
 export const getNewCustomersThisMonthAPI = (month: number, year: number) => {
-  return axios.get(`/api/v1/dashboard/stats/new-customers?month=${month}&year=${year}`);
+  return axios.get(
+    `/api/v1/dashboard/stats/new-customers?month=${month}&year=${year}`
+  );
 };
 
 export const getOrderMonthAPI = (month: number, year: number) => {
@@ -961,4 +1052,3 @@ export interface IOrderDTO {
   total: number;
   status: string;
 }
-

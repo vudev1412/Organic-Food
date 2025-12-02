@@ -40,6 +40,22 @@
 
             return ResponseEntity.ok(productService.getAllProducts(spec, pageable));
         }
+        @GetMapping("/products/active")
+        @ApiMessage("fetch all active products with pagination")
+        public ResponseEntity<ResultPaginationDTO> getAllActiveProducts(
+                @Filter Specification<Product> spec,
+                Pageable pageable
+        ) {
+            // 1. Tạo điều kiện lọc: active = true
+            Specification<Product> isActiveSpec = (root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("active"), true);
+
+            // 2. Kết hợp với các bộ lọc khác từ client (nếu có)
+            Specification<Product> finalSpec = spec != null ? spec.and(isActiveSpec) : isActiveSpec;
+
+            // 3. Gọi service (tái sử dụng hàm getAllProducts có sẵn vì nó nhận Specification)
+            return ResponseEntity.ok(this.productService.getAllProducts(finalSpec, pageable));
+        }
         @GetMapping("/products/{id}")
         public ResponseEntity<ResGetAllProductDTO> getProductById(@PathVariable Long id){
             return ResponseEntity.ok().body(this.productService.handleGetProductById(id));
@@ -68,6 +84,24 @@
                 Pageable pageable
         ) {
             return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id, spec, pageable));
+        }
+        @GetMapping("/product/category/{id}/active")
+        @ApiMessage("fetch all active products by category id with pagination")
+        public ResponseEntity<ResultPaginationDTO> getActiveProductByCategoryId(
+                @PathVariable Long id,
+                @Filter Specification<Product> spec,
+                Pageable pageable
+        ) {
+            // 1. Tạo điều kiện lọc: Trường 'active' trong Product Entity phải là true
+            Specification<Product> isActiveSpec = (root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("active"), true);
+
+            // 2. Kết hợp với các bộ lọc khác (nếu có) từ client gửi lên (biến spec)
+            // Nếu spec ban đầu null thì chỉ dùng isActiveSpec, ngược lại thì dùng AND
+            Specification<Product> finalSpec = spec != null ? spec.and(isActiveSpec) : isActiveSpec;
+
+            // 3. Gọi service (Service sẽ xử lý việc lọc theo categoryId = id và finalSpec)
+            return ResponseEntity.ok().body(this.productService.handleGetProductByCategoryId(id, finalSpec, pageable));
         }
         @GetMapping("/products/search")
         @ApiMessage("Search products by name startWith and get best promotion")

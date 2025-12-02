@@ -11,13 +11,12 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  AlertCircle,
 } from "lucide-react";
 
-// Giữ nguyên import API và Context
 import { loginAPI } from "../../service/api";
 import { useCurrentApp } from "../../components/context/app.context";
 
-// Assets (Logo MXH)
 import fb from "../../assets/png/facebook.png";
 import gg from "../../assets/png/google.png";
 
@@ -29,7 +28,7 @@ const SLIDER_IMAGES = [
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { showToast, setIsAuthenticated, setUser } = useCurrentApp(); // Giả sử bạn dùng showToast từ context thay cho Antd notification
+  const { showToast, setIsAuthenticated, setUser } = useCurrentApp();
 
   // --- STATE ---
   const [username, setUsername] = useState("");
@@ -37,6 +36,9 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
+
+  // State lỗi hiển thị tại Input
+  const [usernameError, setUsernameError] = useState("");
 
   // Slider Auto-play
   useEffect(() => {
@@ -46,18 +48,57 @@ const SignIn = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // --- HANDLER ---
+  // --- VALIDATION HELPER ---
+  const validateInput = (input: string) => {
+    if (!input) return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
+    return emailRegex.test(input) || phoneRegex.test(input);
+  };
+
+  // --- HANDLERS ---
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const cleanVal = val.replace(/\s/g, ""); // Xóa khoảng trắng
+
+    setUsername(cleanVal);
+    if (usernameError) setUsernameError("");
+  };
+
+  const handleUsernameBlur = () => {
+    if (username && !validateInput(username)) {
+      setUsernameError("Email hoặc SĐT không đúng định dạng");
+    }
+  };
+
+  // --- SUBMIT HANDLER ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username || !password) {
+    // 1. Validate
+    if (!username.trim() || !password) {
       showToast("Vui lòng nhập tài khoản và mật khẩu", "error");
       return;
     }
 
+    if (!validateInput(username)) {
+      setUsernameError("Email hoặc SĐT không đúng định dạng");
+      return;
+    }
+
+    // 2. Chuẩn hóa dữ liệu trước khi gửi API
+    // Nếu là SĐT bắt đầu bằng +84 -> đổi thành 0
+    let submitUsername = username;
+    if (submitUsername.startsWith("+84")) {
+      submitUsername = "0" + submitUsername.slice(3);
+    }
+
     setLoading(true);
     try {
-      const res = await loginAPI(username, password);
+      // Truyền submitUsername (đã chuẩn hóa) vào API
+      const res = await loginAPI(submitUsername, password);
+
       if (res?.data) {
         setIsAuthenticated(true);
         setUser(res.data.data.userLogin);
@@ -81,7 +122,7 @@ const SignIn = () => {
   return (
     <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center p-4 font-sans relative">
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[500px] transition-all duration-300">
-        {/* LEFT SIDE: SLIDER (Giống SignUp/ForgotPassword) */}
+        {/* LEFT SIDE: SLIDER */}
         <div className="hidden md:block md:w-[45%] relative overflow-hidden bg-gray-900">
           {SLIDER_IMAGES.map((img, index) => (
             <div
@@ -114,8 +155,6 @@ const SignIn = () => {
                 Đăng nhập để tiếp tục mua sắm những sản phẩm tươi ngon nhất.
               </p>
             </div>
-
-            {/* Slider Dots */}
             <div className="flex gap-2">
               {SLIDER_IMAGES.map((_, idx) => (
                 <div
@@ -131,7 +170,6 @@ const SignIn = () => {
 
         {/* RIGHT SIDE: FORM */}
         <div className="w-full md:w-[55%] p-6 md:p-8 relative flex flex-col justify-center">
-          {/* Mobile Back & Brand */}
           <div className="md:hidden flex items-center justify-between mb-6">
             <Link to="/" className="text-gray-500 hover:text-gray-900">
               <ArrowLeft size={20} />
@@ -142,7 +180,6 @@ const SignIn = () => {
             <div className="w-5"></div>
           </div>
 
-          {/* Header Text */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Đăng nhập</h1>
             <p className="text-gray-500 text-sm">
@@ -155,9 +192,11 @@ const SignIn = () => {
             <InputGroup
               icon={<User />}
               type="text"
-              placeholder="Email hoặc số điện thoại"
+              placeholder="Email hoặc số điện thoại (+84...)"
               value={username}
-              onChange={(e: any) => setUsername(e.target.value)}
+              onChange={handleUsernameChange}
+              onBlur={handleUsernameBlur}
+              error={usernameError}
             />
 
             <div>
@@ -210,13 +249,19 @@ const SignIn = () => {
             </div>
 
             <div className="flex gap-3 mt-2">
-              <button className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors"
+              >
                 <img src={gg} alt="Google" className="w-5 h-5" />
                 <span className="text-sm font-medium text-gray-700">
                   Google
                 </span>
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors"
+              >
                 <img src={fb} alt="Facebook" className="w-5 h-5" />
                 <span className="text-sm font-medium text-gray-700">
                   Facebook
@@ -225,7 +270,6 @@ const SignIn = () => {
             </div>
           </div>
 
-          {/* FOOTER LINK */}
           <div className="mt-8 text-center text-sm text-gray-500">
             Chưa có tài khoản?{" "}
             <Link
@@ -241,33 +285,55 @@ const SignIn = () => {
   );
 };
 
-// Component InputGroup tái sử dụng (Giống SignUp/ForgotPassword)
+// Component InputGroup
 const InputGroup = ({
   icon,
   isPassword,
   showPassword,
   togglePassword,
+  error,
   ...props
 }: any) => {
   return (
     <div className="group relative">
-      <div className="absolute top-1/2 -translate-y-1/2 left-3.5 text-gray-400 group-focus-within:text-[#3A5B22] transition-colors duration-200">
+      <div
+        className={`absolute top-2.5 left-3.5 transition-colors duration-200 ${
+          error
+            ? "text-red-500"
+            : "text-gray-400 group-focus-within:text-[#3A5B22]"
+        }`}
+      >
         {React.cloneElement(icon, { size: 18 })}
       </div>
+
       <input
         {...props}
         className={`w-full pl-10 ${
           isPassword ? "pr-12" : "pr-4"
-        } py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#3A5B22] focus:ring-4 focus:ring-[#3A5B22]/10 outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 font-medium text-sm`}
+        } py-2.5 bg-gray-50 border rounded-xl outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 font-medium text-sm
+          ${
+            error
+              ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500"
+              : "border-gray-200 focus:bg-white focus:border-[#3A5B22] focus:ring-4 focus:ring-[#3A5B22]/10"
+          }
+        `}
       />
+
       {isPassword && (
         <button
           type="button"
           onClick={togglePassword}
-          className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400 hover:text-[#3A5B22] p-1 cursor-pointer"
+          className="absolute top-2.5 right-3 text-gray-400 hover:text-[#3A5B22] p-1 cursor-pointer"
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
+      )}
+
+      {error && (
+        <div className="absolute -bottom-5 left-0 flex items-center gap-1 text-[11px] text-red-500 font-medium animate-fade-in">
+          <AlertCircle size={12} />
+          <span>{error}</span>
+        </div>
       )}
     </div>
   );
