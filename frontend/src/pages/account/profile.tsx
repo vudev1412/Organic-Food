@@ -203,7 +203,7 @@ const Profile = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
   const isMember = user?.customerProfile?.member === true;
-
+  console.log("User Data:", user);
   useEffect(() => {
     if (user) {
       setId(user.id || 0);

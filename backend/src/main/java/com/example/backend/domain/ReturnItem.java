@@ -24,7 +24,7 @@ public class ReturnItem {
 
      private Instant createdAt;
 
-     @OneToOne
+     @ManyToOne
      @JoinColumn(name = "product_id")
      private Product product;
 

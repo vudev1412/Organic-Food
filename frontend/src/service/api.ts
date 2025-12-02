@@ -1,5 +1,6 @@
 // File path: /src/service/api.ts
 
+import instance from "./axios.customize";
 import axios from "./axios.customize";
 
 export const loginAPI = (username: string, password: string) => {
@@ -70,8 +71,10 @@ export const createUserAPI = (
     name,
     email,
     phone,
+
     roleName,
     password
+
   });
 };
 
@@ -791,7 +794,6 @@ export const getVoucherByIdAPI = (id: number) => {
   return axios.get(url);
 };
 
-
 /**
  * API Đặt hàng dành cho User (Checkout)
  * Endpoint: POST /api/v1/orders/place-order
@@ -828,6 +830,60 @@ export const createMembershipPaymentAPI = (data: IReqMembership) => {
 export const getUserById = (id: number) => {
   const urlBackend = `/api/v1/users/${id}`;
   return axios.get<IBackendRes<IUser>>(urlBackend);
+};
+/**
+ * Gọi API tạo yêu cầu đổi/trả cho khách hàng
+ * Endpoint: POST /api/v1/customer/returns
+ */
+export const createReturnRequestAPI = (data: IReqCreateReturn) => {
+  return axios.post<IBackendRes<any>>(`/api/v1/customer/returns`, data, {
+    withCredentials: true,
+  });
+};
+/**
+ * Upload 1 file cho return request
+ * Trả về tên file
+ */
+export const uploadReturnFileAPI = (file: File, folder: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+
+  return axios.post<string>(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/files`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: true,
+    }
+  );
+};
+export const checkReturnByOrderIdAPI = (orderId: number) => {
+  const URL = `/api/v1/returns/check/${orderId}`;
+  return axios.get(URL);
+};
+
+export const callFetchActivePromotions = async (): Promise<
+  IBackendRes<IPromotion[]>
+> => {
+  // SỬ DỤNG instance.get THAY VÌ axios.get
+  const response = await instance.get<IBackendRes<IPromotion[]>>(
+    `/api/v1/promotions/active`
+  );
+  return response as any;
+};
+
+export const callFetchProductsByPromotionId = async (
+  id: number
+): Promise<IBackendRes<IPromotionProduct[]>> => {
+  // SỬ DỤNG instance.get THAY VÌ axios.get
+  const response = await instance.get<IBackendRes<IPromotionProduct[]>>(
+    `/api/v1/promotions/${id}/products`
+  );
+  return response as any;
 };
 
 export const getAllRolesAPI = () => {
@@ -905,3 +961,4 @@ export interface IOrderDTO {
   total: number;
   status: string;
 }
+

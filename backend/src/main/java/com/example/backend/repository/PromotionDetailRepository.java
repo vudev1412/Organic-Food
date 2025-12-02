@@ -1,5 +1,6 @@
 package com.example.backend.repository;
 
+import com.example.backend.domain.Promotion;
 import com.example.backend.domain.PromotionDetail;
 import com.example.backend.domain.key.PromotionDetailKey;
 import org.springframework.data.domain.Page;
@@ -29,4 +30,5 @@ public interface PromotionDetailRepository extends JpaRepository<PromotionDetail
     );
     @Query("SELECT pd FROM PromotionDetail pd JOIN FETCH pd.product WHERE pd.promotion.id = :promotionId")
     Page<PromotionDetail> findByPromotionId(@Param("promotionId") long promotionId, Pageable pageable);
+    List<PromotionDetail> findByPromotion(Promotion promotion);
 }

@@ -155,7 +155,7 @@ public class PaymentController {
             if (sdtNguoiMua == null || sdtNguoiMua.isEmpty()) sdtNguoiMua = "";
 
             long orderIdHienThi = body.getOrderId();
-            String description = "TT Don " + orderIdHienThi;
+            String description = body.getDescription();
 
             CreatePaymentLinkRequest request = CreatePaymentLinkRequest.builder()
                     .orderCode(paymentId) // Dùng ID của bảng Payment

@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,7 +52,21 @@ public class UserServiceImpl implements UserService {
     public boolean isEmailExist(String email){
         return this.userRepository.existsByEmail(email);
     }
+    @Override
+    public Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("Người dùng chưa đăng nhập");
+        }
 
+        String email = auth.getName(); // hoặc username
+        User user = userRepository.findByEmail(email); // trả về null nếu không tồn tại
+        if (user == null) {
+            throw new RuntimeException("Người dùng không tồn tại");
+        }
+
+        return user.getId();
+    }
     @Override
     public boolean isPhoneExist(String phone) {
         return this.userRepository.existsByPhone(phone);

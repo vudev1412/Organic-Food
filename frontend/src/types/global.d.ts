@@ -125,7 +125,7 @@ declare global {
     name: string;
     type: "PERCENT" | "FIXED_AMOUNT";
     value: number;
-    active: boolean;
+    active?: boolean;
   }
   interface IProduct {
     id: number;
@@ -836,6 +836,32 @@ declare global {
     userId: number;
     amount: number;
   }
+
+  interface IReqReturnItem {
+    productId: number;
+    quantity: number;
+    note?: string;
+  }
+
+  interface IReqCreateReturn {
+    orderId: number;
+    reason: string;
+    returnType: "REFUND" | "EXCHANGE";
+    items: IReqReturnItem[];
+    imageUrls?: string[];
+  }
+  export interface IPromotionProduct {
+    id: number;
+    name: string;
+    price: number;
+    slug: string;
+    image: string;
+    quantity: number;
+    promotionType: "PERCENT" | "FIXED_AMOUNT"; // Union type cho chính xác hơn
+    promotionValue: number;
+    startDate: string; // ISO Date string
+    endDate: string; // ISO Date string
+
   export interface IPermission {
     id: number;
     name: string; // <-- backend dùng name (String)
@@ -909,5 +935,6 @@ declare global {
   export interface MonthlyRevenueDTO {
     month: number;
     revenue: number;
+
   }
 }

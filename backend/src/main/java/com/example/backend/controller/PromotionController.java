@@ -1,5 +1,8 @@
 package com.example.backend.controller;
 
+import com.example.backend.domain.ProductDTO;
+import com.example.backend.domain.ProductWithPromotionDTO;
+import com.example.backend.domain.PromotionDTO;
 import com.example.backend.domain.request.ReqPromotionDTO;
 import com.example.backend.domain.response.ResPromotionDTO;
 import com.example.backend.service.PromotionService;
@@ -40,5 +43,16 @@ public class PromotionController {
     public ResponseEntity<Void> delete(@PathVariable long id) {
         promotionService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+    // API 1: Lấy danh sách promotion còn active
+    @GetMapping("/active")
+    public List<PromotionDTO> getActivePromotions() {
+        return promotionService.getActivePromotions();
+    }
+
+    // API 2: Lấy danh sách product trong promotion
+    @GetMapping("/{promotionId}/products")
+    public List<ProductWithPromotionDTO> getProductsByPromotion(@PathVariable Long promotionId) {
+        return promotionService.getProductsByPromotionId(promotionId);
     }
 }

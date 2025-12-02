@@ -126,7 +126,7 @@ const PaymentModal = ({
       const resPayment = await PaymentAPI.createPayment({
         orderId,
         amount,
-        description: `Thanh toan don${formatOrderCode(orderId)}`,
+        description: `Thanh toan don ${formatOrderCode(orderId)}`,
         buyerName: formData.receiverName,
         buyerPhone: formData.receiverPhone,
       });

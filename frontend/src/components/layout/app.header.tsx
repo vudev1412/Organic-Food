@@ -114,7 +114,9 @@ const AppHeader = () => {
               {user?.name || "User"}
             </span>
             <span className="text-xs text-gray-500 mt-0.5 capitalize">
+
               {user?.role?.name.toLowerCase() || "Member"}
+
             </span>
           </div>
         </div>
@@ -141,7 +143,9 @@ const AppHeader = () => {
         </Link>
       ),
     },
+
     ...(user?.role.name === "ADMIN"
+
       ? [
           {
             key: "3",
@@ -496,7 +500,9 @@ const AppHeader = () => {
                       {user?.name}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">
-                      {user?.role?.name.toLowerCase()}
+
+                      {user?.role?.name?.toLowerCase()}
+
                     </p>
                   </div>
                 </div>
@@ -518,7 +524,9 @@ const AppHeader = () => {
                   </div>
                 </div>
 
-                {user?.role.name === "ADMIN" && (
+
+                {user?.role?.name === "ADMIN" && (
+
                   <Link
                     to="/admin"
                     className="block mt-2 text-center text-xs text-blue-600 py-1.5 bg-blue-50 rounded hover:bg-blue-100 transition-colors font-medium"
