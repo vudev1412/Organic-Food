@@ -25,7 +25,6 @@ const PasswordInput = ({
   const [show, setShow] = useState(false);
 
   return (
-    // Đã xóa mb-4 ở đây để căn giữa với label bên ngoài chuẩn hơn
     <div className="w-full">
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -39,7 +38,6 @@ const PasswordInput = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          // Thêm autoComplete để gợi ý đúng mật khẩu mới
           autoComplete="new-password"
           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors ${
             disabled
@@ -139,7 +137,6 @@ const VerifyPasswordModal = ({
             tin.
           </p>
 
-          {/* --- FIX AUTOFILL: Input ẩn để hứng username --- */}
           <input
             type="text"
             name="username"
@@ -193,6 +190,7 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userById, setUserById] = useState<IResUserById | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -202,8 +200,12 @@ const Profile = () => {
   const [userData, setUserData] = useState<IResUserById | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
+
+  // --- MỚI: State lỗi số điện thoại ---
+  const [phoneError, setPhoneError] = useState("");
+
   const isMember = user?.customerProfile?.member === true;
-  console.log("User Data:", user);
+
   useEffect(() => {
     if (user) {
       setId(user.id || 0);
@@ -238,7 +240,6 @@ const Profile = () => {
     try {
       showToast("Đang tải ảnh lên...", "info");
       const uploadedUrl = await uploadFileAvatarAPI(file, "images/avatar");
-      console.log(uploadedUrl);
       setAvatar(uploadedUrl.data);
       showToast("Cập nhật ảnh đại diện thành công!", "success");
     } catch (error: any) {
@@ -265,6 +266,7 @@ const Profile = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setNewPassword("");
+    setPhoneError(""); // Reset lỗi khi hủy
     if (user) {
       setName(user.name || "");
       setPhone(user.phone || "");
@@ -283,13 +285,34 @@ const Profile = () => {
       return;
     }
 
+    // --- MỚI: Logic xử lý số điện thoại ---
+    let formattedPhone = phone.trim();
+
+    // 1. Chuyển đổi +84 thành 0
+    if (formattedPhone.startsWith("+84")) {
+      formattedPhone = "0" + formattedPhone.slice(3);
+    }
+
+    // 2. Validate Regex (Đầu số VN: 03, 05, 07, 08, 09 + 8 số đằng sau)
+    // Regex này bắt buộc bắt đầu bằng 0, theo sau là 3|5|7|8|9, và chính xác 8 chữ số nữa (tổng 10 số)
+    const vnf_regex = /^(0)(3|5|7|8|9)([0-9]{8})$/;
+
+    if (formattedPhone && !vnf_regex.test(formattedPhone)) {
+      setPhoneError("Số điện thoại không hợp lệ (VD: 0912345678)");
+      showToast("Số điện thoại không đúng định dạng!", "error");
+      return; // Dừng lại không lưu
+    }
+    // -------------------------------------
+
     setIsSaving(true);
 
     const payload: Partial<IReqUpdateUserDTO> = {
       name: name.trim(),
     };
 
-    if (phone !== user.phone) payload.phone = phone;
+    // Sử dụng số điện thoại đã được chuẩn hóa (formattedPhone)
+    if (formattedPhone !== user.phone) payload.phone = formattedPhone;
+
     if (newPassword) payload.password = newPassword;
 
     if (avatar && typeof avatar === "string" && avatar !== user.image) {
@@ -303,7 +326,11 @@ const Profile = () => {
       showToast("Cập nhật hồ sơ thành công!", "success");
       setIsEditing(false);
       setNewPassword("");
+      setPhoneError(""); // Xóa lỗi sau khi lưu thành công
       setUpdatedAt(new Date().toISOString());
+
+      // Cập nhật lại state phone hiển thị bằng số đã chuẩn hóa
+      setPhone(formattedPhone);
     } catch (error: any) {
       console.error("Update profile failed:", error);
       showToast(error.response?.data?.message || "Cập nhật thất bại!", "error");
@@ -349,7 +376,7 @@ const Profile = () => {
 
     fetchUser();
   }, [userID]);
-  console.log(`${import.meta.env.VITE_BACKEND_AVATAR_IMAGE_URL}${user?.image}`);
+
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
@@ -457,7 +484,7 @@ const Profile = () => {
           <div className="flex flex-col-reverse md:flex-row gap-8 md:gap-12">
             {/* Form */}
             <div className="flex-1 space-y-6">
-              {/* --- TÊN HIỂN THỊ (Đã thêm items-center) --- */}
+              {/* --- TÊN HIỂN THỊ --- */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Tên hiển thị
@@ -480,7 +507,7 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* --- EMAIL (Đã thêm items-center & autoComplete) --- */}
+              {/* --- EMAIL --- */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Email
@@ -503,9 +530,9 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* --- SĐT (Đã thêm items-center) --- */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                <label className="text-sm font-medium text-gray-600 md:text-right">
+              {/* --- SĐT (Đã thêm xử lý lỗi) --- */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start md:items-center">
+                <label className="text-sm font-medium text-gray-600 md:text-right mt-2 md:mt-0">
                   Số điện thoại
                 </label>
 
@@ -514,17 +541,31 @@ const Profile = () => {
                     type="text"
                     value={phone}
                     disabled={!isEditing}
-                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="VD: 0912345678 hoặc +84912345678"
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setPhoneError(""); // Xóa lỗi khi người dùng nhập lại
+                    }}
                     className={`w-full max-w-md px-4 py-2 border rounded-lg transition-all ${
                       !isEditing
                         ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
-                        : "bg-white border-gray-300 focus:ring-2 focus:ring-green-500"
+                        : `bg-white ${
+                            phoneError
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-gray-300 focus:ring-green-500"
+                          } focus:ring-2`
                     }`}
                   />
+                  {/* Hiển thị lỗi ngay dưới input */}
+                  {phoneError && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">
+                      {phoneError}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* --- MẬT KHẨU (Đã căn giữa) --- */}
+              {/* --- MẬT KHẨU --- */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center pt-2">
                 <label className="text-sm font-medium text-gray-600 md:text-right">
                   Mật khẩu
@@ -542,7 +583,6 @@ const Profile = () => {
                     </div>
                   ) : (
                     <div className="animate-fade-in">
-                      {/* PasswordInput đã bỏ margin-bottom, căn giữa chuẩn hơn */}
                       <PasswordInput
                         label=""
                         placeholder="Nhập mật khẩu mới (để trống nếu không đổi)"
