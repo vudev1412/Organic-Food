@@ -2,15 +2,25 @@
 
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { deleteUserAPI, getEmployeesAPI } from "../../../service/api";
-import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
+import {
+  deleteUserAPI,
+  getEmployeesAPI,
+  updateActiveUser,
+} from "../../../service/api";
+import {
+  DeleteTwoTone,
+  EditTwoTone,
+  EyeOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Tag } from "antd";
+import { App, Button, Popconfirm, Space, Switch, Tag, Tooltip } from "antd";
 import DetailEmployee from "./employee.detail";
 import CreateEmployee from "./create.employee";
 import UpdateEmployee from "./update.employee";
 
 type TSearch = {
+  id?: number;
   name?: string;
   email?: string;
   phone?: string;
@@ -25,12 +35,39 @@ const TableEmployee = () => {
   const [dataUpdate, setDataUpdate] = useState<IEmployee | null>(null);
   const [openModalUpdate, setOpenModalUpdate] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const [loadingActiveId, setLoadingActiveId] = useState<number | null>(null);
   const { message, notification } = App.useApp();
 
+  const refreshTable = () => {
+    actionRef.current?.reload();
+  };
   const formatUserId = (id?: number | null) => {
     if (id == null) return "-";
     return `NV${id.toString().padStart(6, "0")}`;
+  };
+  const parseUsertId = (code: string) => {
+    if (!code.startsWith("NV")) return NaN;
+    const numPart = code.slice(2);
+    return parseInt(numPart, 10);
+  };
+  const handleToggleActive = async (userId: number, current: boolean) => {
+    setLoadingActiveId(userId);
+    try {
+      const res = await updateActiveUser(userId, { active: !current });
+      console.log(res.data.statusCode);
+      if (res.data.statusCode === 200) {
+        message.success("Cập nhật trạng thái thành công");
+        refreshTable();
+      } else {
+        message.error(res.data.message || "Không thể cập nhật trạng thái");
+      }
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.message || error.message || "Lỗi hệ thống"
+      );
+    } finally {
+      setLoadingActiveId(null);
+    }
   };
 
   // Xóa user
@@ -59,7 +96,6 @@ const TableEmployee = () => {
     {
       title: "Mã",
       dataIndex: "id",
-      hideInSearch: true,
       render: (_, entity) => <a>{formatUserId(entity.id)}</a>,
     },
     {
@@ -98,40 +134,55 @@ const TableEmployee = () => {
       dataIndex: ["user", "active"],
       key: "active",
       hideInSearch: true,
-      render: (_, entity: IEmployee) => (
-        <Tag color={entity.user.active ? "green" : "red"}>
-          {entity.user.active ? "Đang hoạt động" : "Ngưng hoạt động"}
-        </Tag>
+      render: (_, entity: ICustomerTable) => (
+        <Switch
+          checked={entity.user.active}
+          loading={loadingActiveId === entity.user.id}
+          onClick={(checked, e) => {
+            e.stopPropagation();
+            handleToggleActive(entity.user.id, entity.user.active);
+          }}
+          checkedChildren="Bật"
+          unCheckedChildren="Tắt"
+        />
       ),
     },
     {
-      title: "Action",
+      title: "Thao tác",
+      key: "action",
+      width: 140,
+      align: "center" as const,
       hideInSearch: true,
       render: (_, record) => (
-        <>
-          <EditTwoTone
-            twoToneColor="#f57800"
-            style={{ cursor: "pointer", marginRight: 12 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setDataUpdate(record);
-              setOpenModalUpdate(true);
-            }}
-          />
-          <Popconfirm
-            title="Xác nhận xóa user?"
-            onConfirm={() => handleDeleteUser(record.id)}
-            okText="Xác nhận"
-            cancelText="Hủy"
-            okButtonProps={{ loading: isDeleting }}
-          >
-            {/* <DeleteTwoTone
-              twoToneColor="#ff4d4f"
-              style={{ cursor: "pointer" }}
-              onClick={(e) => e.stopPropagation()}
-            /> */}
-          </Popconfirm>
-        </>
+        <Space size="middle">
+          {/* Xem chi tiết */}
+          <Tooltip title="Xem chi tiết">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined style={{ color: "#1890ff" }} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDataViewDetail(record);
+                setOpenViewDetail(true);
+              }}
+            />
+          </Tooltip>
+
+          {/* Chỉnh sửa */}
+          <Tooltip title="Chỉnh sửa">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditTwoTone twoToneColor="#fa8c16" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDataUpdate(record);
+                setOpenModalUpdate(true);
+              }}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
   ];
@@ -158,6 +209,16 @@ const TableEmployee = () => {
         ]}
         request={async (params, sort) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
+          if (params.id) {
+            const idNum =
+              typeof params.id === "string"
+                ? parseInt(params.id.replace(/^NV/, ""), 10)
+                : params.id;
+            if (!isNaN(idNum)) {
+              query += `&filter=id=${idNum}`;
+            }
+          }
+
           if (params.name) query += `&filter=user.name~'${params.name}'`;
           if (params.email) query += `&filter=user.email~'${params.email}'`;
           if (params.phone) query += `&filter=user.phone~'${params.phone}'`;
@@ -186,12 +247,6 @@ const TableEmployee = () => {
           showTotal: (total, range) =>
             `${range[0]} - ${range[1]} trên ${total} hàng`,
         }}
-        onRow={(record) => ({
-          onClick: () => {
-            setOpenViewDetail(true);
-            setDataViewDetail(record);
-          },
-        })}
       />
 
       {/* Modals */}

@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqCreateUserDTO;
 import com.example.backend.domain.request.ReqResetPasswordDTO;
+import com.example.backend.domain.request.ReqUpdateUserActive;
 import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
 import com.example.backend.domain.response.ResUserDTO;
@@ -40,4 +41,6 @@ public interface UserService {
     ResultPaginationDTO getAllUserByEmployee(Specification<User> spec, Pageable pageable);
     void handleResetPassword(ReqResetPasswordDTO request) throws UserNotFoundException, InvalidOtpException;
     Long getCurrentUserId();
+
+    User updateActive(Long userId, ReqUpdateUserActive updateUserActive);
 }

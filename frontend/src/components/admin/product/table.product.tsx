@@ -199,9 +199,9 @@ const TableProduct = () => {
                 setDataUpdate(record);
                 setOpenModelUpdate(true);
               }}
-            />
+            /> 
           </Tooltip>
-          <Popconfirm
+          {/* <Popconfirm
             title="Xác nhận xóa sản phẩm?"
             onConfirm={() => handleDelete(record.id)}
             okText="Xác nhận"
@@ -211,7 +211,7 @@ const TableProduct = () => {
               type="text"
               icon={<DeleteTwoTone twoToneColor="#ff4d4f" />}
             />
-          </Popconfirm>
+          </Popconfirm> */}
         </Space>
       ),
     },

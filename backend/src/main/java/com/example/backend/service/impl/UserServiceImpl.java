@@ -3,6 +3,7 @@ package com.example.backend.service.impl;
 import com.example.backend.domain.*;
 import com.example.backend.domain.request.ReqCreateUserDTO;
 import com.example.backend.domain.request.ReqResetPasswordDTO;
+import com.example.backend.domain.request.ReqUpdateUserActive;
 import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.domain.response.ResCreateUserDTO;
@@ -67,6 +68,18 @@ public class UserServiceImpl implements UserService {
 
         return user.getId();
     }
+
+    @Override
+    public User updateActive(Long userId, ReqUpdateUserActive updateUserActive) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        user.setActive(updateUserActive.isActive());
+        user.setUpdateAt(java.time.Instant.now());
+
+        return userRepository.save(user);
+    }
+
     @Override
     public boolean isPhoneExist(String phone) {
         return this.userRepository.existsByPhone(phone);

@@ -40,7 +40,7 @@ public class CertificateServiceImpl implements CertificateService {
             current.setName(certificate.getName());
         }
         if(certificate.getImage() != null){
-            current.setName(certificate.getImage());
+            current.setImage(certificate.getImage());
         }
         this.certificateRepository.save(current);
         return this.certificateMapper.toResCertificateDTO(current);

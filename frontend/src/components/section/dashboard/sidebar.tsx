@@ -14,6 +14,7 @@ import {
   TicketPercent,
   UserCog,
   Receipt,
+  Award,
 } from "lucide-react";
 import { Tag } from "antd";
 
@@ -35,6 +36,7 @@ const Sidebar: React.FC = () => {
     { id: "dashboard", text: "Thống kê", icon: LayoutDashboard, to: "" },
     { id: "customers", text: "Khách hàng", icon: Users, to: "customers" },
     { id: "employees", text: "Nhân viên", icon: UserCheck, to: "employees" },
+    { id: "certificates", text: "Chứng nhận", icon: Award, to: "certificates" },
     { id: "products", text: "Sản phẩm", icon: Package, to: "products" },
     { id: "categories", text: "Loại sản phẩm", icon: Boxes, to: "categories" },
     { id: "suppliers", text: "Nhà cung cấp", icon: Building, to: "suppliers" },

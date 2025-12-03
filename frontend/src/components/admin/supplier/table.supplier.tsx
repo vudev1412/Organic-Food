@@ -2,17 +2,23 @@
 
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
+import {
+  DeleteTwoTone,
+  EditTwoTone,
+  EyeOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm } from "antd";
+import { App, Button, Popconfirm, Space, Tooltip } from "antd";
 import DetailSupplier from "./delete.supplier";
 import CreateSupplier from "./create.supplier";
 import UpdateSupplier from "./update.supplier";
 import { deleteSupplierAPI, getSuppliersAPI } from "../../../service/api";
 
 type TSearch = {
+  id: number;
   name: string;
-  code: string;
+  email: string;
   phone: string;
 };
 
@@ -45,6 +51,11 @@ const TableSupplier = () => {
 
     setIsDeleting(false);
   };
+  const parseSupplierId = (code: string) => {
+    if (!code) return NaN;
+    if (code.startsWith("NCC")) return parseInt(code.slice(3), 10);
+    return parseInt(code, 10);
+  };
 
   const formatSupplierId = (id: number) => {
     return `NCC${id.toString().padStart(6, "0")}`;
@@ -53,7 +64,6 @@ const TableSupplier = () => {
     {
       title: "Mã",
       dataIndex: "id",
-      hideInSearch: true,
       render: (_, entity) => <a>{formatSupplierId(entity.id)}</a>,
     },
     { title: "Tên", dataIndex: "name", sorter: true, copyable: true },
@@ -65,27 +75,41 @@ const TableSupplier = () => {
       render(_, entity) {
         return (
           <>
-            <EditTwoTone
-              twoToneColor="#f57800"
-              style={{ cursor: "pointer", marginRight: 15 }}
-              onClick={(e) => {
-                setDataUpdate(entity);
-                setOpenUpdate(true);
-                e.stopPropagation();
-              }}
-            />
-            <Popconfirm
-              title="Xóa nhà cung cấp"
-              description="Bạn có chắc muốn xóa?"
-              onConfirm={() => handleDelete(entity.id)}
-              okButtonProps={{ loading: isDeleting }}
-            >
-              <DeleteTwoTone
-                twoToneColor="#ff4d4f"
-                style={{ cursor: "pointer" }}
-                onClick={(e) => e.stopPropagation()}
+            <Space size="middle">
+              <Tooltip title="Xem chi tiết">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EyeOutlined style={{ color: "#1890ff" }} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenDetail(true);
+                    setDataDetail(entity);
+                  }}
+                />
+              </Tooltip>
+              <EditTwoTone
+                twoToneColor="#f57800"
+                style={{ cursor: "pointer", marginRight: 15 }}
+                onClick={(e) => {
+                  setDataUpdate(entity);
+                  setOpenUpdate(true);
+                  e.stopPropagation();
+                }}
               />
-            </Popconfirm>
+              <Popconfirm
+                title="Xóa nhà cung cấp"
+                description="Bạn có chắc muốn xóa?"
+                onConfirm={() => handleDelete(entity.id)}
+                okButtonProps={{ loading: isDeleting }}
+              >
+                <DeleteTwoTone
+                  twoToneColor="#ff4d4f"
+                  style={{ cursor: "pointer" }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </Popconfirm>
+            </Space>
           </>
         );
       },
@@ -102,8 +126,15 @@ const TableSupplier = () => {
         request={async (params, sort, filter) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
 
+          // Tìm theo ID
+          if (params.id) {
+            const idNum = parseSupplierId(params.id.toString());
+            if (!isNaN(idNum)) query += `&filter=id=${idNum}`;
+          }
+
+          // Tìm theo các trường khác
           if (params.name) query += `&filter=name~'${params.name}'`;
-          if (params.code) query += `&filter=code~'${params.code}'`;
+          if (params.email) query += `&filter=email~'${params.email}'`;
           if (params.phone) query += `&filter=phone~'${params.phone}'`;
 
           const res = await getSuppliersAPI(query);
@@ -133,12 +164,6 @@ const TableSupplier = () => {
             Thêm mới
           </Button>,
         ]}
-        onRow={(record) => ({
-          onClick: () => {
-            setOpenDetail(true);
-            setDataDetail(record);
-          },
-        })}
       />
 
       <DetailSupplier
