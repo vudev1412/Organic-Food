@@ -1,4 +1,4 @@
-// File path: /src/components/admin/category/create.category.tsx
+// src/components/admin/category/create.category.tsx
 
 import { App, Divider, Form, Input, Modal, Select, type FormProps } from "antd";
 import { useEffect, useState } from "react";
@@ -13,6 +13,15 @@ interface IProps {
   refreshTable: () => void;
 }
 
+// Hàm chuyển tên thành slug
+const generateSlug = (name: string) => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "") // loại bỏ ký tự đặc biệt
+    .replace(/\s+/g, "-"); // thay khoảng trắng bằng dấu -
+};
+
 const CreateCategory = ({
   openModelCreate,
   setOpenModalCreate,
@@ -24,7 +33,6 @@ const CreateCategory = ({
   const [loadingParent, setLoadingParent] = useState(false);
   const { message, notification } = App.useApp();
 
-  // Lấy danh sách parent categories từ API
   useEffect(() => {
     if (openModelCreate) {
       fetchParentCategories();
@@ -48,45 +56,40 @@ const CreateCategory = ({
     }
   };
 
-  const onFinish: FormProps<ICreateCategoryDTO>["onFinish"] = async (
-    values
-  ) => {
-    const payload: any = {
-      name: values.name,
-      slug: values.slug,
-    };
+  const onFinish: FormProps<{ name: string; parentCategoryId?: number }>["onFinish"] =
+    async (values) => {
+      const payload: any = {
+        name: values.name,
+        slug: generateSlug(values.name), // tự tạo slug từ tên
+      };
 
-    // Chỉ gửi parentCategoryId nếu có giá trị
-    if (values.parentCategoryId) {
-      payload.parentCategoryId = values.parentCategoryId;
-    }
-
-    console.log("Payload gửi đi:", payload); // ✅ Debug
-
-    setIsSubmit(true);
-    try {
-      const res = await createCategoryAPI(payload);
-      if (res.status === 201 || res.status === 200) {
-        message.success("Tạo mới category thành công");
-        handleClose();
-        refreshTable();
+      if (values.parentCategoryId) {
+        payload.parentCategoryId = values.parentCategoryId;
       }
-    } catch (error: any) {
-      notification.error({
-        message: "Xảy ra lỗi",
-        description: error.response?.data?.message || error.message,
-      });
-    } finally {
-      setIsSubmit(false);
-    }
-  };
+
+      setIsSubmit(true);
+      try {
+        const res = await createCategoryAPI(payload);
+        if (res.status === 201 || res.status === 200) {
+          message.success("Tạo mới category thành công");
+          handleClose();
+          refreshTable();
+        }
+      } catch (error: any) {
+        notification.error({
+          message: "Xảy ra lỗi",
+          description: error.response?.data?.message || error.message,
+        });
+      } finally {
+        setIsSubmit(false);
+      }
+    };
 
   const handleClose = () => {
     form.resetFields();
     setOpenModalCreate(false);
   };
 
-  // Tạo danh sách parent options
   const parentOptions = parentList.map((c) => ({
     value: c.id,
     label: c.name,
@@ -105,13 +108,7 @@ const CreateCategory = ({
       destroyOnClose
     >
       <Divider />
-
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        autoComplete="off"
-      >
+      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
         <Form.Item
           label="Tên category"
           name="name"
@@ -124,20 +121,6 @@ const CreateCategory = ({
           ]}
         >
           <Input placeholder="Nhập tên category" />
-        </Form.Item>
-
-        <Form.Item
-          label="Slug"
-          name="slug"
-          rules={[
-            { required: true, message: "Vui lòng nhập slug" },
-            {
-              whitespace: true,
-              message: "Slug không được chỉ chứa khoảng trắng",
-            },
-          ]}
-        >
-          <Input placeholder="Nhập slug" />
         </Form.Item>
 
         <Form.Item label="Parent Category" name="parentCategoryId">
@@ -154,9 +137,7 @@ const CreateCategory = ({
                 .toLowerCase()
                 .includes(input.toLowerCase())
             }
-            notFoundContent={
-              loadingParent ? "Đang tải..." : "Không tìm thấy category"
-            }
+            notFoundContent={loadingParent ? "Đang tải..." : "Không tìm thấy category"}
           />
         </Form.Item>
       </Form>

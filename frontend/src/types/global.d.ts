@@ -861,7 +861,7 @@ declare global {
     promotionValue: number;
     startDate: string; // ISO Date string
     endDate: string; // ISO Date string
-
+  }
   export interface IPermission {
     id: number;
     name: string; // <-- backend dùng name (String)
@@ -936,5 +936,8 @@ declare global {
     month: number;
     revenue: number;
 
+  }
+  interface IReqUpdateUserActive{
+    active:boolean;
   }
 }

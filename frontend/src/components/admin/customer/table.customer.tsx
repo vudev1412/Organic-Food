@@ -6,16 +6,23 @@ import {
   deleteUserAPI,
   deleteUserProfileAPI,
   getCustomersAPI,
-  updateUserDTOAPI,
+  updateActiveUser,
 } from "../../../service/api";
-import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
+import {
+  DeleteTwoTone,
+  EditTwoTone,
+  EyeOutlined,
+  EyeTwoTone,
+  PlusOutlined,
+} from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Tag } from "antd";
+import { App, Button, Popconfirm, Space, Switch, Tag, Tooltip } from "antd";
 import DetailUser from "./user.detail";
 import CreateUser from "./create.customer";
 import UpdateUser from "./update.customer";
 
 type TSearch = {
+  id: number;
   name: string;
   email: string;
   phone: string;
@@ -37,14 +44,42 @@ const MyTable = () => {
   const [openModelCreate, setOpenModalCreate] = useState(false);
   const [openModalUpdate, setOpenModalUpdate] = useState<boolean>(false);
   const [dataUpdate, setDataUpdate] = useState<ICustomerTable | null>(null);
+  const [loadingActiveId, setLoadingActiveId] = useState<number | null>(null);
 
   const [isDeleteUser, setIsDeleteUser] = useState(false);
   const { message, notification } = App.useApp();
   const formatUserId = (id: number) => {
     return `KH${id.toString().padStart(6, "0")}`;
   };
+  const handleToggleActive = async (userId: number, current: boolean) => {
+    setLoadingActiveId(userId);
+    try {
+      const res = await updateActiveUser(userId, { active: !current });
+      console.log(res);
+      if (res.data.statusCode === 200) {
+        message.success("Cập nhật trạng thái thành công");
+        refreshTable();
+      } else {
+        message.error(res.data.message || "Không thể cập nhật trạng thái");
+      }
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.message || error.message || "Lỗi hệ thống"
+      );
+    } finally {
+      setLoadingActiveId(null);
+    }
+  };
+  const parseCustomerId = (code: string) => {
+    if (!code) return NaN;
+    if (code.startsWith("KH")) {
+      return parseInt(code.slice(2), 10);
+    }
+    return parseInt(code, 10);
+  };
 
   // ========================= DELETE =========================
+
   const handleDeleteUser = async (id: number, userId: number) => {
     setIsDeleteUser(true);
     try {
@@ -93,7 +128,6 @@ const MyTable = () => {
       title: "Mã",
       dataIndex: ["user", "id"],
       key: "id",
-      hideInSearch: true,
       render: (_, entity) => <a>{formatUserId(entity.id)}</a>,
     },
     {
@@ -132,69 +166,83 @@ const MyTable = () => {
       key: "active",
       hideInSearch: true,
       render: (_, entity: ICustomerTable) => (
-        <Tag color={entity.user.active ? "green" : "red"}>
-          {entity.user.active ? "Đang hoạt động" : "Ngưng hoạt động"}
-        </Tag>
+        <Switch
+          checked={entity.user.active}
+          loading={loadingActiveId === entity.user.id}
+          onClick={(checked, e) => {
+            e.stopPropagation();
+            handleToggleActive(entity.user.id, entity.user.active);
+          }}
+          checkedChildren="Bật"
+          unCheckedChildren="Tắt"
+        />
       ),
     },
+
     {
       title: "Thao tác",
+      key: "action",
+      width: 140,
+      align: "center" as const,
       hideInSearch: true,
-      render: (_, entity) => (
-        <>
-          <EditTwoTone
-            twoToneColor="#f57800"
-            style={{ cursor: "pointer", marginRight: 15 }}
-            onClick={(e) => {
-              setDataUpdate(entity);
-              setOpenModalUpdate(true);
-              e.stopPropagation();
-            }}
-          />
-          <Button
-            type="link"
-            style={{ marginRight: 15 }}
-            onClick={async (e) => {
-              e.stopPropagation(); // tránh click row
-              try {
-                // Gọi API update user, toggle active boolean
-                await updateUserDTOAPI(entity.user.id, {
-                  active: !entity.user.active,
-                });
-                message.success(
-                  `User đã ${
-                    entity.user.active ? "ngưng hoạt động" : "kích hoạt"
-                  } thành công`
-                );
-                refreshTable(); // load lại bảng
-              } catch (error: any) {
-                notification.error({
-                  message: "Xảy ra lỗi",
-                  description:
-                    error.response?.data?.message || error.message || "Lỗi",
-                });
-              }
-            }}
-          >
-            {entity.user.active ? "Ngưng hoạt động" : "Kích hoạt"}
-          </Button>
+      render: (_, record) => (
+        <Space size="middle">
+          {/* Xem chi tiết */}
+          <Tooltip title="Xem chi tiết">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined style={{ color: "#1890ff" }} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDataViewDetail(record);
+                setOpenViewDetail(true);
+              }}
+            />
+          </Tooltip>
 
-          <Popconfirm
-            placement="leftTop"
-            title="Xác nhận xóa user"
-            description="Bạn có chắc muốn xóa user này?"
-            onConfirm={() => handleDeleteUser(entity.id, entity.user.id)}
-            okText="Xác nhận"
+          {/* Chỉnh sửa */}
+          <Tooltip title="Chỉnh sửa">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditTwoTone twoToneColor="#fa8c16" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDataUpdate(record);
+                setOpenModalUpdate(true); // sửa tên state cho đúng: openModalUpdate (không phải openModelUpdate)
+              }}
+            />
+          </Tooltip>
+
+          {/* Xóa */}
+          {/* <Popconfirm
+            placement="topRight"
+            title="Xác nhận xóa khách hàng"
+            description="Bạn có chắc chắn muốn xóa khách hàng này không? Hành động này không thể hoàn tác."
+            onConfirm={(e) => {
+              e?.stopPropagation();
+              handleDeleteUser(record.id, record.user.id);
+            }}
+            onCancel={(e) => e?.stopPropagation()}
+            okText="Xóa"
             cancelText="Hủy"
-            okButtonProps={{ loading: isDeleteUser }}
+            okButtonProps={{ danger: true, loading: isDeleteUser }}
           >
-            {/* <DeleteTwoTone
-              twoToneColor="#ff4d4f"
-              style={{ cursor: "pointer" }}
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={
+                <DeleteTwoTone
+                  twoToneColor="#ff4d4f"
+                  
+                />
+              }
               onClick={(e) => e.stopPropagation()}
-            /> */}
-          </Popconfirm>
-        </>
+            />
+          </Popconfirm> */}
+        </Space>
       ),
     },
   ];
@@ -227,6 +275,12 @@ const MyTable = () => {
         request={async (params, sort, filter) => {
           console.log("Request called with sort:", sort);
           let query = `page=${params.current}&size=${params.pageSize}`;
+          if (params.id) {
+            const idNum = parseCustomerId(params.id.toString());
+            if (!isNaN(idNum)) {
+              query += `&filter=id=${idNum}`;
+            }
+          }
 
           // ================== FILTER ==================
           if (params.name) query += `&filter=user.name~'${params.name}'`;
@@ -254,12 +308,6 @@ const MyTable = () => {
             page: res.data?.data.meta.page,
           };
         }}
-        onRow={(record) => ({
-          onClick: () => {
-            setOpenViewDetail(true);
-            setDataViewDetail(record);
-          },
-        })}
         pagination={{
           current: meta.page,
           pageSize: meta.size,

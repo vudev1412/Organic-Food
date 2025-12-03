@@ -7,6 +7,7 @@ import com.example.backend.domain.User;
 import com.example.backend.domain.request.CreatePaymentDTO;
 import com.example.backend.domain.request.ReqPaymentDTO;
 import com.example.backend.domain.request.CreateMembershipDTO;
+import com.example.backend.domain.response.PaymentDTO;
 import com.example.backend.domain.response.ResPaymentDTO;
 import com.example.backend.enums.StatusPayment;
 import com.example.backend.repository.CustomerProfileRepository;
@@ -210,7 +211,7 @@ public class PaymentController {
     }
 
     @GetMapping("/payments")
-    public ResponseEntity<List<ResPaymentDTO>> getAllPayments() {
+    public ResponseEntity<List<PaymentDTO>> getAllPayments() {
         return ResponseEntity.ok(paymentService.getAllPayments());
     }
 

@@ -1034,3 +1034,35 @@ export interface IOrderDTO {
   total: number;
   status: string;
 }
+
+
+export const updateActiveUser = (id: number, payload: IReqUpdateUserActive) => {
+  return axios.patch<IBackendRes<IUser>>(
+    `/api/v1/users/${id}/active`,
+    payload
+  );
+};
+
+
+export interface ICertificate {
+  id: number;
+  name: string;
+  image?: string;
+}
+
+export const getCertificatesAPI = () =>
+  axios.get(`/api/v1/certificates`);
+
+export const getCertificateByIdAPI = (id: number) =>
+  axios.get(`/api/v1/certificates/${id}`);
+
+export const createCertificateAPI = (data: Partial<ICertificate>) =>
+  axios.post(`/api/v1/certificates`, data);
+
+export const updateCertificateAPI = (id: number, data: Partial<ICertificate>) =>
+  axios.patch(`/api/v1/certificates/${id}`, data);
+
+export const deleteCertificateAPI = (id: number) =>
+  axios.delete(`/api/v1/certificates/${id}`);
+
+

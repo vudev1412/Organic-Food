@@ -40,6 +40,12 @@ const SignIn = () => {
   // State lỗi hiển thị tại Input
   const [usernameError, setUsernameError] = useState("");
 
+  // --- EMAIL VALIDATE FUNCTION ---
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+
   // Slider Auto-play
   useEffect(() => {
     const interval = setInterval(() => {
@@ -82,6 +88,7 @@ const SignIn = () => {
       return;
     }
 
+
     if (!validateInput(username)) {
       setUsernameError("Email hoặc SĐT không đúng định dạng");
       return;
@@ -98,6 +105,17 @@ const SignIn = () => {
     try {
       // Truyền submitUsername (đã chuẩn hóa) vào API
       const res = await loginAPI(submitUsername, password);
+
+    // Nếu nhập dạng email → phải đúng định dạng
+    if (username.includes("@") && !isValidEmail(username)) {
+      showToast("Email không hợp lệ", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await loginAPI(username, password);
+
 
       if (res?.data) {
         setIsAuthenticated(true);
@@ -122,6 +140,7 @@ const SignIn = () => {
   return (
     <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center p-4 font-sans relative">
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[500px] transition-all duration-300">
+
         {/* LEFT SIDE: SLIDER */}
         <div className="hidden md:block md:w-[45%] relative overflow-hidden bg-gray-900">
           {SLIDER_IMAGES.map((img, index) => (
@@ -138,6 +157,7 @@ const SignIn = () => {
               />
             </div>
           ))}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white z-10">
             <div className="mb-4 animate-fade-in-up">
               <div className="flex items-center gap-3 mb-2">
@@ -170,6 +190,7 @@ const SignIn = () => {
 
         {/* RIGHT SIDE: FORM */}
         <div className="w-full md:w-[55%] p-6 md:p-8 relative flex flex-col justify-center">
+
           <div className="md:hidden flex items-center justify-between mb-6">
             <Link to="/" className="text-gray-500 hover:text-gray-900">
               <ArrowLeft size={20} />
@@ -210,6 +231,7 @@ const SignIn = () => {
                 showPassword={showPassword}
                 togglePassword={() => setShowPassword(!showPassword)}
               />
+
               <div className="flex justify-end mt-2">
                 <Link
                   to="/quen-mat-khau"
@@ -270,6 +292,7 @@ const SignIn = () => {
             </div>
           </div>
 
+
           <div className="mt-8 text-center text-sm text-gray-500">
             Chưa có tài khoản?{" "}
             <Link
@@ -285,7 +308,7 @@ const SignIn = () => {
   );
 };
 
-// Component InputGroup
+
 const InputGroup = ({
   icon,
   isPassword,
@@ -340,3 +363,4 @@ const InputGroup = ({
 };
 
 export default SignIn;
+ 

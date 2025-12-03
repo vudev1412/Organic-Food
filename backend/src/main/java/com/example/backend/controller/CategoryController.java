@@ -4,6 +4,7 @@ import com.example.backend.domain.Category;
 import com.example.backend.domain.Product;
 import com.example.backend.domain.request.ReqCategory;
 import com.example.backend.domain.request.ReqCategoryDTO;
+import com.example.backend.domain.response.ResCategoryDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.impl.CategoryService;
 import com.turkraft.springfilter.boot.Filter;
@@ -42,7 +43,7 @@ public class CategoryController {
     }
     @PutMapping("/categories/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('QLKho') or hasAuthority('QL LoaiSP')")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody ReqCategory category){
+    public ResponseEntity<ResCategoryDTO> updateCategory(@PathVariable Long id, @RequestBody ReqCategory category){
         return ResponseEntity.ok().body(this.categoryService.handleUpdateCategory(id,category));
     }
 

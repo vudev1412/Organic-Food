@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.User;
 import com.example.backend.domain.request.ReqCreateUserDTO;
+import com.example.backend.domain.request.ReqUpdateUserActive;
 import com.example.backend.domain.request.ReqUserDTO;
 import com.example.backend.domain.response.ResUserDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
@@ -86,5 +87,13 @@ public class UserController {
         }
         this.userService.handleDeleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+    @PatchMapping("/users/{id}/active")
+    public ResponseEntity<User> updateUserActive(
+            @PathVariable Long id,
+            @RequestBody ReqUpdateUserActive request
+    ) {
+        User updatedUser = userService.updateActive(id, request);
+        return ResponseEntity.ok(updatedUser);
     }
 }

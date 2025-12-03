@@ -160,7 +160,7 @@ const UpdateReceipt = ({
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
-                label={<Text strong>Người nhận hàng</Text>}
+                label={<Text strong>Người giao hàng</Text>}
                 name="deliverName"
                 rules={[
                   { required: true, message: "Vui lòng nhập người nhận" },
