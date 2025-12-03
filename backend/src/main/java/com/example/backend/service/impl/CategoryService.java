@@ -4,6 +4,7 @@ import com.example.backend.domain.Category;
 import com.example.backend.domain.request.ReqCategory;
 import com.example.backend.domain.request.ReqCategoryDTO;
 import com.example.backend.domain.response.ResCategoryDTO;
+import com.example.backend.domain.response.ResCertificateDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.mapper.CategoryMapper;
 import com.example.backend.repository.CategoryRepository;
@@ -63,7 +64,7 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    public Category handleUpdateCategory(Long id, ReqCategory req) {
+    public ResCategoryDTO handleUpdateCategory(Long id, ReqCategory req) {
 
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -81,7 +82,8 @@ public class CategoryService {
             category.setParentCategory(null); // nếu muốn remove cha
         }
 
-        return categoryRepository.save(category);
+        return this.categoryMapper.toResCategoryDTO(categoryRepository.save(category));
+
     }
 
     public String handleDeleteCategory(Long id){

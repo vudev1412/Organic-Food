@@ -9,7 +9,7 @@ import {
   FileExcelOutlined,
 } from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Tag, Typography } from "antd";
+import { App, Button, Popconfirm, Typography } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
@@ -21,8 +21,9 @@ import { deleteReceiptAPI, getReceiptsAPI } from "../../../service/api";
 dayjs.extend(customParseFormat);
 
 type TSearch = {
-  deliverName?: string;
-  supplierName?: string;
+  id?: string; // tìm theo mã phiếu
+  supplierName?: string; // tìm theo nhà cung cấp
+  creatorName?: string; // tìm theo người tạo
 };
 
 const { Text } = Typography;
@@ -58,8 +59,17 @@ const TableReceipt = () => {
       setIsDeleting(false);
     }
   };
+
   const formatReceiptId = (id: number) => {
     return `PN${id.toString().padStart(6, "0")}`;
+  };
+
+  const parseReceiptId = (code: string) => {
+    if (!code) return NaN;
+    if (code.startsWith("PN")) {
+      return parseInt(code.slice(2), 10);
+    }
+    return parseInt(code, 10);
   };
 
   const columns: ProColumns<ResReceiptDTO>[] = [
@@ -68,18 +78,21 @@ const TableReceipt = () => {
       dataIndex: "id",
       width: 90,
       align: "center",
-      render: (id) => <Tag color="blue">{formatReceiptId(id)}</Tag>,
+      render: (id) => <span>{formatReceiptId(id as number)}</span>,
     },
     {
-      title: "Người nhận hàng",
+      title: "Người giao hàng",
       dataIndex: "deliverName",
       ellipsis: true,
+      hideInSearch: true,
     },
     {
       title: "Nhà cung cấp",
-      dataIndex: ["supplier", "name"],
-      render: (name) =>
-        name ? <Text strong>{name}</Text> : <Text type="secondary">—</Text>,
+      dataIndex: "supplierName",
+      render: (_, record) => {
+        const name = record?.supplier?.name;
+        return name ? <Text strong>{name}</Text> : <Text type="secondary">—</Text>;
+      },
     },
     {
       title: "Tổng tiền",
@@ -87,10 +100,11 @@ const TableReceipt = () => {
       align: "right",
       width: 140,
       sorter: true,
+      hideInSearch: true,
       render: (value) =>
         value ? (
           <Text strong type="danger" style={{ fontSize: "15px" }}>
-            {value.toLocaleString("vi-VN")} ₫
+            {(value as number).toLocaleString("vi-VN")} ₫
           </Text>
         ) : (
           "-"
@@ -100,9 +114,10 @@ const TableReceipt = () => {
       title: "Ngày giao",
       dataIndex: "shipDate",
       width: 150,
+      hideInSearch: true,
       render: (value) => {
         if (!value) return <Text type="secondary">—</Text>;
-        const date = dayjs(value);
+        const date = dayjs(value as string);
         return date.isValid() ? (
           <div>
             <div>{date.format("DD/MM/YYYY")}</div>
@@ -117,9 +132,12 @@ const TableReceipt = () => {
     },
     {
       title: "Người tạo",
-      dataIndex: ["user", "name"],
+      dataIndex: "creatorName",
       width: 130,
-      render: (name) => name || <Text type="secondary">—</Text>,
+      render: (_, record) => {
+        const name = record?.user?.name;
+        return name || <Text type="secondary">—</Text>;
+      },
     },
     {
       title: "Thao tác",
@@ -127,6 +145,7 @@ const TableReceipt = () => {
       width: 130,
       align: "center",
       fixed: "right",
+      hideInSearch: true,
       render: (_, record) => (
         <div className="flex justify-center gap-3">
           <Button
@@ -181,12 +200,44 @@ const TableReceipt = () => {
         columns={columns}
         actionRef={actionRef}
         cardBordered={{ table: true }}
-        request={async (params) => {
-          const query = `page=${params.current}&size=${params.pageSize}`;
+        request={async (params, sort, filter) => {
+          let query = `page=${params.current}&size=${params.pageSize}`;
+
+          // 1. Filter theo ID phiếu nhập
+          if (params.id) {
+            const idNum = parseReceiptId(params.id.toString());
+            if (!isNaN(idNum)) query += `&filter=id=${idNum}`;
+          }
+
+          // 2. Filter theo nhà cung cấp
+          if (params.supplierName) {
+            query += `&filter=supplier.name~'${params.supplierName}'`;
+          }
+
+          // 3. Filter theo người tạo
+          if (params.creatorName) {
+            query += `&filter=user.name~'${params.creatorName}'`;
+          }
+
+          // 4. Sort
+          if (sort && Object.keys(sort).length > 0) {
+            const sortField = Object.keys(sort)[0].replace(/,/g, ".");
+            const sortOrder =
+              sort[Object.keys(sort)[0]] === "ascend" ? "ASC" : "DESC";
+            query += `&sort=${sortField},${sortOrder}`;
+          }
+
           const res = await getReceiptsAPI(query);
 
+          // Lấy dữ liệu từ API
+          const apiData = res.data?.data?.result || [];
+          
+          // Slice data để đảm bảo chỉ hiển thị đúng số lượng theo pageSize
+          // (workaround khi backend trả về sai số lượng records)
+          const slicedData = apiData.slice(0, params.pageSize);
+
           return {
-            data: res.data?.data?.result || [],
+            data: slicedData,
             success: true,
             total: res.data?.data?.meta?.total || 0,
             page: res.data?.data?.meta?.page || 1,
@@ -213,7 +264,6 @@ const TableReceipt = () => {
             <span className="text-xl font-bold text-gray-800">
               Quản lý Phiếu Nhập Hàng
             </span>
-            
           </div>
         }
         toolBarRender={() => [
@@ -247,12 +297,6 @@ const TableReceipt = () => {
         }}
         scroll={{ x: 1200 }}
         rowClassName="cursor-pointer hover:bg-indigo-50 transition-colors"
-        onRow={(record) => ({
-          onClick: () => {
-            setDataDetail(record);
-            setOpenDetail(true);
-          },
-        })}
       />
 
       {/* Modals */}

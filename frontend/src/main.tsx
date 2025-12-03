@@ -52,6 +52,7 @@ import MembershipPage from "./pages/client/MembershipPage";
 import MembershipSuccessPage from "./pages/client/MembershipSuccessPage";
 import RolePermissionManager from "./pages/admin/permisstion";
 import Receipt from "./pages/admin/receipt";
+import TableCertificate from "./components/admin/certificate/table.certificate";
 
 
 const router = createBrowserRouter([
@@ -203,7 +204,7 @@ const router = createBrowserRouter([
       { path: "voucher", element: <Voucher /> },
       { path: "permission", element: <RolePermissionManager /> },
       { path: "receipts", element: <Receipt /> },
-      
+      { path: "certificates", element: <TableCertificate /> },
 
       { path: "backup", element: <BackupRestorePage /> }, // Trang /admin
       // { path: "users", element: <ManageUsers /> }, // Trang /admin/users

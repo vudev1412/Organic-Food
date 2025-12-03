@@ -18,6 +18,12 @@ import UpdateOrder from "./update.order";
 
 const { Text } = Typography;
 
+type TSearch = {
+  id?: string;
+  userName?: string;
+  statusOrder?: string;
+};
+
 const statusColors: Record<string, string> = {
   PENDING: "orange",
   PROCESSING: "cyan",
@@ -41,15 +47,21 @@ const TableOrder = () => {
   const [openCreate, setOpenCreate] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<IOrder | null>(null);
-  const [userDetail, setUserDetail] = useState<IResUserById | null>(null);
 
   const { message, notification } = App.useApp();
 
-   const formatOrderId = (id?: number | null) => {
+  const formatOrderId = (id?: number | null) => {
     if (id == null) return "-";
     return `DH${id.toString().padStart(6, "0")}`;
   };
-  
+
+  const parseOrderId = (code: string) => {
+    if (!code) return NaN;
+    if (code.startsWith("DH")) {
+      return parseInt(code.slice(2), 10);
+    }
+    return parseInt(code, 10);
+  };
 
   const formatPrice = (price: number) =>
     Number(price).toLocaleString("vi-VN") + " ₫";
@@ -62,14 +74,11 @@ const TableOrder = () => {
       fixed: "left",
       sorter: true,
       defaultSortOrder: "descend",
-      render: (_, record) => (
-        <Text strong style={{ fontSize: 15, color: "#1677ff" }}>
-          {formatOrderId(record.id)}
-        </Text>
-      ),
+      render: (_, record) => <span>{formatOrderId(record.id)}</span>,
     },
     {
       title: "Khách hàng",
+      dataIndex: "userName",
       width: 200,
       render: (_, record) => (
         <Space direction="vertical" size={0}>
@@ -86,6 +95,7 @@ const TableOrder = () => {
       title: "Số lượng SP",
       width: 110,
       align: "center",
+      hideInSearch: true,
       render: (_, record) => {
         const totalItems = record.orderDetails?.length || 0;
         return <Tag color="blue">{totalItems}</Tag>;
@@ -95,6 +105,7 @@ const TableOrder = () => {
       title: "Tổng tiền",
       width: 140,
       align: "right",
+      hideInSearch: true,
       render: (_, record) => {
         const total =
           record.orderDetails?.reduce(
@@ -111,34 +122,41 @@ const TableOrder = () => {
     {
       title: "Trạng thái",
       dataIndex: "statusOrder",
-      width: 150, // giữ nguyên độ rộng cột
+      width: 150,
       align: "center",
+      valueType: "select",
+      valueEnum: {
+        PENDING: { text: "Chờ xác nhận", status: "Warning" },
+        PROCESSING: { text: "Đang xử lý", status: "Processing" },
+        SHIPPING: { text: "Đang giao", status: "Default" },
+        DELIVERED: { text: "Đã giao", status: "Success" },
+        CANCELLED: { text: "Đã hủy", status: "Error" },
+      },
       render: (_, record) => (
         <Tag
           color={statusColors[record.statusOrder] || "default"}
           style={{
-            width: 120, // 🎯 SET CHIỀU RỘNG CỐ ĐỊNH
-            textAlign: "center", // 🎯 CĂN GIỮA CHỮ
+            width: 120,
+            textAlign: "center",
             fontWeight: 600,
             fontSize: 13,
-            padding: "6px 0", // giữ chiều cao đều
+            padding: "6px 0",
             borderRadius: 20,
-            display: "inline-block", // tránh tự co lại
+            display: "inline-block",
           }}
         >
           {statusTexts[record.statusOrder] || record.statusOrder}
         </Tag>
       ),
     },
-
     {
       title: "Thao tác",
       width: 130,
       fixed: "right",
       align: "center",
+      hideInSearch: true,
       render: (_, record) => (
         <Space>
-          {/* Xem chi tiết */}
           <Tooltip title="Xem chi tiết">
             <Button
               type="text"
@@ -150,7 +168,6 @@ const TableOrder = () => {
             />
           </Tooltip>
 
-          {/* Chỉnh sửa */}
           <Tooltip title="Chỉnh sửa">
             <Button
               type="text"
@@ -162,7 +179,6 @@ const TableOrder = () => {
             />
           </Tooltip>
 
-          {/* Xóa */}
           <Popconfirm
             title="Xác nhận xóa đơn hàng?"
             onConfirm={async () => {
@@ -192,7 +208,8 @@ const TableOrder = () => {
 
   return (
     <>
-      <ProTable<IOrder>
+      <h2>Tìm kiếm</h2>
+      <ProTable<IOrder, TSearch>
         columns={columns}
         actionRef={actionRef}
         rowKey="id"
@@ -223,10 +240,33 @@ const TableOrder = () => {
             Tạo đơn mới
           </Button>,
         ]}
-        request={async (params) => {
-          const query = `page=${params.current || 1}&size=${
-            params.pageSize || 10
-          }`;
+        request={async (params, sort, filter) => {
+          let query = `page=${params.current || 1}&size=${params.pageSize || 10}`;
+
+          // 1. Filter theo ID đơn hàng
+          if (params.id) {
+            const idNum = parseOrderId(params.id.toString());
+            if (!isNaN(idNum)) query += `&filter=id=${idNum}`;
+          }
+
+          // 2. Filter theo tên khách hàng (nếu backend hỗ trợ)
+          // Lưu ý: Cần backend hỗ trợ join với bảng user
+          if (params.userName) {
+            query += `&filter=user.name~'${params.userName}'`;
+          }
+
+          // 3. Filter theo trạng thái
+          if (params.statusOrder) {
+            query += `&filter=statusOrder='${params.statusOrder}'`;
+          }
+
+          // 4. Sort
+          if (sort && Object.keys(sort).length > 0) {
+            const sortField = Object.keys(sort)[0];
+            const sortOrder =
+              sort[Object.keys(sort)[0]] === "ascend" ? "ASC" : "DESC";
+            query += `&sort=${sortField},${sortOrder}`;
+          }
 
           try {
             const res = await getOrderAPI(query);
@@ -257,7 +297,7 @@ const TableOrder = () => {
         pagination={{
           defaultPageSize: 5,
           showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "50", "100"],
+          pageSizeOptions: ["5", "10", "20", "50"],
           showTotal: (total, range) => (
             <span style={{ fontSize: 15, color: "#595959" }}>
               Hiển thị{" "}
@@ -293,4 +333,4 @@ const TableOrder = () => {
   );
 };
 
-export default TableOrder;
+export default TableOrder

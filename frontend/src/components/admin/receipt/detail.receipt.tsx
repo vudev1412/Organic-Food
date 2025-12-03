@@ -138,7 +138,7 @@ const DetailReceipt = ({ open, setOpen, data, setData }: IProps) => {
               </Tag>
             </Descriptions.Item>
 
-            <Descriptions.Item label="Người nhận hàng">
+            <Descriptions.Item label="Người giao hàng">
               <Text strong>{data.deliverName || "—"}</Text>
             </Descriptions.Item>
 

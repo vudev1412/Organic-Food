@@ -93,7 +93,7 @@ const CreateReceipt = ({ open, setOpen, refreshTable }: IProps) => {
       <Divider />
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item
-          label="Người nhận"
+          label="Người giao"
           name="deliverName"
           rules={[{ required: true }]}
         >

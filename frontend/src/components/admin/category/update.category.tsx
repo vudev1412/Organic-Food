@@ -140,19 +140,7 @@ const UpdateCategory = ({
           <Input placeholder="Nhập tên category" />
         </Form.Item>
 
-        <Form.Item
-          label="Slug"
-          name="slug"
-          rules={[
-            { required: true, message: "Vui lòng nhập slug" },
-            {
-              whitespace: true,
-              message: "Slug không được chỉ chứa khoảng trắng",
-            },
-          ]}
-        >
-          <Input placeholder="Nhập slug" />
-        </Form.Item>
+        
 
         <Form.Item label="Parent Category" name="parentId">
           <Select
