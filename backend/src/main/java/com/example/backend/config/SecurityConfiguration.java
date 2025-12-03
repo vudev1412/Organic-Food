@@ -72,6 +72,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/db/**").permitAll()
                         .requestMatchers("/api/v1/payments/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/certificates/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/register/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/verify-otp/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/send-otp/**").permitAll()

@@ -62,9 +62,8 @@ export const createUserAPI = (
   name: string,
   email: string,
   phone: string,
-  roleName?:string,
-  password?:string
-
+  roleName?: string,
+  password?: string
 ) => {
   const urlBackend = `/api/v1/users`;
   return axios.post<IBackendRes<IRegister>>(urlBackend, {
@@ -73,8 +72,7 @@ export const createUserAPI = (
     phone,
 
     roleName,
-    password
-
+    password,
   });
 };
 
@@ -230,6 +228,75 @@ export const getProductsByCategoryAPI = (
   }
 
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
+};
+/**
+ * Gọi API lấy TẤT CẢ sản phẩm đang Active
+ */
+export const fetchAllActiveProducts = (params = {}) => {
+  const { page, size, sort, minPrice, maxPrice, certificateIds } = params;
+
+  // 1. Xử lý Filter (Turkraft)
+  const filterParts = [];
+  if (minPrice !== undefined && minPrice !== null) {
+    filterParts.push(`price >= ${minPrice}`);
+  }
+  if (maxPrice !== undefined && maxPrice !== null) {
+    filterParts.push(`price <= ${maxPrice}`);
+  }
+  const filterString = filterParts.join(" and ");
+
+  // 2. Tạo Query String
+  const queryParams = new URLSearchParams();
+
+  if (page) queryParams.append("page", page);
+  if (size) queryParams.append("size", size);
+  if (sort) queryParams.append("sort", sort);
+  if (filterString) queryParams.append("filter", filterString);
+
+  // [MỚI] Xử lý mảng certificateIds -> chuyển thành chuỗi cách nhau dấu phẩy
+  if (certificateIds && certificateIds.length > 0) {
+    queryParams.append("certificateIds", certificateIds.join(","));
+  }
+
+  return axios.get(`/api/v1/products/active?${queryParams.toString()}`);
+};
+
+/**
+ * Gọi API lấy sản phẩm Active theo Category
+ */
+export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
+  const { page, size, sort, minPrice, maxPrice, certificateIds } = params;
+
+  // 1. Xử lý Filter
+  const filterParts = [];
+  if (minPrice !== undefined && minPrice !== null) {
+    filterParts.push(`price >= ${minPrice}`);
+  }
+  if (maxPrice !== undefined && maxPrice !== null) {
+    filterParts.push(`price <= ${maxPrice}`);
+  }
+  const filterString = filterParts.join(" and ");
+
+  // 2. Tạo Query String
+  const queryParams = new URLSearchParams();
+
+  if (page) queryParams.append("page", page);
+  if (size) queryParams.append("size", size);
+  if (sort) queryParams.append("sort", sort);
+  if (filterString) queryParams.append("filter", filterString);
+
+  // [MỚI] Xử lý mảng certificateIds cho API theo Category
+  if (certificateIds && certificateIds.length > 0) {
+    queryParams.append("certificateIds", certificateIds.join(","));
+  }
+
+  return axios.get(
+    `/api/v1/product/category/${categoryId}/active?${queryParams.toString()}`
+  );
+};
+
+export const getCertificatesAPI = () => {
+  return axios.get("/api/v1/certificates");
 };
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
@@ -849,7 +916,6 @@ export const uploadReturnFileAPI = (file: File, folder: string) => {
   formData.append("file", file);
   formData.append("folder", folder);
 
-
   return axios.post<string>(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/files`,
     formData,
@@ -895,19 +961,26 @@ export const createRoleAPI = (roleName: string) => {
 export const deleteRoleAPI = (roleName: string) => {
   return axios.delete(`/api/v1/roles/${roleName}`);
 };
-export const addPermissionToRoleAPI = (roleName: string, permissionName: string) => {
+export const addPermissionToRoleAPI = (
+  roleName: string,
+  permissionName: string
+) => {
   return axios.post(`/api/v1/roles/${roleName}/permissions/${permissionName}`);
 };
-export const updatePermissionsForRoleAPI = (roleName: string, permissions: string[]) => {
+export const updatePermissionsForRoleAPI = (
+  roleName: string,
+  permissions: string[]
+) => {
   return axios.put(`/api/v1/roles/${roleName}/permissions`, permissions);
 };
 export const getAllPermissionsAPI = () => {
   return axios.get("/api/v1/permissions");
 };
 
-
 export const getNewCustomersThisMonthAPI = (month: number, year: number) => {
-  return axios.get(`/api/v1/dashboard/stats/new-customers?month=${month}&year=${year}`);
+  return axios.get(
+    `/api/v1/dashboard/stats/new-customers?month=${month}&year=${year}`
+  );
 };
 
 export const getOrderMonthAPI = (month: number, year: number) => {
@@ -962,6 +1035,7 @@ export interface IOrderDTO {
   status: string;
 }
 
+
 export const updateActiveUser = (id: number, payload: IReqUpdateUserActive) => {
   return axios.patch<IBackendRes<IUser>>(
     `/api/v1/users/${id}/active`,
@@ -990,4 +1064,5 @@ export const updateCertificateAPI = (id: number, data: Partial<ICertificate>) =>
 
 export const deleteCertificateAPI = (id: number) =>
   axios.delete(`/api/v1/certificates/${id}`);
+
 

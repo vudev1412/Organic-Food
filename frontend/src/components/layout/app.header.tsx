@@ -97,7 +97,7 @@ const AppHeader = () => {
   const closeMegaMenu = () => {
     setIsMegaMenuOpen(false);
   };
-  console.log(user?.role?.name)
+  console.log(user?.role?.name);
 
   const userMenuItems: MenuProps["items"] = [
     {
@@ -114,9 +114,7 @@ const AppHeader = () => {
               {user?.name || "User"}
             </span>
             <span className="text-xs text-gray-500 mt-0.5 capitalize">
-
               {user?.role?.name.toLowerCase() || "Member"}
-
             </span>
           </div>
         </div>
@@ -143,12 +141,20 @@ const AppHeader = () => {
         </Link>
       ),
     },
+    {
+      key: "3",
+      icon: <EnvironmentOutlined className="text-gray-500" />,
+      label: (
+        <Link to="/tai-khoan/don-hang" className="font-medium">
+          Theo dõi đơn hàng
+        </Link>
+      ),
+    },
 
     ...(user?.role.name === "ADMIN"
-
       ? [
           {
-            key: "3",
+            key: "4",
             icon: <DashboardOutlined className="text-blue-500" />,
             label: (
               <Link to="/admin" className="font-medium">
@@ -162,7 +168,7 @@ const AppHeader = () => {
     { type: "divider" },
 
     {
-      key: "4",
+      key: "5",
       danger: true,
       icon: <LogoutOutlined />,
       // ✅ Sử dụng hàm logout mới
@@ -500,9 +506,7 @@ const AppHeader = () => {
                       {user?.name}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">
-
                       {user?.role?.name?.toLowerCase()}
-
                     </p>
                   </div>
                 </div>
@@ -524,9 +528,7 @@ const AppHeader = () => {
                   </div>
                 </div>
 
-
                 {user?.role?.name === "ADMIN" && (
-
                   <Link
                     to="/admin"
                     className="block mt-2 text-center text-xs text-blue-600 py-1.5 bg-blue-50 rounded hover:bg-blue-100 transition-colors font-medium"

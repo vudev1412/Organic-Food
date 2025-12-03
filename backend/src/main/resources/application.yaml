@@ -56,7 +56,6 @@ lhv:
 lehienvu:
   upload-file:
     base-path: "file:../upload/"
-
     base-uri: "D:/KhoaLuan/E-Commerce_Web/upload/"
 
 

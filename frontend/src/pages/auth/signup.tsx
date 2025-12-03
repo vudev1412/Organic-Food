@@ -1,5 +1,3 @@
-// File path: /src/pages/auth/signup.tsx
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -39,8 +37,18 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  // ✅ 1. THÊM STATE ĐỂ LƯU DỮ LIỆU FORM (Controlled Component)
+
+  // 1. STATE DỮ LIỆU FORM
   const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  // ✅ STATE LƯU LỖI (VALIDATION)
+  const [errors, setErrors] = useState({
     name: "",
     email: "",
     phone: "",
@@ -71,8 +79,6 @@ const SignUp = () => {
     const savedStep = sessionStorage.getItem("pendingStep");
 
     if (savedEmail && savedStep === "1") {
-      // Nếu F5, ta chỉ khôi phục Email để verify, data form có thể bị mất (chấp nhận được)
-      // Hoặc bạn cần update formData.email = savedEmail
       setFormData((prev) => ({ ...prev, email: savedEmail }));
       setCurrentStep(1);
       setCountdown(60);
@@ -80,34 +86,143 @@ const SignUp = () => {
     }
   }, []);
 
+  // --- VALIDATION HELPERS ---
+  const validateField = (name: string, value: string) => {
+    let errorMsg = "";
+
+    switch (name) {
+      case "email":
+        // Regex email cơ bản
+        if (!value) errorMsg = "Email không được để trống";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          errorMsg = "Email không đúng định dạng (VD: example@mail.com)";
+        break;
+
+      case "phone":
+        if (!value) errorMsg = "Số điện thoại không được để trống";
+        else {
+          // Chuẩn hóa tạm thời để check regex (nếu có +84 thì đổi về 0 để check)
+          let checkPhone = value.trim();
+          if (checkPhone.startsWith("+84")) {
+            checkPhone = "0" + checkPhone.slice(3);
+          }
+          // Regex VN: Bắt đầu 03, 05, 07, 08, 09 + 8 số
+          const vnf_regex = /^(0)(3|5|7|8|9)([0-9]{8})$/;
+          if (!vnf_regex.test(checkPhone)) {
+            errorMsg = "SĐT không hợp lệ (VD: 0912345678 hoặc +849...)";
+          }
+        }
+        break;
+
+      case "password":
+        if (!value) errorMsg = "Mật khẩu không được để trống";
+        else if (value.length < 6)
+          errorMsg = "Mật khẩu phải có ít nhất 6 ký tự";
+        break;
+
+      case "confirmPassword":
+        if (!value) errorMsg = "Vui lòng xác nhận mật khẩu";
+        else if (value !== formData.password)
+          errorMsg = "Mật khẩu xác nhận không khớp";
+        break;
+
+      case "name":
+        if (!value.trim()) errorMsg = "Họ tên không được để trống";
+        break;
+
+      default:
+        break;
+    }
+    return errorMsg;
+  };
+
   // --- HANDLERS ---
 
-  // ✅ 2. HÀM XỬ LÝ KHI NHẬP INPUT
+  // 2. HÀM XỬ LÝ KHI NHẬP INPUT
+  // Logic: Cập nhật value ngay lập tức.
+  // CHỈ Validate nếu trường đó ĐANG CÓ LỖI (để clear lỗi khi người dùng sửa đúng).
+  // Nếu chưa có lỗi, không validate ngay (để tránh báo đỏ khi đang gõ dở).
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // Nếu trường này đang bị báo lỗi -> check ngay để xóa lỗi nếu đã nhập đúng
+    if (errors[name as keyof typeof errors]) {
+      const errorMsg = validateField(name, value);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: errorMsg,
+      }));
+    }
+
+    // Xử lý riêng cho confirmPassword khi password thay đổi
+    if (name === "password" && formData.confirmPassword) {
+      // Chỉ cập nhật lỗi confirmPassword nếu nó đang hiển thị lỗi
+      if (errors.confirmPassword) {
+        const confirmError =
+          value !== formData.confirmPassword
+            ? "Mật khẩu xác nhận không khớp"
+            : "";
+        setErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
+      }
+    }
   };
 
-  // ✅ 3. XỬ LÝ SUBMIT ĐĂNG KÝ (Tạo mới hoặc Cập nhật)
+  // ✅ MỚI: HÀM XỬ LÝ KHI BLUR (RỜI KHỎI Ô INPUT)
+  // Khi người dùng nhập xong và click ra ngoài -> Lúc này mới kiểm tra lỗi và báo đỏ
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const errorMsg = validateField(name, value);
+    setErrors((prev) => ({
+      ...prev,
+      [name]: errorMsg,
+    }));
+  };
+
+  // 3. XỬ LÝ SUBMIT ĐĂNG KÝ
   const handleRegisterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    // KIỂM TRA MẬT KHẨU XÁC NHẬN
-    if (formData.password !== formData.confirmPassword) {
-      showToast("Mật khẩu xác nhận không khớp!", "error");
-      setLoading(false);
+
+    // Validate toàn bộ form trước khi submit
+    const newErrors = {
+      name: validateField("name", formData.name),
+      email: validateField("email", formData.email),
+      phone: validateField("phone", formData.phone),
+      password: validateField("password", formData.password),
+      confirmPassword: validateField(
+        "confirmPassword",
+        formData.confirmPassword
+      ),
+    };
+
+    setErrors(newErrors);
+
+    // Nếu có bất kỳ lỗi nào (string khác rỗng) -> Chặn submit
+    if (Object.values(newErrors).some((err) => err !== "")) {
+      showToast("Vui lòng kiểm tra lại thông tin nhập liệu!", "error");
       return;
     }
 
-    // Loại bỏ confirmPassword trước khi gửi API (nếu API không cần)
-    const { confirmPassword, ...payload } = formData;
-    // Backend mới của bạn đã tự xử lý logic:
-    // - Nếu email mới -> Tạo mới
-    // - Nếu email cũ chưa verify -> Cập nhật thông tin đè lên
-    // - Nếu email cũ đã verify -> Trả lỗi 400
+    setLoading(true);
+
+    // Chuẩn bị payload
+    const { confirmPassword, phone, ...rest } = formData;
+
+    // ✅ XỬ LÝ SỐ ĐIỆN THOẠI TRƯỚC KHI GỬI
+    // Nếu bắt đầu bằng +84 -> đổi thành 0
+    let formattedPhone = phone.trim();
+    if (formattedPhone.startsWith("+84")) {
+      formattedPhone = "0" + formattedPhone.slice(3);
+    }
+
+    const payload = {
+      ...rest,
+      phone: formattedPhone,
+    };
 
     try {
       const res: any = await registerUserAPI(payload);
@@ -118,7 +233,6 @@ const SignUp = () => {
         setCurrentStep(1);
         setCountdown(60);
 
-        // Lưu Session chống F5
         sessionStorage.setItem("pendingEmail", formData.email);
         sessionStorage.setItem("pendingStep", "1");
       } else {
@@ -134,17 +248,12 @@ const SignUp = () => {
     }
   };
 
-  // ✅ 4. NÚT "QUAY LẠI CHỈNH SỬA"
   const handleEditInfo = () => {
-    // Chỉ lùi bước, GIỮ NGUYÊN data trong formData
     setCurrentStep(0);
-
-    // Xóa session pendingStep để nếu F5 lúc này thì nó ở lại trang form (Step 0)
     sessionStorage.removeItem("pendingStep");
-    // (Optional) Có thể xóa pendingEmail hoặc giữ lại tùy ý
   };
 
-  // Xử lý Verify OTP (Giữ nguyên logic cũ, chỉ sửa biến email tham chiếu)
+  // Xử lý Verify OTP
   const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (otpValue.length !== 6) {
@@ -155,7 +264,7 @@ const SignUp = () => {
     setLoading(true);
     try {
       const res: any = await verifyOtpAPI({
-        email: formData.email, // Dùng email từ state formData
+        email: formData.email,
         otp: otpValue,
       });
 
@@ -175,11 +284,8 @@ const SignUp = () => {
   };
 
   const handleResendOtp = async () => {
-    // Nếu đang đếm ngược HOẶC đang trong quá trình gửi thì chặn luôn
     if (countdown > 0 || isResending) return;
-
-    setIsResending(true); // 🔒 Bắt đầu gửi -> Khóa nút, hiện loading
-
+    setIsResending(true);
     try {
       await resendOtpAPI(formData.email);
       showToast("Đã gửi lại mã OTP.", "info");
@@ -187,7 +293,7 @@ const SignUp = () => {
     } catch (error) {
       showToast("Không thể gửi lại OTP.", "error");
     } finally {
-      setIsResending(false); // 🔓 Kết thúc gửi -> Mở khóa (nhưng lúc này countdown đã chạy nên vẫn khóa theo countdown)
+      setIsResending(false);
     }
   };
 
@@ -200,7 +306,7 @@ const SignUp = () => {
   return (
     <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center p-4 font-sans relative">
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[500px] transition-all duration-300">
-        {/* LEFT SIDE: SLIDER (Giữ nguyên) */}
+        {/* LEFT SIDE: SLIDER */}
         <div className="hidden md:block md:w-[45%] relative overflow-hidden bg-gray-900">
           {SLIDER_IMAGES.map((img, index) => (
             <div
@@ -248,7 +354,6 @@ const SignUp = () => {
 
         {/* RIGHT SIDE: CONTENT */}
         <div className="w-full md:w-[55%] p-6 md:p-8 relative flex flex-col justify-center">
-          {/* Mobile Back & Brand */}
           <div className="md:hidden flex items-center justify-between mb-6">
             <Link to="/" className="text-gray-500 hover:text-gray-900">
               <ArrowLeft size={20} />
@@ -259,7 +364,7 @@ const SignUp = () => {
             <div className="w-5"></div>
           </div>
 
-          {/* STEPPER (Giữ nguyên UI) */}
+          {/* STEPPER */}
           <div className="mb-6">
             <div className="flex items-center justify-between relative px-2">
               <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-gray-100 -z-10"></div>
@@ -321,11 +426,12 @@ const SignUp = () => {
           </div>
 
           <div className="flex-1">
-            {/* STEP 1: FORM (ĐÃ CẬP NHẬT CONTROLLED INPUT) */}
+            {/* STEP 1: FORM */}
             {currentStep === 0 && (
               <form
                 onSubmit={handleRegisterSubmit}
                 className="space-y-3 animate-fade-in"
+                noValidate // Tắt validate mặc định của trình duyệt để dùng custom UI
               >
                 <div className="grid grid-cols-1 gap-3">
                   <InputGroup
@@ -334,7 +440,9 @@ const SignUp = () => {
                     placeholder="Họ và tên đầy đủ"
                     type="text"
                     value={formData.name}
-                    onChange={handleInputChange} // ✅ Binding State
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur} // ✅ Thêm onBlur
+                    error={errors.name}
                   />
                   <InputGroup
                     icon={<Mail />}
@@ -342,39 +450,42 @@ const SignUp = () => {
                     placeholder="Địa chỉ Email"
                     type="email"
                     value={formData.email}
-                    onChange={handleInputChange} // ✅ Binding State
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur} // ✅ Thêm onBlur
+                    error={errors.email}
                   />
                   <InputGroup
                     icon={<Phone />}
                     name="phone"
                     placeholder="Số điện thoại"
                     type="tel"
-                    pattern="[0-9]{10,11}"
                     value={formData.phone}
-                    onChange={handleInputChange} // ✅ Binding State
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur} // ✅ Thêm onBlur
+                    error={errors.phone}
                   />
                   <InputGroup
                     icon={<Lock />}
                     name="password"
                     placeholder="Mật khẩu (tối thiểu 6 ký tự)"
                     type={showPassword ? "text" : "password"}
-                    minLength={6}
                     value={formData.password}
-                    onChange={handleInputChange} // ✅ Binding State
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur} // ✅ Thêm onBlur
+                    error={errors.password}
                     isPassword={true}
                     showPassword={showPassword}
                     togglePassword={() => setShowPassword(!showPassword)}
                   />
-                  {/* ✅ INPUT XÁC NHẬN MẬT KHẨU (Thêm mới) */}
                   <InputGroup
                     icon={<ShieldCheck />}
                     name="confirmPassword"
                     placeholder="Nhập lại mật khẩu"
-                    type={showConfirmPassword ? "text" : "password"} // Toggle type
-                    minLength={6}
+                    type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    // Props cho nút mắt
+                    onBlur={handleInputBlur} // ✅ Thêm onBlur
+                    error={errors.confirmPassword}
                     isPassword={true}
                     showPassword={showConfirmPassword}
                     togglePassword={() =>
@@ -462,7 +573,6 @@ const SignUp = () => {
                     Bạn không nhận được mã?{" "}
                     <button
                       onClick={handleResendOtp}
-                      // ✅ Disable khi đang đếm ngược HOẶC đang gửi
                       disabled={countdown > 0 || isResending}
                       className={`font-bold ${
                         countdown > 0 || isResending
@@ -470,7 +580,6 @@ const SignUp = () => {
                           : "text-[#3A5B22] hover:underline cursor-pointer"
                       }`}
                     >
-                      {/* ✅ Logic hiển thị chữ */}
                       {isResending
                         ? "Đang gửi..."
                         : countdown > 0
@@ -479,7 +588,6 @@ const SignUp = () => {
                     </button>
                   </p>
 
-                  {/* ✅ NÚT QUAY LẠI ĐÃ ĐƯỢC CHỈNH SỬA */}
                   <button
                     onClick={handleEditInfo}
                     className="text-xs text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2 w-full transition-colors group"
@@ -514,18 +622,55 @@ const SignUp = () => {
   );
 };
 
-// InputGroup Component (Updated to accept value & onChange)
-const InputGroup = ({ icon, ...props }: any) => {
+// ✅ UPDATE: InputGroup nhận thêm prop `error`
+const InputGroup = ({
+  icon,
+  error,
+  isPassword,
+  showPassword,
+  togglePassword,
+  ...props
+}: any) => {
   return (
-    <div className="group relative">
-      <div className="absolute top-1/2 -translate-y-1/2 left-3.5 text-gray-400 group-focus-within:text-[#3A5B22] transition-colors duration-200">
-        {React.cloneElement(icon, { size: 18 })}
+    <div className="mb-1">
+      <div className="group relative">
+        <div
+          className={`absolute top-1/2 -translate-y-1/2 left-3.5 transition-colors duration-200 ${
+            error
+              ? "text-red-500"
+              : "text-gray-400 group-focus-within:text-[#3A5B22]"
+          }`}
+        >
+          {React.cloneElement(icon, { size: 18 })}
+        </div>
+
+        <input
+          {...props}
+          className={`w-full pl-10 pr-12 py-2.5 bg-gray-50 border rounded-xl outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 text-sm ${
+            error
+              ? "border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10"
+              : "border-gray-200 focus:bg-white focus:border-[#3A5B22] focus:ring-4 focus:ring-[#3A5B22]/10"
+          }`}
+        />
+
+        {/* Nút Toggle Password */}
+        {isPassword && (
+          <button
+            type="button"
+            onClick={togglePassword}
+            className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        )}
       </div>
-      <input
-        {...props}
-        required
-        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#3A5B22] focus:ring-4 focus:ring-[#3A5B22]/10 outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 text-sm"
-      />
+
+      {/* ✅ Hiển thị lỗi gợi ý bên dưới */}
+      {error && (
+        <p className="text-red-500 text-[11px] font-medium mt-1 ml-1 animate-fade-in">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

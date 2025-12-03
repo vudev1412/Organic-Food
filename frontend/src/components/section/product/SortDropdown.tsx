@@ -1,7 +1,5 @@
-// File path: /src/components/section/product/SortDropdown.tsx
-
-import React, { useState } from "react";
-import ChevronDownIcon from "./ChevronDownIcon"; // Giả sử icon ở cùng thư mục
+import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface SortDropdownProps {
   onSortChange: (sortOption: string) => void;
@@ -9,11 +7,14 @@ interface SortDropdownProps {
 
 const SortDropdown = ({ onSortChange }: SortDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState("Sắp xếp mặc định");
+  const [selectedOption, setSelectedOption] = useState("Mặc định");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const options = [
-    { label: "Sắp xếp mặc định", value: "default" },
+    { label: "Mặc định", value: "default" },
     { label: "Giá thấp đến cao", value: "price_asc" },
     { label: "Giá cao đến thấp", value: "price_desc" },
+    { label: "Tên A-Z", value: "name_asc" },
   ];
 
   const handleSelect = (option: { label: string; value: string }) => {
@@ -22,40 +23,47 @@ const SortDropdown = ({ onSortChange }: SortDropdownProps) => {
     onSortChange(option.value);
   };
 
-  return (
-    <div className="relative inline-block text-left w-full sm:w-auto">
-      <div>
-        <button
-          type="button"
-          className="flex justify-between items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          id="options-menu"
-          aria-haspopup="true"
-          aria-expanded={isOpen}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {selectedOption}
-          <ChevronDownIcon
-            className={`-mr-1 ml-2 h-5 w-5 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-      </div>
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-      {/* Menu dropdown */}
+  return (
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      <button
+        type="button"
+        className="flex items-center justify-between w-[180px] px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#3A5B22]/20 transition-all text-sm font-medium text-gray-700"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="truncate">{selectedOption}</span>
+        <ChevronDown
+          size={16}
+          className={`ml-2 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
       {isOpen && (
-        <div
-          className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" // Tăng z-index nếu cần
-          role="menu"
-          aria-orientation="vertical"
-          aria-labelledby="options-menu"
-        >
-          <div className="py-1" role="none">
+        <div className="absolute right-0 z-50 w-full mt-2 origin-top-right bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 animate-fade-in">
+          <div className="py-1">
             {options.map((option) => (
               <button
                 key={option.value}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                role="menuitem"
+                className={`block w-full px-4 py-2.5 text-sm text-left transition-colors ${
+                  selectedOption === option.label
+                    ? "bg-[#3A5B22]/10 text-[#3A5B22] font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
                 onClick={() => handleSelect(option)}
               >
                 {option.label}
