@@ -181,16 +181,13 @@ const UpdateProduct: React.FC<IProps> = ({
     }
   }, [dataUpdate, form]);
 
-  const uploadFileToServer = async (file: File, folder: string) => {
-    try {
-      const uploadAPI =
-        folder === "images/certs" ? uploadFileCertsAPI : uploadFileProductAPI;
-      const res = await uploadAPI(file, folder);
+  const uploadFileToServer = async (file: RcFile, folder: string) => {
+      const api = folder.includes("images/certs")
+        ? uploadFileCertsAPI
+        : uploadFileProductAPI;
+      const res = await api(file, folder);
       return res.data;
-    } catch {
-      return null;
-    }
-  };
+    };
 
   const handleSubmit = async (values: any) => {
     if (!dataUpdate) return;
