@@ -48,26 +48,25 @@ public class OrderServiceImpl implements OrderService {
     public ResOrderDTO handleCreateOrder(ReqCreateOrderDTO reqDTO) {
         User customer;
 
-        // ✅ Bước 1: Xử lý Customer
+        // ========================
+        // 1. Xử lý Customer
+        // ========================
         if (reqDTO.getUserId() != null) {
-            // Trường hợp đã có tài khoản
             customer = userRepository.findById(reqDTO.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + reqDTO.getUserId()));
         } else {
-            // Trường hợp chưa có tài khoản → Tạo mới
             if (reqDTO.getCustomerDTO() == null) {
                 throw new RuntimeException("Phải cung cấp thông tin khách hàng hoặc userId");
             }
-
-            // Check email đã tồn tại chưa
             if (userRepository.existsByEmail(reqDTO.getCustomerDTO().getEmail())) {
                 throw new RuntimeException("Email đã tồn tại: " + reqDTO.getCustomerDTO().getEmail());
             }
-
             customer = createNewCustomer(reqDTO.getCustomerDTO());
         }
 
-        // ✅ Bước 2: Tạo Order
+        // ========================
+        // 2. Tạo Order
+        // ========================
         Order order = new Order();
         order.setOrderAt(Instant.now());
         order.setNote(reqDTO.getNote());
@@ -79,20 +78,22 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
 
 
+        // ========================
+        // 3. Tạo OrderDetail + cập nhật tồn kho
+        // ========================
         List<OrderDetail> orderDetails = new ArrayList<>();
+        double subtotal = 0;
 
         for (ReqOrderDetailItemDTO item : reqDTO.getOrderDetails()) {
-            // Lấy thông tin sản phẩm
+
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + item.getProductId()));
 
-            // Kiểm tra tồn kho
             if (product.getQuantity() < item.getQuantity()) {
                 throw new RuntimeException("Sản phẩm '" + product.getName() +
                         "' không đủ hàng. Còn lại: " + product.getQuantity());
             }
 
-            // Tạo OrderDetail
             OrderDetail orderDetail = new OrderDetail();
 
             OrderDetailKey key = new OrderDetailKey();
@@ -102,29 +103,55 @@ public class OrderServiceImpl implements OrderService {
 
             orderDetail.setQuantity(item.getQuantity());
 
-            // Tính giá sau giảm giá (nếu có logic promotion thì thêm vào đây)
             double finalPrice = calculateFinalPrice(product);
             orderDetail.setPrice(finalPrice);
+
+            subtotal += finalPrice * item.getQuantity();  // cộng vào subtotal
 
             orderDetail.setProduct(product);
             orderDetail.setOrder(savedOrder);
 
             orderDetails.add(orderDetail);
 
-            // ✅ Cập nhật số lượng tồn kho
             product.setQuantity(product.getQuantity() - item.getQuantity());
             productRepository.save(product);
         }
 
-        // Lưu tất cả OrderDetails
         orderDetailRepository.saveAll(orderDetails);
 
-        // ✅ Bước 4: Fetch lại Order với đầy đủ thông tin để trả về
-        Order orderWithDetails = orderRepository.findOrderWithDetailsAndProduct(savedOrder.getId())
+
+        // ========================
+        // 4. Tạo Invoice sau khi có Order + OrderDetail
+        // ========================
+        Invoice invoice = new Invoice();
+
+        invoice.setOrder(savedOrder);
+        invoice.setCustomer(customer);
+
+        invoice.setSubtotal(subtotal);
+
+        // tính thuế
+        double taxRate = invoice.getTaxRate();
+        double taxAmount = subtotal * taxRate;
+        invoice.setTaxAmount(taxAmount);
+
+        // Tổng cộng = subtotal + tax + fee - discount
+        double total = subtotal + taxAmount + invoice.getDeliverFee() - invoice.getDiscountAmount();
+        invoice.setTotal(total);
+
+        invoiceRepository.save(invoice);
+
+
+        // ========================
+        // 5. Fetch lại Order đầy đủ (kèm invoice + details + product)
+        // ========================
+        Order orderWithDetails = orderRepository
+                .findOrderWithDetailsAndProduct(savedOrder.getId())
                 .orElseThrow(() -> new RuntimeException("Order not found after creation"));
 
         return convertToResOrderDTO(orderWithDetails);
     }
+
 
     @Transactional
     private User createNewCustomer(ReqCustomerDTO customerDTO) {

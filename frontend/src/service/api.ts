@@ -295,9 +295,7 @@ export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
   );
 };
 
-export const getCertificatesAPI = () => {
-  return axios.get("/api/v1/certificates");
-};
+
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
   return axios.get<IBackendRes<IProductDetail>>(urlBackend);

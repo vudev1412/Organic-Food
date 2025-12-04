@@ -45,7 +45,6 @@ const SignIn = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-
   // Slider Auto-play
   useEffect(() => {
     const interval = setInterval(() => {
@@ -63,11 +62,9 @@ const SignIn = () => {
   };
 
   // --- HANDLERS ---
-
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     const cleanVal = val.replace(/\s/g, ""); // Xóa khoảng trắng
-
     setUsername(cleanVal);
     if (usernameError) setUsernameError("");
   };
@@ -88,14 +85,12 @@ const SignIn = () => {
       return;
     }
 
-
     if (!validateInput(username)) {
       setUsernameError("Email hoặc SĐT không đúng định dạng");
       return;
     }
 
     // 2. Chuẩn hóa dữ liệu trước khi gửi API
-    // Nếu là SĐT bắt đầu bằng +84 -> đổi thành 0
     let submitUsername = username;
     if (submitUsername.startsWith("+84")) {
       submitUsername = "0" + submitUsername.slice(3);
@@ -103,19 +98,7 @@ const SignIn = () => {
 
     setLoading(true);
     try {
-      // Truyền submitUsername (đã chuẩn hóa) vào API
       const res = await loginAPI(submitUsername, password);
-
-    // Nếu nhập dạng email → phải đúng định dạng
-    if (username.includes("@") && !isValidEmail(username)) {
-      showToast("Email không hợp lệ", "error");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await loginAPI(username, password);
-
 
       if (res?.data) {
         setIsAuthenticated(true);
@@ -175,6 +158,7 @@ const SignIn = () => {
                 Đăng nhập để tiếp tục mua sắm những sản phẩm tươi ngon nhất.
               </p>
             </div>
+
             <div className="flex gap-2">
               {SLIDER_IMAGES.map((_, idx) => (
                 <div
@@ -203,9 +187,7 @@ const SignIn = () => {
 
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Đăng nhập</h1>
-            <p className="text-gray-500 text-sm">
-              Nhập thông tin tài khoản của bạn.
-            </p>
+            <p className="text-gray-500 text-sm">Nhập thông tin tài khoản của bạn.</p>
           </div>
 
           {/* LOGIN FORM */}
@@ -276,22 +258,17 @@ const SignIn = () => {
                 className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors"
               >
                 <img src={gg} alt="Google" className="w-5 h-5" />
-                <span className="text-sm font-medium text-gray-700">
-                  Google
-                </span>
+                <span className="text-sm font-medium text-gray-700">Google</span>
               </button>
               <button
                 type="button"
                 className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors"
               >
                 <img src={fb} alt="Facebook" className="w-5 h-5" />
-                <span className="text-sm font-medium text-gray-700">
-                  Facebook
-                </span>
+                <span className="text-sm font-medium text-gray-700">Facebook</span>
               </button>
             </div>
           </div>
-
 
           <div className="mt-8 text-center text-sm text-gray-500">
             Chưa có tài khoản?{" "}
@@ -307,7 +284,6 @@ const SignIn = () => {
     </div>
   );
 };
-
 
 const InputGroup = ({
   icon,
@@ -363,4 +339,3 @@ const InputGroup = ({
 };
 
 export default SignIn;
- 

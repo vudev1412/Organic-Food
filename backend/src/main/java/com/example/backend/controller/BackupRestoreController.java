@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.service.BackupRestoreService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -14,63 +15,82 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/db")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Nếu cần cho frontend React
+@CrossOrigin(origins = "*")
 public class BackupRestoreController {
 
     private final BackupRestoreService backupRestoreService;
 
-    @PostMapping("/backup")
+    // ⚠️ ĐẶT API LIST TRƯỚC, TRÁNH CONFLICT VỚI /backup
+    @GetMapping("/backups/list")
+    public ResponseEntity<ApiResponse<List<BackupRestoreService.BackupInfo>>> listBackups() {
+        try {
+            log.info("Fetching backup list...");
+            List<BackupRestoreService.BackupInfo> backups = backupRestoreService.listBackups();
+            log.info("Found {} backups", backups.size());
+            return ResponseEntity.ok(ApiResponse.success(backups));
+        } catch (Exception e) {
+            log.error("Error listing backups", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Không thể lấy danh sách backup: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/backup/create")
     public ResponseEntity<ApiResponse<BackupRestoreService.BackupInfo>> backup() {
         try {
+            log.info("Creating backup...");
             BackupRestoreService.BackupInfo info = backupRestoreService.backupDatabase();
+            log.info("Backup created: {}", info.fileName());
             return ResponseEntity.ok(ApiResponse.success(info));
         } catch (Exception e) {
+            log.error("Backup failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Backup thất bại: " + e.getMessage()));
         }
     }
-    @GetMapping("/download")
-    public ResponseEntity<Resource> downloadBackup(@RequestParam String path) throws IOException {
-        File file = new File(path);
-        if (!file.exists()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+    @DeleteMapping("/backup/delete")
+    public ResponseEntity<ApiResponse<String>> deleteBackup(@RequestParam String path) {
+        try {
+            log.info("Deleting backup: {}", path);
+            boolean deleted = backupRestoreService.deleteBackup(path);
+            if (deleted) {
+                log.info("Backup deleted successfully");
+                return ResponseEntity.ok(ApiResponse.success("Đã xóa backup thành công"));
+            } else {
+                log.warn("Backup file not found: {}", path);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("File không tồn tại"));
+            }
+        } catch (Exception e) {
+            log.error("Delete failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Xóa thất bại: " + e.getMessage()));
         }
-
-        // Trả thẳng Resource, KHÔNG bao ApiResponse
-        Path filePath = file.toPath();
-        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(filePath));
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + file.getName() + "\"")
-                .contentLength(file.length())
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
     }
-
-
-
-
 
     @PostMapping("/restore")
     public ResponseEntity<ApiResponse<String>> restore(@RequestParam String path) {
         try {
+            log.info("Restoring from: {}", path);
             backupRestoreService.restoreDatabase(path);
+            log.info("Restore completed successfully");
             return ResponseEntity.ok(
                     ApiResponse.success("Restore thành công từ: " + path)
             );
         } catch (Exception e) {
+            log.error("Restore failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Restore thất bại: " + e.getMessage()));
         }
     }
 }
-record BackupInfo(String absolutePath, long fileSize, String createdAt) {}
 
 record ApiResponse<T>(
         boolean success,
