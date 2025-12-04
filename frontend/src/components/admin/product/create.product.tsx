@@ -144,7 +144,7 @@ const CreateProductCertificate = ({
       if (mainImageFileList[0]?.originFileObj) {
         mainImageUrl = await uploadFileToServer(
           mainImageFileList[0].originFileObj as RcFile,
-          "products"
+          "images/products"
         );
       }
 
@@ -164,7 +164,7 @@ const CreateProductCertificate = ({
             if (c.fileList[0]?.originFileObj) {
               imageUrl = await uploadFileToServer(
                 c.fileList[0].originFileObj as RcFile,
-                "certs"
+                "images/certs"
               );
             }
             return {
