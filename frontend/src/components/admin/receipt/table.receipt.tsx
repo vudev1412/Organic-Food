@@ -267,17 +267,7 @@ const TableReceipt = () => {
           </div>
         }
         toolBarRender={() => [
-          <Button
-            key="export"
-            icon={<FileExcelOutlined />}
-            onClick={() =>
-              notification.info({
-                message: "Tính năng xuất Excel đang phát triển",
-              })
-            }
-          >
-            Xuất Excel
-          </Button>,
+          
           <Button
             key="create"
             type="primary"

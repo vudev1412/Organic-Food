@@ -78,6 +78,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/send-otp/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/reset-password/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "api/v1/auth/forgot-password/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "api/v1/files/**").permitAll()
+
 
                         .requestMatchers("/api/upload").permitAll()
 
