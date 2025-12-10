@@ -3,7 +3,8 @@ import { useCurrentApp } from "../../components/context/app.context";
 import { useNavigate } from "react-router-dom";
 import { CrownOutlined } from "@ant-design/icons";
 import {
-  getUserByIdAPI,
+  getUserById,
+  getCustomerInfoAPI,
   updateUserDTOAPI,
   uploadFileAvatarAPI,
 } from "../../service/api";
@@ -192,7 +193,8 @@ const Profile = () => {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [userById, setUserById] = useState<IResUserById | null>(null);
+  const [customerData, setCustomerData] = useState<any | null>(null);
+
   const [isEditing, setIsEditing] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -204,7 +206,7 @@ const Profile = () => {
   // --- MỚI: State lỗi số điện thoại ---
   const [phoneError, setPhoneError] = useState("");
 
-  const isMember = user?.customerProfile?.member === true;
+  const isMember = customerData?.member === true;
 
   useEffect(() => {
     if (user) {
@@ -358,15 +360,24 @@ const Profile = () => {
   useEffect(() => {
     if (!userID) return;
 
-    const fetchUser = async () => {
+    const fetchUserProfile = async () => {
       setLoading(true);
       try {
-        const res = await getUserByIdAPI(userID);
+        // Lấy user info
+        const res = await getUserById(userID);
+        if (res?.data?.data) {
+          console.log("profile checking");
 
-        if (res?.data?.statusCode === 200) {
-          setUserData(res.data.data.data);
-        } else {
-          console.warn("Fetch thất bại:", res?.data?.message);
+          setUserData(res.data.data);
+
+          // Nếu là CUSTOMER thì lấy thêm customer profile
+          if (res.data.data.role.name === "CUSTOMER") {
+            const customerRes = await getCustomerInfoAPI(userID);
+
+            if (customerRes?.data?.data) {
+              setCustomerData(customerRes.data.data);
+            }
+          }
         }
       } catch (error) {
         console.error("Lỗi khi gọi API:", error);
@@ -375,8 +386,9 @@ const Profile = () => {
       }
     };
 
-    fetchUser();
+    fetchUserProfile();
   }, [userID]);
+
   console.log(`${import.meta.env.VITE_BACKEND_AVATAR_IMAGE_URL}${user?.image}`);
   return (
     <>

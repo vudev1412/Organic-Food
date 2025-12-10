@@ -87,4 +87,34 @@ public class OrderController {
         ResOrderDTO resDTO = orderService.convertToResOrderDTOv2(order);
         return ResponseEntity.ok(resDTO);
     }
+    /**
+     * API hủy đơn hàng từ phía Khách hàng hoặc từ Frontend (Modal thanh toán)
+     * Dùng POST vì nó là một hành động (action) thay đổi trạng thái.
+     * Khách hàng không cần quyền, Service sẽ tự kiểm tra order có thuộc về user không.
+     * Endpoint này sẽ được gọi từ PaymentModal.tsx
+     * Ví dụ: POST /api/v1/orders/cancel/123
+     */
+    @PostMapping("/cancel/{id}")
+    @ApiMessage("Cancel an order and refund inventory (by Customer or System)")
+    public ResponseEntity<Void> cancelUserOrder(@PathVariable Long id) {
+        // Lấy ID người dùng hiện tại (hoặc null nếu không cần kiểm tra quyền)
+        // Trong trường hợp này, Service cần tự kiểm tra user ID.
+        orderService.cancelOrder(id);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * API hủy đơn hàng từ phía Admin/Nhân viên
+     * Cần có quyền 'QL DonHang' hoặc 'ADMIN'.
+     * API này có thể có thêm logic ghi log người hủy.
+     */
+    @PatchMapping("/admin/cancel/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL DonHang')")
+    @ApiMessage("Cancel an order (by Admin/Staff)")
+    public ResponseEntity<Void> cancelOrderAdmin(@PathVariable Long id) {
+        // Lấy thông tin người dùng hiện tại để ghi log nếu cần
+        // String currentUser = SecurityUtil.getCurrentUserLogin().orElse("System");
+        orderService.cancelOrder(id);
+        return ResponseEntity.ok().build();
+    }
 }

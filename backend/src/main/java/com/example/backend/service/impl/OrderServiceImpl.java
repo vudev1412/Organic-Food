@@ -582,36 +582,38 @@ public class OrderServiceImpl implements OrderService {
 
     // --- 2. LOGIC HỦY ĐƠN (KÈM HOÀN TỒN KHO) ---
     @Override
-    @Transactional
+    @Transactional // Rất quan trọng để đảm bảo tính toàn vẹn (tồn kho và xóa)
     public void cancelOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
-        // Chỉ cho hủy khi đang PENDING hoặc CONFIRMED (Tùy nghiệp vụ)
-        if (order.getStatusOrder() == StatusOrder.CANCELLED || order.getStatusOrder() == StatusOrder.SHIPPING || order.getStatusOrder() == StatusOrder.DELIVERED) {
-            throw new RuntimeException("Không thể hủy đơn hàng ở trạng thái này.");
+        // --- 1. KIỂM TRA TRẠNG THÁI (Chỉ cho phép xóa đơn hàng mới tạo) ---
+        // Giả định đơn hàng mới tạo có trạng thái là PENDING hoặc NEW.
+        // Nếu trạng thái đã là SHIPPING hoặc DELIVERED thì không được xóa.
+        if (order.getStatusOrder() != StatusOrder.PENDING ) {
+            // Thay đổi điều kiện này tùy theo trạng thái khởi tạo chính xác của bạn
+            throw new RuntimeException("Không thể xóa đơn hàng ở trạng thái này. Chỉ có thể xóa các đơn hàng mới tạo.");
         }
 
-        // Hoàn lại số lượng tồn kho
+        // --- 2. HOÀN LẠI SỐ LƯỢNG TỒN KHO ---
         List<OrderDetail> details = order.getOrderDetails();
         if (details != null) {
             for (OrderDetail detail : details) {
                 Product product = detail.getProduct();
+                // Hoàn lại số lượng đã trừ khi đặt hàng
                 product.setQuantity(product.getQuantity() + detail.getQuantity());
                 productRepository.save(product);
             }
         }
 
-        // Cập nhật trạng thái Order
-        order.setStatusOrder(StatusOrder.CANCELLED);
+        // --- 3. XÓA VĨNH VIỄN ORDER VÀ CÁC THÔNG TIN LIÊN QUAN ---
+        // Lệnh này sẽ:
+        // 1. Xóa bản ghi Order.
+        // 2. Tự động xóa OrderDetail, Invoice, và Return liên quan
+        //    nhờ cấu hình 'cascade = CascadeType.ALL' trong Order.java.
+        orderRepository.delete(order);
 
-        // Cập nhật trạng thái Invoice (nếu cần thiết để đối soát)
-        if (order.getInvoice() != null) {
-            order.getInvoice().setStatus(StatusInvoice.CANCELLED);
-            invoiceRepository.save(order.getInvoice());
-        }
-
-        orderRepository.save(order);
+        // (Lưu ý: Không cần cập nhật trạng thái hay gọi save sau khi gọi delete)
     }
     @Override
     public ResOrderDTO convertToResOrderDTOv2(Order order) {
