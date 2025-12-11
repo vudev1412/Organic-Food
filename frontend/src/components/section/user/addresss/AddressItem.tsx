@@ -49,7 +49,7 @@ const AddressItem: React.FC<AddressItemProps> = ({
         </div>
 
         {/* Row 2: Address (One line with truncate) */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-start gap-2 text-sm text-gray-600">
           <MapPin size={14} className="text-gray-400 flex-shrink-0" />
           <p className="truncate leading-relaxed">
             <span className="font-medium text-gray-700">{address.street}</span>
