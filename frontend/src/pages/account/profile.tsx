@@ -367,8 +367,10 @@ const Profile = () => {
         const res = await getUserById(userID);
         if (res?.data?.data) {
           console.log("profile checking");
-
-          setUserData(res.data.data);
+          const fetchedUser = res.data.data;
+          setUserData(fetchedUser);
+          setCreatedAt(fetchedUser.createAt || null);
+          setUpdatedAt(fetchedUser.updateAt || null);
 
           // Nếu là CUSTOMER thì lấy thêm customer profile
           if (res.data.data.role.name === "CUSTOMER") {

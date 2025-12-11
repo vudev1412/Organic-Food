@@ -150,7 +150,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
       <div className="bg-green-50 rounded-xl p-4 border border-green-200">
         {/* HIỂN THỊ GIÁ */}
-        <div className="flex items-baseline gap-3 mb-1">
+        <div className="flex items-baseline gap-3 mb-1 flex-wrap">
           {hasPromotion && (
             <span className="text-xl font-semibold text-gray-500 line-through">
               {originalPrice.toLocaleString()}₫
@@ -182,39 +182,39 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         </div>
       </div>
 
-      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 ">
-        <h4 className="font-semibold mb-2 flex items-center gap-2 ">
-          <FontAwesomeIcon icon={faShieldAlt} className="text-green-600" />
-          Chứng nhận chất lượng
-        </h4>
-        {/* Đã xóa mb-4 vì không còn nút ở dưới */}
-        <div className="flex gap-3">
-          {certifications.map((cert) => (
-            <div
-              key={cert.id}
-              // Giữ lại logic mở modal khi click vào logo
-              className="p-2 border border-transparent hover:!border-green-300 rounded-full cursor-pointer transition-all duration-300 
+      {certifications.length > 0 && (
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 ">
+          <h4 className="font-semibold mb-2 flex items-center gap-2 ">
+            <FontAwesomeIcon icon={faShieldAlt} className="text-green-600" />
+            Chứng nhận chất lượng
+          </h4>
+          {/* Đã xóa mb-4 vì không còn nút ở dưới */}
+          <div className="flex gap-3">
+            {certifications.map((cert) => (
+              <div
+                key={cert.id}
+                // Giữ lại logic mở modal khi click vào logo
+                className="p-2 border border-transparent hover:!border-green-300 rounded-full cursor-pointer transition-all duration-300 
         ring-1 ring-transparent hover:ring-green-300 
         hover:shadow-lg hover:scale-105"
-              onClick={() => onCertClick(cert)}
-            >
-              {/* Thêm xử lý lỗi nếu ảnh không load được */}
-              <img
-                src={cert.logo}
-                alt={cert.name}
-                className="w-20 h-20 object-contain"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://placehold.co/80x80/cccccc/000000?text=Loi";
-                  e.currentTarget.alt = `${cert.name} (Loi tai anh)`;
-                }}
-              />
-            </div>
-          ))}
+                onClick={() => onCertClick(cert)}
+              >
+                {/* Thêm xử lý lỗi nếu ảnh không load được */}
+                <img
+                  src={cert.logo}
+                  alt={cert.name}
+                  className="w-20 h-20 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://placehold.co/80x80/cccccc/000000?text=Loi";
+                    e.currentTarget.alt = `${cert.name} (Loi tai anh)`;
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-
-        {/* ĐÃ XÓA NÚT "Tìm hiểu thêm" */}
-      </div>
+      )}
 
       <div>
         <h3 className="font-semibold text-lg mb-3">Số lượng:</h3>

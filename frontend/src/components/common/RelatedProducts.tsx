@@ -6,6 +6,35 @@ import "../section/home/home.scss";
 import QuantityModal from "../section/product/QuantityModal";
 import ProductCardWithPromotion from "./product.card.with.promotion";
 
+const calculateOriginalPrice = (product: IProductCard): number => {
+  if (product.discount && product.discount.value > 0) {
+    const discountedPrice = product.price;
+
+    switch (product.discount.type) {
+      case "PERCENT": {
+        const discountRate = product.discount.value / 100;
+
+        if (discountRate >= 1) return discountedPrice;
+
+        const originalPricePercent = discountedPrice / (1 - discountRate);
+
+        return Math.round(originalPricePercent);
+      }
+
+      case "FIXED_AMOUNT": {
+        const discountAmount = product.discount.value;
+
+        const originalPriceFixed = discountedPrice + discountAmount;
+
+        return Math.round(originalPriceFixed);
+      }
+
+      default:
+        return discountedPrice;
+    }
+  }
+  return product.price;
+};
 const RelatedProducts = () => {
   const {
     products,
@@ -38,7 +67,16 @@ const RelatedProducts = () => {
       </section>
     );
   }
+  const transformedProducts = products.map((p) => {
+    const originalPrice = calculateOriginalPrice(p);
 
+    return {
+      ...p,
+      price: originalPrice, // Gán giá gốc vào trường 'price'
+      // p.price ban đầu (giá đã giảm) vẫn có thể được truy cập thông qua p.discount
+      // hoặc bạn có thể thêm finalPrice: p.price nếu ProductCardWithPromotion cần
+    };
+  });
   return (
     <section className="mt-[50px]">
       <QuantityModal
@@ -52,7 +90,7 @@ const RelatedProducts = () => {
         <h1 style={{ color: "#0a472e" }}>Sản phẩm tương tự</h1>
       </div>
       <div className="flex flex-wrap gap-15 justify-center ">
-        {products.map((p) => (
+        {transformedProducts.map((p) => (
           <ProductCardWithPromotion
             key={p.id}
             product={p}
