@@ -10,8 +10,9 @@ import {
   PhoneOutlined,
   UserOutlined,
   HomeOutlined,
+  CreditCardOutlined, // Giữ lại CreditCardOutlined để dùng cho Payment Status
 } from "@ant-design/icons";
-import { Spin, Button } from "antd";
+import { Spin, Button, Tag, Divider } from "antd"; // Thêm Divider
 import { getOrderByIdV2API } from "../../../service/api";
 import { formatCurrency, formatOrderCode } from "../../../utils/format";
 
@@ -45,6 +46,40 @@ interface Order {
   orderDetails: OrderDetail[];
   userId: number | null;
 }
+
+// --- HELPER FUNCTIONS ---
+
+// Helper: Lấy màu và text cho trạng thái Đơn hàng
+const getStatusTag = (status: string) => {
+  switch (status) {
+    case "PENDING":
+      return { color: "blue", text: "Chờ xác nhận" };
+    case "CONFIRMED":
+      return { color: "processing", text: "Đã xác nhận" };
+    case "SHIPPING":
+      return { color: "gold", text: "Đang giao hàng" };
+    case "DELIVERED":
+      return { color: "success", text: "Đã giao hàng" };
+    case "CANCELLED":
+      return { color: "error", text: "Đã hủy" };
+    default:
+      return { color: "default", text: status };
+  }
+};
+
+// Helper: Lấy màu và text cho trạng thái Thanh toán
+const getPaymentStatusTag = (status: string) => {
+  switch (status) {
+    case "SUCCESS":
+      return { color: "green", text: "Đã thanh toán" };
+    case "PENDING":
+      return { color: "volcano", text: "Chưa thanh toán" };
+    case "FAILED":
+      return { color: "red", text: "Thất bại" };
+    default:
+      return { color: "default", text: status };
+  }
+};
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
@@ -88,7 +123,7 @@ const SuccessPage = () => {
           <meta charset="utf-8">
           <title>Hóa đơn #${formatOrderCode(order.id)}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
             
             /* Reset & Base */
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -186,7 +221,7 @@ const SuccessPage = () => {
               font-weight: 600;
             }
 
-            /* Order Meta (Date, Payment) */
+            /* Order Meta (Date, Payment, Status) */
             .meta-bar {
               background-color: #f0fdf4;
               border: 1px solid #dcfce7;
@@ -200,7 +235,11 @@ const SuccessPage = () => {
             .meta-item {
               display: flex;
               flex-direction: column;
+              text-align: center; /* Căn giữa cho Meta Bar */
             }
+            
+            .meta-item:first-child { text-align: left; }
+            .meta-item:last-child { text-align: right; }
             
             .meta-label {
               font-size: 11px;
@@ -214,6 +253,8 @@ const SuccessPage = () => {
               font-weight: 700;
               color: #14532d;
             }
+            .meta-value.status-error { color: #dc2626; } /* Thêm style cho trạng thái hủy/lỗi */
+
 
             /* Table */
             .products-table {
@@ -268,7 +309,7 @@ const SuccessPage = () => {
               padding-top: 10px;
               font-size: 16px;
               font-weight: 800;
-              color: #013a1e;
+              color: #b91c1c; /* Đổi màu tổng tiền cho nổi bật */
             }
 
             /* Footer */
@@ -319,15 +360,30 @@ const SuccessPage = () => {
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#f8f9fa]">
-        <Spin size="large" />
+        <Spin size="large" tip="Đang tải thông tin đơn hàng..." />
       </div>
     );
 
   if (!order)
     return (
-      <div className="text-center p-10">
-        Không tìm thấy đơn hàng{" "}
-        <Button onClick={() => navigate("/")}>Về trang chủ</Button>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-[#f8f9fa]">
+        <div className="text-center p-8 bg-white rounded-2xl shadow-sm">
+          <CloseCircleFilled className="text-6xl text-gray-300 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-700 mb-2">
+            Không tìm thấy đơn hàng
+          </h2>
+          <p className="text-gray-500 mb-6">
+            Đơn hàng bạn tìm kiếm không tồn tại hoặc đã bị xóa.
+          </p>
+          <Button
+            type="primary"
+            size="large"
+            onClick={() => navigate("/")}
+            className="bg-green-600 hover:bg-green-700 border-none"
+          >
+            Về trang chủ
+          </Button>
+        </div>
       </div>
     );
 
@@ -338,10 +394,13 @@ const SuccessPage = () => {
       "http://localhost:8080/storage/images/products/"
     }${productImage}`;
 
+  const statusOrderTag = getStatusTag(order.statusOrder);
+  const paymentStatusTag = getPaymentStatusTag(order.paymentStatus);
+
   return (
     <div className="min-h-screen bg-[#F4F7F6] py-10 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-5xl mx-auto">
-        {/* HEADER SECTION - Web View (GIỮ NGUYÊN) */}
+        {/* HEADER SECTION - Web View */}
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-6 text-center border-t-4 border-green-800 relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-green-50 rounded-full opacity-50 pointer-events-none"></div>
@@ -359,6 +418,11 @@ const SuccessPage = () => {
                   #{formatOrderCode(order.id)}
                 </span>
               </p>
+              {order.note && (
+                <p className="mt-2 text-red-500 bg-red-50 inline-block px-3 py-1 rounded-lg">
+                  Lý do: {order.note}
+                </p>
+              )}
             </>
           ) : (
             <>
@@ -372,6 +436,15 @@ const SuccessPage = () => {
                   #{formatOrderCode(order.id)}
                 </span>
               </p>
+              <div className="mt-2 flex justify-center items-center">
+                <span className="text-gray-600 mr-2">Trạng thái hiện tại:</span>
+                <Tag
+                  color={statusOrderTag.color}
+                  className="rounded-md px-2 py-1 text-sm font-semibold"
+                >
+                  {statusOrderTag.text}
+                </Tag>
+              </div>
             </>
           )}
 
@@ -396,10 +469,60 @@ const SuccessPage = () => {
           </div>
         </div>
 
-        {/* CONTENT GRID - Web View (GIỮ NGUYÊN) */}
+        {/* CONTENT GRID - Web View */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-2 space-y-6">
+            {/* THÔNG TIN CHUNG VÀ TRẠNG THÁI */}
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
+                <HistoryOutlined className="text-green-700" /> Chi tiết giao
+                dịch
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="flex flex-col items-center p-2">
+                  <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                    Mã đơn hàng
+                  </span>
+                  <span className="text-base font-bold text-green-700">
+                    #{formatOrderCode(order.id)}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center p-2">
+                  <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                    Ngày đặt
+                  </span>
+                  <span className="text-base font-medium text-gray-800">
+                    {formatDate(order.orderAt)}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center p-2">
+                  <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                    Trạng thái
+                  </span>
+                  <Tag
+                    color={statusOrderTag.color}
+                    className="rounded-md px-2 py-1 text-sm font-semibold"
+                  >
+                    {statusOrderTag.text}
+                  </Tag>
+                </div>
+                <div className="flex flex-col items-center p-2">
+                  <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                    Thanh toán
+                  </span>
+                  <Tag
+                    color={paymentStatusTag.color}
+                    className="rounded-md px-2 py-1 text-sm font-semibold"
+                  >
+                    {paymentStatusTag.text}
+                  </Tag>
+                </div>
+              </div>
+            </div>
+
+            {/* THÔNG TIN NHẬN HÀNG */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
                 <EnvironmentOutlined className="text-green-700" /> Thông tin
@@ -444,11 +567,30 @@ const SuccessPage = () => {
                   </div>
                 </div>
               </div>
+              <div className="mt-6 pt-4 border-t border-dashed border-gray-200">
+                <div className="flex items-start gap-3">
+                  <CreditCardOutlined className="mt-1 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                      Phương thức thanh toán
+                    </p>
+                    <span className="font-medium text-gray-800">
+                      {order.paymentMethod === "COD"
+                        ? "Thanh toán khi nhận hàng (COD)"
+                        : order.paymentMethod === "ONLINE"
+                        ? "Chuyển khoản ngân hàng"
+                        : order.paymentMethod}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* DANH SÁCH SẢN PHẨM */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
                 <ShoppingOutlined className="text-green-700" /> Sản phẩm đã đặt
+                ({order.orderDetails.length})
               </h2>
               <div className="space-y-6">
                 {order.orderDetails.map((item, index) => (
@@ -490,7 +632,7 @@ const SuccessPage = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
+          {/* RIGHT COLUMN (SUMMARY) */}
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
               <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
@@ -544,6 +686,7 @@ const SuccessPage = () => {
               )}
             </div>
 
+            {/* Support Card */}
             <div className="bg-[#e6f4ea] rounded-2xl p-5 border border-green-100 text-center">
               <p className="text-green-800 font-semibold mb-1">
                 Cần hỗ trợ đơn hàng?
@@ -613,13 +756,21 @@ const SuccessPage = () => {
               </div>
             </div>
 
-            {/* Thanh thông tin phụ */}
+            {/* Thanh thông tin phụ - CẬP NHẬT: Thêm Trạng thái đơn hàng */}
             <div className="meta-bar">
               <div className="meta-item">
                 <span className="meta-label">Ngày đặt hàng</span>
                 <span className="meta-value">{formatDate(order.orderAt)}</span>
               </div>
-              <div className="meta-item" style={{ alignItems: "center" }}>
+              <div className="meta-item">
+                <span className="meta-label">Trạng thái đơn hàng</span>
+                <span
+                  className={`meta-value ${isCancelled ? "status-error" : ""}`}
+                >
+                  {statusOrderTag.text}
+                </span>
+              </div>
+              <div className="meta-item">
                 <span className="meta-label">Phương thức thanh toán</span>
                 <span className="meta-value">
                   {order.paymentMethod === "COD"
@@ -627,12 +778,14 @@ const SuccessPage = () => {
                     : order.paymentMethod}
                 </span>
               </div>
-              <div className="meta-item" style={{ alignItems: "flex-end" }}>
+              <div className="meta-item">
                 <span className="meta-label">Trạng thái thanh toán</span>
-                <span className="meta-value">
-                  {order.paymentStatus === "SUCCESS"
-                    ? "Đã thanh toán"
-                    : "Chờ thanh toán"}
+                <span
+                  className={`meta-value ${
+                    paymentStatusTag.color === "red" ? "status-error" : ""
+                  }`}
+                >
+                  {paymentStatusTag.text}
                 </span>
               </div>
             </div>
