@@ -112,7 +112,7 @@ public class CartItemServiceImpl implements CartItemService {
 
         // Giả sử Product có field 'quantity' là tồn kho
         if (product.getQuantity() < totalDesiredQuantity) {
-            throw new IdInvalidException("Sản phẩm này chỉ còn " + product.getQuantity() + " cái.");
+            throw new IdInvalidException("Số lượng của "+ product.getName()+" chỉ còn " + product.getQuantity() );
         }
 
         // 3. Lưu CartItem

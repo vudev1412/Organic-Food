@@ -9,6 +9,7 @@ import com.example.backend.domain.response.ResOrderDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.service.OrderService;
 import com.example.backend.util.annotation.ApiMessage;
+import com.example.backend.util.error.IdInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -115,6 +116,20 @@ public class OrderController {
         // Lấy thông tin người dùng hiện tại để ghi log nếu cần
         // String currentUser = SecurityUtil.getCurrentUserLogin().orElse("System");
         orderService.cancelOrder(id);
+        return ResponseEntity.ok().build();
+    }
+    /**
+     * API hủy đơn hàng COD dành cho User (Sau khi đặt hàng thành công)
+     * Điều kiện:
+     * 1. Status phải là PENDING hoặc PROCESSING.
+     * 2. Payment Method phải là COD.
+     * 3. Trả lại tồn kho (nếu cần).
+     */
+    @PostMapping("/cancel/user-cod/{id}")
+    @ApiMessage("Cancel COD order by User (Condition: PENDING/PROCESSING & COD)")
+    public ResponseEntity<Void> cancelCodOrder(@PathVariable Long id) throws IdInvalidException {
+        // Gọi service xử lý logic kiểm tra và hủy
+        orderService.handleCancelCodOrder(id);
         return ResponseEntity.ok().build();
     }
 }

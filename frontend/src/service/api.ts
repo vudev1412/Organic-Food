@@ -871,6 +871,9 @@ export const cancelOrderAPI = (orderId: number) => {
   // Gọi đến endpoint mới đã thêm vào OrderController
   return axios.post(`/api/v1/orders/cancel/${orderId}`);
 };
+export const cancelCodOrderAPI = (orderId: number) => {
+  return axios.post(`/api/v1/orders/cancel/user-cod/${orderId}`);
+};
 /**
  * Lấy chi tiết đơn hàng (Dành cho User - Success Page)
  * Endpoint: GET /api/v1/orders/user/{id}

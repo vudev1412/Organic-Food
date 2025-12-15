@@ -7,6 +7,7 @@ import com.example.backend.domain.request.ReqUpdateOrderDTO;
 import com.example.backend.domain.response.ResCreateUserOrderDTO;
 import com.example.backend.domain.response.ResOrderDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
+import com.example.backend.util.error.IdInvalidException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -22,4 +23,5 @@ public interface OrderService {
     void cancelOrder(Long orderId);
     ResCreateUserOrderDTO handlePlaceUserOrder(CreateUserOrderDTO reqDTO);
     ResOrderDTO convertToResOrderDTOv2(Order order);
+    void handleCancelCodOrder(Long orderId) throws IdInvalidException;
 }

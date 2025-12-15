@@ -14,6 +14,7 @@ import com.example.backend.service.CustomerProfileService;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.UserService;
 import com.example.backend.util.SecurityUtil;
+import com.example.backend.util.error.IdInvalidException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -675,5 +676,79 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return builder.build();
+    }
+    @Override
+    @Transactional // Quan trọng: Để đảm bảo rollback nếu có lỗi giữa chừng
+    public void handleCancelCodOrder(Long orderId) throws IdInvalidException {
+        // 1. Tìm đơn hàng
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IdInvalidException("Đơn hàng không tồn tại với ID: " + orderId));
+
+        // 2. Security Check (Người dùng chỉ được hủy đơn của chính mình)
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().isPresent()
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+
+        if (order.getUser() != null && !order.getUser().getEmail().equals(currentUserEmail)) {
+            throw new IdInvalidException("Bạn không có quyền hủy đơn hàng này.");
+        }
+
+        // ==================================================================
+        // 3. CHECK LOGIC MỚI: Lấy Payment Method từ Invoice -> Payment
+        // ==================================================================
+
+        // Lấy Invoice từ Order
+        Invoice invoice = order.getInvoice();
+        if (invoice == null) {
+            throw new IdInvalidException("Dữ liệu hóa đơn bị lỗi, không tìm thấy hóa đơn cho đơn hàng này.");
+        }
+
+        // Lấy Payment từ Invoice
+        Payment payment = invoice.getPayment();
+        if (payment == null) {
+            throw new IdInvalidException("Dữ liệu thanh toán bị lỗi.");
+        }
+
+        // Kiểm tra Method
+        // Giả sử database lưu chuỗi "COD" (hoặc "CASH_ON_DELIVERY" tùy bạn quy định)
+        if (!"COD".equalsIgnoreCase(payment.getMethod())) {
+            throw new IdInvalidException("Chức năng này chỉ áp dụng cho đơn hàng thanh toán khi nhận hàng (COD).");
+        }
+
+        // 4. Kiểm tra trạng thái đơn hàng (Chỉ PENDING hoặc PROCESSING mới được hủy)
+        if (order.getStatusOrder() != StatusOrder.PENDING && order.getStatusOrder() != StatusOrder.PROCESSING) {
+            throw new IdInvalidException("Không thể hủy đơn hàng khi đã giao cho vận chuyển hoặc đã hoàn tất.");
+        }
+
+        // ==================================================================
+        // 5. CẬP NHẬT TRẠNG THÁI (Đồng bộ cả 3 bảng)
+        // ==================================================================
+
+        // 5.1. Hủy Order
+        order.setStatusOrder(StatusOrder.CANCELLED);
+
+        // 5.2. Hủy Invoice (Nếu Enum StatusInvoice có CANCELLED)
+        // Nếu không có CANCELLED, bạn có thể để UNPAID hoặc FAILED
+        invoice.setStatus(StatusInvoice.CANCELLED);
+
+        // 5.3. Hủy Payment (Nếu Enum StatusPayment có CANCELLED/FAILED)
+        payment.setStatus(StatusPayment.CANCELLED); // Hoặc CANCELLED tùy enum của bạn
+
+        // 6. HOÀN TRẢ TỒN KHO (Restock Inventory)
+        if (order.getOrderDetails() != null) {
+            for (OrderDetail detail : order.getOrderDetails()) {
+                Product product = detail.getProduct();
+                // Cộng lại số lượng kho
+                product.setQuantity(product.getQuantity() + detail.getQuantity());
+                // productRepository.save(product); (Optional nếu dùng JPA Managed Entity)
+            }
+        }
+
+        // 7. Lưu tất cả thay đổi
+        // Vì CascadeType.ALL được thiết lập ở Order -> Invoice, và Invoice -> Payment (cần check lại Invoice entity)
+        // Nên thường chỉ cần save Order là đủ. Nhưng để chắc ăn, ta có thể save lẻ.
+        orderRepository.save(order);
+        invoiceRepository.save(invoice); // Lưu cập nhật trạng thái invoice
+        paymentRepository.save(payment); // Lưu cập nhật trạng thái payment
     }
 }

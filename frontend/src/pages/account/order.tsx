@@ -14,11 +14,15 @@ import {
   EyeOutlined,
   ShoppingCartOutlined,
 } from "@ant-design/icons";
-import { Tag, Space, Typography, Button, message } from "antd";
+import { Space, Typography, Button, message } from "antd";
 import { useCurrentApp } from "../../components/context/app.context";
-import { checkReturnByOrderIdAPI, getOrderByUserId } from "../../service/api";
+import {
+  cancelCodOrderAPI,
+  checkReturnByOrderIdAPI,
+  getOrderByUserId,
+} from "../../service/api";
 import ReturnRequestModal from "../../components/section/reutrn/ReturnRequestModal";
-
+import ConfirmModal from "../../components/common/ConfirmModal";
 const { Text } = Typography;
 
 // === ENUM & TYPES ===
@@ -29,7 +33,18 @@ export enum StatusOrder {
   DELIVERED = "DELIVERED",
   CANCELLED = "CANCELLED",
 }
-
+const generateSlug = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize("NFD") // Tách dấu
+    .replace(/[\u0300-\u036f]/g, "") // Xóa dấu
+    .replace(/\s+/g, "-") // Thay khoảng trắng bằng -
+    .replace(/[^\w\-]+/g, "") // Xóa ký tự đặc biệt
+    .replace(/\-\-+/g, "-") // Xóa dấu gạch ngang liên tiếp
+    .replace(/^-+/, "") // Xóa gạch ngang đầu
+    .replace(/-+$/, ""); // Xóa gạch ngang cuối
+};
 // === HELPER ===
 const isWithinReturnPeriod = (order: IOrder): boolean => {
   if (order.statusOrder !== StatusOrder.DELIVERED || !order.actualDate) {
@@ -57,11 +72,6 @@ const isWithinReturnPeriod = (order: IOrder): boolean => {
   // Cho phép khiếu nại trong vòng 7 ngày
   return dayDifference >= 0 && dayDifference <= 7;
 };
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    amount
-  );
 
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("vi-VN", {
@@ -97,7 +107,7 @@ const getStatusStyles = (status: string) => {
     PROCESSING: "bg-blue-100 text-blue-700 border-blue-200",
     SHIPPING: "bg-indigo-100 text-indigo-700 border-indigo-200",
     DELIVERED: "bg-green-100 text-green-700 border-green-200",
-    CANCELLED: "bg-gray-100 text-gray-600 border-gray-300",
+    CANCELLED: "bg-red-100 text-white-600 border-gray-300",
   };
   return map[status] || "bg-gray-100 text-gray-600 border-gray-200";
 };
@@ -161,13 +171,20 @@ const CustomProgressBar = ({ status }: { status: string }) => {
 
 // === MAIN PAGE ===
 const OrderTrackingPage = () => {
-  const { user, showToast } = useCurrentApp();
+  const { user, showToast, addToCart, cartItems } = useCurrentApp();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [returnOrder, setReturnOrder] = useState<IOrder | null>(null);
-
+  //  STATE CHO CONFIRM MODAL HỦY ĐƠN
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<number | null>(null);
+  const [isRepurchaseModalOpen, setIsRepurchaseModalOpen] = useState(false);
+  const [pendingRepurchaseOrder, setPendingRepurchaseOrder] =
+    useState<IOrder | null>(null);
+  const [duplicateProductsName, setDuplicateProductsName] =
+    useState<string>("");
   useEffect(() => {
     if (user?.id) {
       fetchOrders();
@@ -230,6 +247,83 @@ const OrderTrackingPage = () => {
       </div>
     );
   }
+  const openCancelModal = (orderId: number) => {
+    setOrderToCancel(orderId);
+    setIsCancelModalOpen(true);
+  };
+  const handleConfirmCancel = async () => {
+    if (!orderToCancel) return;
+
+    setIsCancelModalOpen(false);
+
+    try {
+      const res = await cancelCodOrderAPI(orderToCancel);
+
+      // 🟢 THÊM KIỂM TRA NÀY:
+      // Chỉ khi status là 200 (OK) hoặc 204 (No Content) mới coi là thành công
+      if (res && (res.status === 200 || res.status === 204)) {
+        showToast("Đã hủy đơn hàng thành công!", "success");
+        fetchOrders();
+      } else {
+        // Nếu status khác (ví dụ backend trả về 200 nhưng kèm error code, hoặc axios config lạ)
+        // Ta tự ném lỗi xuống catch
+        throw new Error(
+          res?.data?.message || "Hủy đơn hàng chỉ áp dụng cho phương thức COD"
+        );
+      }
+    } catch (error: any) {
+      // Bây giờ lỗi 400 hoặc lỗi do ta tự throw ở trên sẽ nhảy vào đây
+      console.log("Lỗi catch:", error);
+      const msg =
+        error.response?.data?.message ||
+        error.message ||
+        "Lỗi khi hủy đơn hàng";
+      showToast(msg, "error");
+    } finally {
+      setOrderToCancel(null);
+    }
+  };
+  const handleRepurchase = (order: IOrder) => {
+    if (!order.orderDetails || order.orderDetails.length === 0) return;
+
+    // Tìm các sản phẩm bị trùng
+    const duplicates = order.orderDetails.filter((item) =>
+      cartItems.some((cartItem) => cartItem.id === item.productId)
+    );
+
+    if (duplicates.length > 0) {
+      // Nếu có trùng, lưu thông tin và mở modal xác nhận
+      const names = duplicates.map((d) => d.productName).join(", ");
+      setDuplicateProductsName(names);
+      setPendingRepurchaseOrder(order);
+      setIsRepurchaseModalOpen(true);
+    } else {
+      // Nếu không trùng, thêm thẳng vào giỏ
+      processAddRepurchase(order);
+    }
+  };
+  const processAddRepurchase = async (order: IOrder) => {
+    // Đóng modal nếu đang mở
+    setIsRepurchaseModalOpen(false);
+    setPendingRepurchaseOrder(null);
+
+    let addedCount = 0;
+
+    for (const item of order.orderDetails) {
+      const productPayload = {
+        id: item.productId,
+        name: item.productName,
+        price: item.price,
+        image: item.productImage,
+        slug: generateSlug(item.productName),
+        quantity: 100, // Bypass check tồn kho client
+      };
+
+      // Gọi hàm thêm vào giỏ
+      // addToCart sẽ tự cộng dồn số lượng nếu sản phẩm đã tồn tại
+      await addToCart(productPayload, item.quantity);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -282,7 +376,9 @@ const OrderTrackingPage = () => {
                 </div>
                 <div className="space-y-6">
                   {activeOrders.map((order) => {
-                    const total = calculateOrderTotal(order.orderDetails || []);
+                    const canCancel =
+                      order.statusOrder === "PENDING" ||
+                      order.statusOrder === "PROCESSING";
                     return (
                       <div
                         key={order.id}
@@ -301,13 +397,13 @@ const OrderTrackingPage = () => {
                               {formatDate(order.orderAt)}
                             </Text>
                           </div>
-                          <Tag
+                          <span
                             className={`text-base px-5 py-2 font-bold rounded-full ${getStatusStyles(
                               order.statusOrder
                             )}`}
                           >
                             {getStatusLabel(order.statusOrder)}
-                          </Tag>
+                          </span>
                         </div>
 
                         <div className="p-6">
@@ -349,18 +445,18 @@ const OrderTrackingPage = () => {
                           </div>
 
                           <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                            <div>
-                              <Text className="text-gray-600">
-                                Tổng thanh toán:
-                              </Text>
-                              <Text
-                                strong
-                                className="text-2xl text-green-600 ml-3 font-bold"
-                              >
-                                {formatPrice(total)}
-                              </Text>
-                            </div>
+                            <div></div>
                             <Space size="middle">
+                              {canCancel && (
+                                <Button
+                                  danger
+                                  size="large"
+                                  className="font-medium border-red-500 text-red-500 hover:bg-red-50"
+                                  onClick={() => openCancelModal(order.id)} // Gọi hàm mở modal
+                                >
+                                  Hủy đơn hàng
+                                </Button>
+                              )}
                               <Button
                                 size="large"
                                 icon={<EyeOutlined />}
@@ -400,7 +496,6 @@ const OrderTrackingPage = () => {
                 </div>
                 <div className="space-y-5">
                   {historyOrders.map((order) => {
-                    const total = calculateOrderTotal(order.orderDetails || []);
                     const isCancelled =
                       order.statusOrder === StatusOrder.CANCELLED;
                     const canClaim = isWithinReturnPeriod(order);
@@ -434,13 +529,13 @@ const OrderTrackingPage = () => {
                                 <Text strong className="text-xl">
                                   DH{String(order.id).padStart(6, "0")}
                                 </Text>
-                                <Tag
+                                <span
                                   className={`px-4 py-1 text-sm font-medium rounded-full ${getStatusStyles(
                                     order.statusOrder
                                   )}`}
                                 >
                                   {getStatusLabel(order.statusOrder)}
-                                </Tag>
+                                </span>
                               </div>
                               <Text
                                 type="secondary"
@@ -463,9 +558,10 @@ const OrderTrackingPage = () => {
                           </div>
 
                           <div className="flex flex-col md:items-end gap-3 w-full md:w-auto">
-                            <Text strong className="text-2xl text-green-600">
-                              {formatPrice(total)}
-                            </Text>
+                            <Text
+                              strong
+                              className="text-2xl text-green-600"
+                            ></Text>
                             <Space>
                               {canClaim && (
                                 <Button
@@ -488,7 +584,11 @@ const OrderTrackingPage = () => {
                                 Xem chi tiết
                               </Button>
                               {!isCancelled && (
-                                <Button type="primary" size="large">
+                                <Button
+                                  type="primary"
+                                  size="large"
+                                  onClick={() => handleRepurchase(order)}
+                                >
                                   Mua lại
                                 </Button>
                               )}
@@ -513,6 +613,27 @@ const OrderTrackingPage = () => {
           onSuccess={fetchOrders} // reload danh sách đơn hàng sau khi tạo return
         />
       )}
+      <ConfirmModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleConfirmCancel}
+        title="Xác nhận hủy đơn hàng"
+        message="Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ hủy đơn hàng ngay lập tức và không thể hoàn tác."
+        confirmText="Hủy đơn hàng"
+        cancelText="Quay lại"
+      />
+      {/* Modal xác nhận Mua lại (Khi trùng sản phẩm) */}
+      <ConfirmModal
+        isOpen={isRepurchaseModalOpen}
+        onClose={() => setIsRepurchaseModalOpen(false)}
+        onConfirm={() =>
+          pendingRepurchaseOrder && processAddRepurchase(pendingRepurchaseOrder)
+        }
+        title="Sản phẩm đã có trong giỏ"
+        message={`Các sản phẩm sau đã có trong giỏ hàng của bạn: ${duplicateProductsName}. Bạn có muốn tiếp tục thêm số lượng không?`}
+        confirmText="Vẫn thêm"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };
