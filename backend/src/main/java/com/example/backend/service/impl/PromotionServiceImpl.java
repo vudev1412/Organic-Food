@@ -2,12 +2,15 @@ package com.example.backend.service.impl;
 
 import com.example.backend.domain.*;
 import com.example.backend.domain.request.ReqPromotionDTO;
-import com.example.backend.domain.response.ResPromotionDTO;
+import com.example.backend.domain.response.*;
 import com.example.backend.mapper.PromotionMapper;
 import com.example.backend.repository.PromotionDetailRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.service.PromotionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,11 +25,58 @@ public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionDetailRepository promotionDetailRepository;
     @Override
-    public List<ResPromotionDTO> getAll() {
-        return promotionRepository.findAll()
-                .stream()
-                .map(promotionMapper::toResPromotionDTO)
-                .collect(Collectors.toList());
+    public ResultPaginationDTO getAll(Specification<Promotion> spec, Pageable pageable) {
+
+        Page<ResPromotionDTO> pagePromotion =
+                promotionRepository.findAll(spec, pageable)
+                        .map(this::toResPromotionDTO);
+
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+        meta.setPages(pagePromotion.getTotalPages());
+        meta.setTotal(pagePromotion.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(pagePromotion.getContent());
+
+        return rs;
+    }
+
+    public ResPromotionDTO toResPromotionDTO(Promotion promotion) {
+        return ResPromotionDTO.builder()
+                .id(promotion.getId())
+                .name(promotion.getName())
+                .type(promotion.getType())
+                .value(promotion.getValue())
+                .active(promotion.isActive())
+                .promotionDetails(
+                        promotion.getPromotionDetails()
+                                .stream()
+                                .map(this::toResPromotionDetailDTO)
+                                .toList()
+                )
+                .build();
+    }
+
+    private ResPromotionDetailDTO toResPromotionDetailDTO(PromotionDetail detail) {
+        Product p = detail.getProduct();
+
+        return ResPromotionDetailDTO.builder()
+                .product(
+                        ResPromotionProductDTO.builder()
+                                .id(p.getId())
+                                .name(p.getName())
+                                .price(p.getPrice())
+                                .image(p.getImage())
+                                .slug(p.getSlug())
+                                .build()
+                )
+                .startDate(detail.getStartDate())
+                .endDate(detail.getEndDate())
+                .build();
     }
 
     @Override

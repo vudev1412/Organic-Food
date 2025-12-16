@@ -10,8 +10,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface PromotionDetailMapper {
 
-    @Mapping(source = "promotion.id", target = "promotionId")
-    @Mapping(source = "product.id", target = "productId")
+
     ResPromotionDetailDTO toResPromotionDetailDTO(PromotionDetail entity);
 
 
