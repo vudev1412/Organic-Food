@@ -73,7 +73,8 @@ export const AppProvider = ({ children }: Tprops) => {
       type: "success" | "error" | "info" | "warning" = "success",
       duration = 1500
     ) => {
-      const id = Date.now().toString();
+      const id =
+        Date.now().toString() + Math.random().toString(36).substring(2, 9);
       const toast: ToastMessage = { id, message, type, duration };
       console.log("Showing toast:", toast);
 
@@ -265,7 +266,7 @@ export const AppProvider = ({ children }: Tprops) => {
 
         // Cập nhật lại giỏ hàng từ DB
         await fetchCartFromDB();
-        showToast("Đã thêm vào giỏ hàng", "success");
+        showToast(`Đã thêm ${product.name} vào giỏ hàng`, "success");
         return true;
       } catch (error: any) {
         showToast("Không thể thêm vào giỏ hàng", "error");
@@ -421,7 +422,7 @@ export const AppProvider = ({ children }: Tprops) => {
             // Kiểm tra vượt tồn kho
             if (newQuantity > maxQuantity) {
               showToast(
-                `Số lượng sản phẩm này chỉ còn ${maxQuantity}`,
+                `Số lượng ${item.name}này chỉ còn ${maxQuantity}`,
                 "error"
               );
               // Vẫn trả về item với quantity = maxQuantity

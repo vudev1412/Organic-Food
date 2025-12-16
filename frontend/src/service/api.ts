@@ -309,7 +309,6 @@ export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
   );
 };
 
-
 export const getProductDetailById = (id: number) => {
   const urlBackend = `/api/v1/products/${id}`;
   return axios.get<IBackendRes<IProductDetail>>(urlBackend);
@@ -882,6 +881,13 @@ export const placeOrderAPI = (data: IReqPlaceOrder) => {
   const urlBackend = `/api/v1/orders/place-order`;
   return axios.post<IBackendRes<IResPlaceOrder>>(urlBackend, data);
 };
+export const cancelOrderAPI = (orderId: number) => {
+  // Gọi đến endpoint mới đã thêm vào OrderController
+  return axios.post(`/api/v1/orders/cancel/${orderId}`);
+};
+export const cancelCodOrderAPI = (orderId: number) => {
+  return axios.post(`/api/v1/orders/cancel/user-cod/${orderId}`);
+};
 /**
  * Lấy chi tiết đơn hàng (Dành cho User - Success Page)
  * Endpoint: GET /api/v1/orders/user/{id}
@@ -1047,14 +1053,9 @@ export interface IOrderDTO {
   status: string;
 }
 
-
 export const updateActiveUser = (id: number, payload: IReqUpdateUserActive) => {
-  return axios.patch<IBackendRes<IUser>>(
-    `/api/v1/users/${id}/active`,
-    payload
-  );
+  return axios.patch<IBackendRes<IUser>>(`/api/v1/users/${id}/active`, payload);
 };
-
 
 export interface ICertificate {
   id: number;
@@ -1062,8 +1063,7 @@ export interface ICertificate {
   image?: string;
 }
 
-export const getCertificatesAPI = () =>
-  axios.get(`/api/v1/certificates`);
+export const getCertificatesAPI = () => axios.get(`/api/v1/certificates`);
 
 export const getCertificateByIdAPI = (id: number) =>
   axios.get(`/api/v1/certificates/${id}`);
@@ -1076,5 +1076,3 @@ export const updateCertificateAPI = (id: number, data: Partial<ICertificate>) =>
 
 export const deleteCertificateAPI = (id: number) =>
   axios.delete(`/api/v1/certificates/${id}`);
-
-

@@ -149,10 +149,7 @@ public class ReviewServiceImpl implements ReviewService {
         // ⭐ 3. Cập nhật rating_avg của product (vì số lượng review đã giảm)
         updateProductRatingAvg(productId);
     }
-    private ResReviewDTO mapToResReviewDTO(Review review) {
-        // ... Logic mapping fields ...
-        return new ResReviewDTO(); // Thay thế bằng logic thực tế của bạn
-    }
+ 
     @Override
     public ResultPaginationDTO handleGetReviewsByProductId(long productId, Pageable pageable) {
         // 1. Lấy dữ liệu dạng Page từ Repository

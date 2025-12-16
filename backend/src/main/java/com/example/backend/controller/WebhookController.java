@@ -2,14 +2,18 @@ package com.example.backend.controller;
 
 import com.example.backend.domain.CustomerProfile;
 import com.example.backend.domain.Invoice; // Import Invoice
+import com.example.backend.domain.Order;
 import com.example.backend.domain.Payment;
 import com.example.backend.enums.StatusInvoice; // Import Enum Invoice
+import com.example.backend.enums.StatusOrder;
 import com.example.backend.enums.StatusPayment;
 import com.example.backend.repository.CustomerProfileRepository;
 import com.example.backend.repository.InvoiceRepository; // Import Repo
+import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.PaymentRepository;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import vn.payos.PayOS;
 import vn.payos.model.webhooks.WebhookData;
@@ -26,15 +30,17 @@ public class WebhookController {
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository; // Inject thêm cái này
     private final CustomerProfileRepository customerProfileRepository; // Inject thêm cái này
-
-    public WebhookController(PayOS payOS, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository,CustomerProfileRepository customerProfileRepository) {
+    private final OrderRepository orderRepository;
+    public WebhookController(PayOS payOS, PaymentRepository paymentRepository, InvoiceRepository invoiceRepository,CustomerProfileRepository customerProfileRepository, OrderRepository orderRepository) {
         this.payOS = payOS;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.customerProfileRepository = customerProfileRepository;
+        this.orderRepository = orderRepository;
     }
 
     @PostMapping("/webhook")
+    @Transactional
     public ResponseEntity<String> handleWebhook(@RequestBody ObjectNode webhookBody) {
         try {
             // 1. Verify và lấy ID (Giữ nguyên)
@@ -65,7 +71,16 @@ public class WebhookController {
                     invoice.setStatus(StatusInvoice.PAID);
                     invoiceRepository.save(invoice);
                     System.out.println("✅ (ORDER FLOW) Đã update Invoice ID " + invoice.getId());
+                    // B2. Cập nhật Order -> CONFIRMED (Đã xác nhận)
+                    Order order = invoice.getOrder(); // Lấy Order từ Invoice
+                    if (order != null) {
+                        // Chuyển trạng thái từ PENDING sang CONFIRMED
+                        // CONFIRMED nghĩa là: Đã trả tiền, kho hãy đóng gói đi
+                        order.setStatusOrder(StatusOrder.PROCESSING);
+                        orderRepository.save(order);
 
+                        System.out.println("✅ UPDATE SUCCESS: Order ID " + order.getId() + " -> CONFIRMED");
+                    }
                     // Kết thúc xử lý tại đây, không đi xuống dưới nữa
                     return ResponseEntity.ok("OK");
                 }

@@ -1,3 +1,4 @@
+
 // File path: /src/pages/client/payment.tsx
 
 import { useCurrentApp } from "../../components/context/app.context";

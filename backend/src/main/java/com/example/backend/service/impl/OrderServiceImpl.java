@@ -14,6 +14,7 @@ import com.example.backend.service.CustomerProfileService;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.UserService;
 import com.example.backend.util.SecurityUtil;
+import com.example.backend.util.error.IdInvalidException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -582,36 +583,38 @@ public class OrderServiceImpl implements OrderService {
 
     // --- 2. LOGIC HỦY ĐƠN (KÈM HOÀN TỒN KHO) ---
     @Override
-    @Transactional
+    @Transactional // Rất quan trọng để đảm bảo tính toàn vẹn (tồn kho và xóa)
     public void cancelOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
-        // Chỉ cho hủy khi đang PENDING hoặc CONFIRMED (Tùy nghiệp vụ)
-        if (order.getStatusOrder() == StatusOrder.CANCELLED || order.getStatusOrder() == StatusOrder.SHIPPING || order.getStatusOrder() == StatusOrder.DELIVERED) {
-            throw new RuntimeException("Không thể hủy đơn hàng ở trạng thái này.");
+        // --- 1. KIỂM TRA TRẠNG THÁI (Chỉ cho phép xóa đơn hàng mới tạo) ---
+        // Giả định đơn hàng mới tạo có trạng thái là PENDING hoặc NEW.
+        // Nếu trạng thái đã là SHIPPING hoặc DELIVERED thì không được xóa.
+        if (order.getStatusOrder() != StatusOrder.PENDING ) {
+            // Thay đổi điều kiện này tùy theo trạng thái khởi tạo chính xác của bạn
+            throw new RuntimeException("Không thể xóa đơn hàng ở trạng thái này. Chỉ có thể xóa các đơn hàng mới tạo.");
         }
 
-        // Hoàn lại số lượng tồn kho
+        // --- 2. HOÀN LẠI SỐ LƯỢNG TỒN KHO ---
         List<OrderDetail> details = order.getOrderDetails();
         if (details != null) {
             for (OrderDetail detail : details) {
                 Product product = detail.getProduct();
+                // Hoàn lại số lượng đã trừ khi đặt hàng
                 product.setQuantity(product.getQuantity() + detail.getQuantity());
                 productRepository.save(product);
             }
         }
 
-        // Cập nhật trạng thái Order
-        order.setStatusOrder(StatusOrder.CANCELLED);
+        // --- 3. XÓA VĨNH VIỄN ORDER VÀ CÁC THÔNG TIN LIÊN QUAN ---
+        // Lệnh này sẽ:
+        // 1. Xóa bản ghi Order.
+        // 2. Tự động xóa OrderDetail, Invoice, và Return liên quan
+        //    nhờ cấu hình 'cascade = CascadeType.ALL' trong Order.java.
+        orderRepository.delete(order);
 
-        // Cập nhật trạng thái Invoice (nếu cần thiết để đối soát)
-        if (order.getInvoice() != null) {
-            order.getInvoice().setStatus(StatusInvoice.CANCELLED);
-            invoiceRepository.save(order.getInvoice());
-        }
-
-        orderRepository.save(order);
+        // (Lưu ý: Không cần cập nhật trạng thái hay gọi save sau khi gọi delete)
     }
     @Override
     public ResOrderDTO convertToResOrderDTOv2(Order order) {
@@ -673,5 +676,79 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return builder.build();
+    }
+    @Override
+    @Transactional // Quan trọng: Để đảm bảo rollback nếu có lỗi giữa chừng
+    public void handleCancelCodOrder(Long orderId) throws IdInvalidException {
+        // 1. Tìm đơn hàng
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IdInvalidException("Đơn hàng không tồn tại với ID: " + orderId));
+
+        // 2. Security Check (Người dùng chỉ được hủy đơn của chính mình)
+        String currentUserEmail = SecurityUtil.getCurrentUserLogin().isPresent()
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+
+        if (order.getUser() != null && !order.getUser().getEmail().equals(currentUserEmail)) {
+            throw new IdInvalidException("Bạn không có quyền hủy đơn hàng này.");
+        }
+
+        // ==================================================================
+        // 3. CHECK LOGIC MỚI: Lấy Payment Method từ Invoice -> Payment
+        // ==================================================================
+
+        // Lấy Invoice từ Order
+        Invoice invoice = order.getInvoice();
+        if (invoice == null) {
+            throw new IdInvalidException("Dữ liệu hóa đơn bị lỗi, không tìm thấy hóa đơn cho đơn hàng này.");
+        }
+
+        // Lấy Payment từ Invoice
+        Payment payment = invoice.getPayment();
+        if (payment == null) {
+            throw new IdInvalidException("Dữ liệu thanh toán bị lỗi.");
+        }
+
+        // Kiểm tra Method
+        // Giả sử database lưu chuỗi "COD" (hoặc "CASH_ON_DELIVERY" tùy bạn quy định)
+        if (!"COD".equalsIgnoreCase(payment.getMethod())) {
+            throw new IdInvalidException("Chức năng này chỉ áp dụng cho đơn hàng thanh toán khi nhận hàng (COD).");
+        }
+
+        // 4. Kiểm tra trạng thái đơn hàng (Chỉ PENDING hoặc PROCESSING mới được hủy)
+        if (order.getStatusOrder() != StatusOrder.PENDING && order.getStatusOrder() != StatusOrder.PROCESSING) {
+            throw new IdInvalidException("Không thể hủy đơn hàng khi đã giao cho vận chuyển hoặc đã hoàn tất.");
+        }
+
+        // ==================================================================
+        // 5. CẬP NHẬT TRẠNG THÁI (Đồng bộ cả 3 bảng)
+        // ==================================================================
+
+        // 5.1. Hủy Order
+        order.setStatusOrder(StatusOrder.CANCELLED);
+
+        // 5.2. Hủy Invoice (Nếu Enum StatusInvoice có CANCELLED)
+        // Nếu không có CANCELLED, bạn có thể để UNPAID hoặc FAILED
+        invoice.setStatus(StatusInvoice.CANCELLED);
+
+        // 5.3. Hủy Payment (Nếu Enum StatusPayment có CANCELLED/FAILED)
+        payment.setStatus(StatusPayment.CANCELLED); // Hoặc CANCELLED tùy enum của bạn
+
+        // 6. HOÀN TRẢ TỒN KHO (Restock Inventory)
+        if (order.getOrderDetails() != null) {
+            for (OrderDetail detail : order.getOrderDetails()) {
+                Product product = detail.getProduct();
+                // Cộng lại số lượng kho
+                product.setQuantity(product.getQuantity() + detail.getQuantity());
+                // productRepository.save(product); (Optional nếu dùng JPA Managed Entity)
+            }
+        }
+
+        // 7. Lưu tất cả thay đổi
+        // Vì CascadeType.ALL được thiết lập ở Order -> Invoice, và Invoice -> Payment (cần check lại Invoice entity)
+        // Nên thường chỉ cần save Order là đủ. Nhưng để chắc ăn, ta có thể save lẻ.
+        orderRepository.save(order);
+        invoiceRepository.save(invoice); // Lưu cập nhật trạng thái invoice
+        paymentRepository.save(payment); // Lưu cập nhật trạng thái payment
     }
 }

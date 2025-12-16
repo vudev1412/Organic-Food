@@ -285,8 +285,6 @@ const ProductDetail: React.FC = () => {
       showToast("Đánh giá thành công!", "success");
       setNewComment("");
       setNewRating(5);
-      // Refresh lại list review về trang 1
-      await fetchReviews(productId, 1);
 
       // ⭐ THÊM DÒNG NÀY - Refresh rating_avg của product
       await refreshProductRating();

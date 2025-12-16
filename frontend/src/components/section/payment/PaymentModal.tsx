@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { CloseOutlined } from "@ant-design/icons";
 import { message } from "antd";
-import { PaymentAPI, placeOrderAPI } from "../../../service/api";
+import {
+  PaymentAPI,
+  placeOrderAPI,
+  cancelOrderAPI,
+} from "../../../service/api";
 
 // Import các component con
 import PaymentForm from "./PaymentForm";
@@ -53,7 +57,7 @@ const PaymentModal = ({
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [isPaid, setIsPaid] = useState(false);
-
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   // [MỚI] State để lưu Order ID phục vụ cho việc polling
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
 
@@ -65,6 +69,7 @@ const PaymentModal = ({
       setIsPaid(false);
       setPaymentData(null);
       setCreatedOrderId(null); // Reset ID
+      setPaymentMethod(null);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
@@ -95,6 +100,7 @@ const PaymentModal = ({
         const orderData = resOrder.data.data;
 
         // [MỚI] Lưu Order ID lại ngay lập tức
+        setPaymentMethod(orderData.paymentMethod);
         setCreatedOrderId(orderData.id);
 
         if (orderData.paymentMethod === "COD") {
@@ -114,8 +120,47 @@ const PaymentModal = ({
     } finally {
       if (formData.paymentMethod === "COD") setLoading(false);
     }
+  }; // --- HÀM HỦY ORDER TỪ CLIENT ---
+  const handleCancelOrder = async (orderId: number) => {
+    try {
+      // Gọi API hủy Order đã tạo
+      await cancelOrderAPI(orderId); // <- Sử dụng API mới
+      message.info(`Đã hủy đơn hàng ${formatOrderCode(orderId)}`);
+    } catch (error) {
+      console.error("Lỗi khi hủy đơn hàng:", error);
+      // message.error("Không thể hủy đơn hàng."); // Có thể thông báo lỗi cho người dùng
+    }
   };
+  // --- HÀM ĐÓNG MODAL CHÍNH (Xử lý Hủy) ---
+  const handleCloseModal = () => {
+    // 1. Dừng Polling
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
+    // 2. [QUAN TRỌNG] Kiểm tra và Hủy Order
+    // Hủy nếu: Có Order ID, CHƯA thanh toán và là BANK_TRANSFER
+    if (createdOrderId && !isPaid && paymentMethod === "BANK_TRANSFER") {
+      handleCancelOrder(createdOrderId);
+    }
+
+    // 3. Gọi hàm đóng của Component cha
+    onClose();
+  };
+  // --- HÀM MỚI: Chỉ Hủy Order Đang Chờ (Không đóng Modal) ---
+  const handleCancelAndClear = () => {
+    // 1. Dừng Polling
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    // 2. Kiểm tra và Hủy Order (nếu là BANK_TRANSFER và chưa thanh toán)
+    if (createdOrderId && !isPaid && paymentMethod === "BANK_TRANSFER") {
+      handleCancelOrder(createdOrderId);
+    }
+
+    // 3. Quay lại màn hình form (xóa QR code data và reset state liên quan)
+    setPaymentData(null);
+    setCreatedOrderId(null);
+    setPaymentMethod(null);
+    setIsPaid(false);
+  };
   // --- LOGIC LẤY QR ---
   const handleGetQrCode = async (
     orderId: number,
@@ -174,7 +219,7 @@ const PaymentModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
         <button
-          onClick={onClose}
+          onClick={handleCloseModal}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 p-2"
         >
           <CloseOutlined className="text-xl" />
@@ -195,7 +240,7 @@ const PaymentModal = ({
           ) : paymentData ? (
             <PaymentQrScan
               paymentData={paymentData}
-              onCancel={() => setPaymentData(null)}
+              onCancel={handleCancelAndClear}
             />
           ) : (
             <PaymentForm
