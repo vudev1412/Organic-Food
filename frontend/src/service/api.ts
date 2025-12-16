@@ -162,6 +162,20 @@ export const updateSupplierAPI = (id: number, supplier: ICreateSupplierDTO) => {
 export const deleteSupplierAPI = (id: number) => {
   return axios.delete(`/api/v1/suppliers/${id}`);
 };
+export const getPromotionAPI = (query: string) => {
+  return axios.get(`/api/v1/promotions?${query}`);
+};
+export const createPromotionAPI = (supplier: ICreatePromotionDTO) => {
+  return axios.post(`/api/v1/promotions`, supplier);
+};
+
+export const updatePromotionAPI = (id: number, supplier: ICreateSupplierDTO) => {
+  return axios.put(`/api/v1/promotions/${id}`, supplier);
+};
+
+export const deletePromotionAPI = (id: number) => {
+  return axios.delete(`/api/v1/promotions/${id}`);
+};
 
 export const getReturnsAPI = (query: string) => {
   return axios.get<IBackendRes<IModelPaginate<IReturn>>>(

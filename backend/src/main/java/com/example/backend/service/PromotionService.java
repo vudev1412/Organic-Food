@@ -1,15 +1,16 @@
 package com.example.backend.service;
 
-import com.example.backend.domain.ProductDTO;
-import com.example.backend.domain.ProductWithPromotionDTO;
-import com.example.backend.domain.PromotionDTO;
+import com.example.backend.domain.*;
 import com.example.backend.domain.request.ReqPromotionDTO;
 import com.example.backend.domain.response.ResPromotionDTO;
+import com.example.backend.domain.response.ResultPaginationDTO;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
 public interface PromotionService {
-    List<ResPromotionDTO> getAll();
+    ResultPaginationDTO getAll(Specification<Promotion> spec, Pageable pageable);
     ResPromotionDTO getById(long id);
     ResPromotionDTO create(ReqPromotionDTO dto);
     ResPromotionDTO update(long id, ReqPromotionDTO dto);

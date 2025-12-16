@@ -211,6 +211,12 @@ declare global {
     name: string;
     image: string;
   }
+  interface ICreatePromotionDTO{
+    name:string;
+    type:string;
+    value:number;
+    active:boolean;
+  }
   interface IProductTable {
     imageUrl: string;
     certNo: string;
