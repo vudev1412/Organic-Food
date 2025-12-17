@@ -9,7 +9,7 @@ import {
   DatePicker,
   Switch,
   Button,
-  App
+  App,
 } from "antd";
 
 import dayjs from "dayjs";
@@ -50,7 +50,11 @@ const CreateVoucher = ({ open, onClose }: IProps) => {
       title="Tạo mã khuyến mãi"
     >
       <Form layout="vertical" form={form}>
-        <Form.Item label="Mã khuyến mãi" name="code" rules={[{ required: true }]}>
+        <Form.Item
+          label="Mã khuyến mãi"
+          name="code"
+          rules={[{ required: true }]}
+        >
           <Input />
         </Form.Item>
 
@@ -58,11 +62,15 @@ const CreateVoucher = ({ open, onClose }: IProps) => {
           <Input.TextArea rows={3} />
         </Form.Item>
 
-        <Form.Item label="Loại khuyến mãi" name="typeVoucher" rules={[{ required: true }]}>
+        <Form.Item
+          label="Loại khuyến mãi"
+          name="typeVoucher"
+          rules={[{ required: true }]}
+        >
           <Select
             options={[
               { label: "Phần trăm", value: "PERCENT" },
-              { label: "Giảm tiền", value: "AMOUNT" },
+              { label: "Giảm tiền", value: "FIXED_AMOUNT" },
             ]}
           />
         </Form.Item>
@@ -71,11 +79,19 @@ const CreateVoucher = ({ open, onClose }: IProps) => {
           <InputNumber min={1} style={{ width: "100%" }} />
         </Form.Item>
 
-        <Form.Item label="Số lượng" name="quantity" rules={[{ required: true }]}>
+        <Form.Item
+          label="Số lượng"
+          name="quantity"
+          rules={[{ required: true }]}
+        >
           <InputNumber min={1} style={{ width: "100%" }} />
         </Form.Item>
 
-        <Form.Item label="Thời gian áp dụng" name="dates" rules={[{ required: true }]}>
+        <Form.Item
+          label="Thời gian áp dụng"
+          name="dates"
+          rules={[{ required: true }]}
+        >
           <RangePicker style={{ width: "100%" }} showTime />
         </Form.Item>
 

@@ -84,7 +84,7 @@ public class PaymentController {
 
             // BƯỚC 3: Gọi PayOS tạo link
             long paymentId = savedPayment.getId();
-            String description = "Nang cap VIP " + body.getUserId();
+            String description = "Nang cap VIP ";
 
             CreatePaymentLinkRequest request = CreatePaymentLinkRequest.builder()
                     .orderCode(paymentId)

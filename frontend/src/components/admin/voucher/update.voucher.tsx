@@ -77,7 +77,7 @@ const UpdateVoucher = ({ open, voucherId, onClose }: IProps) => {
           <Select
             options={[
               { label: "PERCENT", value: "PERCENT" },
-              { label: "AMOUNT", value: "AMOUNT" },
+              { label: "FIXED_AMOUNT", value: "FIXED_AMOUNT" },
             ]}
           />
         </Form.Item>
