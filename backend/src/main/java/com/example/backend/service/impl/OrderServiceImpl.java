@@ -17,6 +17,7 @@ import com.example.backend.service.UserService;
 import com.example.backend.util.SecurityUtil;
 import com.example.backend.util.error.IdInvalidException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -292,6 +294,7 @@ public class OrderServiceImpl implements OrderService {
         // LƯU TRẠNG THÁI CŨ (QUAN TRỌNG)
         // ===============================
         StatusOrder oldStatus = existingOrder.getStatusOrder();
+        log.info("🔍 Old status: {}", oldStatus); // ← THÊM LOG
 
         // ===============================
         // BƯỚC 2: CẬP NHẬT THÔNG TIN CƠ BẢN
@@ -306,6 +309,7 @@ public class OrderServiceImpl implements OrderService {
 
         if (reqDTO.getStatusOrder() != null) {
             existingOrder.setStatusOrder(reqDTO.getStatusOrder());
+            log.info("🔍 New status from request: {}", reqDTO.getStatusOrder()); // ← THÊM LOG
         }
 
         if (reqDTO.getEstimatedDate() != null) {
@@ -332,19 +336,41 @@ public class OrderServiceImpl implements OrderService {
         // BƯỚC 5: GỬI MAIL KHI ĐÃ DELIVERED
         // ===============================
         StatusOrder newStatus = updatedOrder.getStatusOrder();
+        log.info("🔍 Final status after save: {}", newStatus); // ← THÊM LOG
 
-        if (oldStatus != StatusOrder.DELIVERED
-                && newStatus == StatusOrder.DELIVERED) {
+        // SỬA LẠI ĐIỀU KIỆN SO SÁNH
+        boolean wasNotDelivered = !StatusOrder.DELIVERED.equals(oldStatus);
+        boolean nowDelivered = StatusOrder.DELIVERED.equals(newStatus);
+
+        log.info("🔍 wasNotDelivered: {}, nowDelivered: {}", wasNotDelivered, nowDelivered); // ← THÊM LOG
+
+        if (wasNotDelivered && nowDelivered) {
+            log.info("📧 Điều kiện đúng - Chuẩn bị gửi mail..."); // ← THÊM LOG
 
             User customer = updatedOrder.getUser();
 
             if (customer != null && customer.getEmail() != null) {
-                emailService.sendOrderDeliveredEmail(
-                        customer.getEmail(),
-                        customer.getName(),
-                        updatedOrder.getId()
-                );
+                log.info("📧 Gửi mail đến: {} ({})", customer.getEmail(), customer.getName());
+
+                try {
+                    emailService.sendOrderDeliveredEmail(
+                            customer.getEmail(),
+                            customer.getName(),
+                            updatedOrder.getId()
+                    );
+                    log.info("✅ Đã gửi mail thành công!");
+                } catch (Exception e) {
+                    log.error("❌ Lỗi khi gửi mail: {}", e.getMessage(), e);
+                    // Không throw exception để không làm fail cả request
+                }
+            } else {
+                log.warn("⚠️ Customer hoặc email null - không gửi mail");
+                log.warn("Customer: {}, Email: {}",
+                        customer,
+                        customer != null ? customer.getEmail() : "N/A");
             }
+        } else {
+            log.info("❌ Điều kiện không thỏa - không gửi mail");
         }
 
         // ===============================

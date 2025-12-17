@@ -9,10 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,9 +25,10 @@ public class BackupRestoreService {
     @Value("${spring.datasource.url}")
     private String dbUrl;
 
+    /* ===================== COMMON ===================== */
+
     private String getBackupDirectory() {
-        String userHome = System.getProperty("user.home");
-        return userHome + File.separator + "backups";
+        return System.getProperty("user.home") + File.separator + "backups";
     }
 
     private String extractDbName() {
@@ -38,55 +36,63 @@ public class BackupRestoreService {
         return url.substring(url.lastIndexOf("/") + 1);
     }
 
-    private String findExecutable(String... candidates) {
-        for (String cmd : candidates) {
-            try {
-                ProcessBuilder pb = new ProcessBuilder(cmd, "--version");
-                pb.start();
-                log.info("Found executable in PATH: {}", cmd);
-                return cmd;
-            } catch (Exception ignored) {}
-        }
+    /* ===================== EXECUTABLE ===================== */
 
-        String[] paths = {
+    private String findMysqlDump() {
+        return findExecutableExact(
+                "mysqldump",
                 "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe",
-                "C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysqldump.exe",
-                "C:\\Program Files (x86)\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe",
-                "C:\\Program Files\\MySQL\\MySQL Server 9.0\\bin\\mysqldump.exe",
-                "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-                "C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysql.exe",
-                "C:\\Program Files (x86)\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-                "/usr/bin/mysqldump", "/usr/local/bin/mysqldump", "/opt/homebrew/bin/mysqldump",
-                "/usr/bin/mysql", "/usr/local/bin/mysql", "/opt/homebrew/bin/mysql"
-        };
-
-        for (String path : paths) {
-            if (Files.exists(Paths.get(path))) {
-                log.info("Found executable at: {}", path);
-                return path;
-            }
-        }
-
-        throw new RuntimeException("Không tìm thấy mysqldump/mysql.exe. Vui lòng cài MySQL client!");
+                "/usr/bin/mysqldump",
+                "/usr/local/bin/mysqldump",
+                "/opt/homebrew/bin/mysqldump"
+        );
     }
 
+    private String findMysql() {
+        return findExecutableExact(
+                "mysql",
+                "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+                "/usr/bin/mysql",
+                "/usr/local/bin/mysql",
+                "/opt/homebrew/bin/mysql"
+        );
+    }
+
+    private String findExecutableExact(String... candidates) {
+        for (String cmd : candidates) {
+            try {
+                if (cmd.contains(File.separator)) {
+                    if (Files.exists(Paths.get(cmd))) {
+                        return cmd;
+                    }
+                } else {
+                    new ProcessBuilder(cmd, "--version").start();
+                    return cmd;
+                }
+            } catch (Exception ignored) {}
+        }
+        throw new RuntimeException("❌ Không tìm thấy MySQL client: " + Arrays.toString(candidates));
+    }
+
+    /* ===================== BACKUP ===================== */
+
     public BackupInfo backupDatabase() {
-        String backupDir = getBackupDirectory();
-        File folder = new File(backupDir);
+        File folder = new File(getBackupDirectory());
         if (!folder.exists()) folder.mkdirs();
 
         String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss")
-                .format(new java.util.Date());
-        String backupFile = backupDir + File.separator + "backup_" + timestamp + ".sql";
+                .format(new Date());
 
+        String backupFile = folder + File.separator + "backup_" + timestamp + ".sql";
         String dbName = extractDbName();
-        String mysqldump = findExecutable("mysqldump", "mysqldump.exe");
+        String mysqldump = findMysqlDump();
 
         List<String> command = List.of(
                 mysqldump,
                 "--user=" + dbUser,
                 "--password=" + dbPassword,
-                "--add-drop-table",
+                "--databases",
+                "--add-drop-database",
                 "--routines",
                 "--triggers",
                 "--single-transaction",
@@ -99,33 +105,27 @@ public class BackupRestoreService {
 
         File file = new File(backupFile);
         return new BackupInfo(
-                backupFile,
+                file.getAbsolutePath(),
                 file.getName(),
                 file.length(),
-                new java.util.Date().toString()
+                new Date().toString()
         );
     }
 
-    // API mới: Lấy danh sách tất cả backup files
     public List<BackupInfo> listBackups() {
-        String backupDir = getBackupDirectory();
-        File folder = new File(backupDir);
+        File folder = new File(getBackupDirectory());
+        if (!folder.exists()) return List.of();
 
-        if (!folder.exists() || !folder.isDirectory()) {
-            return new ArrayList<>();
-        }
+        File[] files = folder.listFiles(f ->
+                f.getName().startsWith("backup_") && f.getName().endsWith(".sql"));
 
-        File[] files = folder.listFiles((dir, name) -> name.startsWith("backup_") && name.endsWith(".sql"));
-
-        if (files == null || files.length == 0) {
-            return new ArrayList<>();
-        }
+        if (files == null) return List.of();
 
         return Arrays.stream(files)
                 .map(file -> {
                     try {
-                        BasicFileAttributes attrs = Files.readAttributes(
-                                file.toPath(), BasicFileAttributes.class);
+                        BasicFileAttributes attrs =
+                                Files.readAttributes(file.toPath(), BasicFileAttributes.class);
                         return new BackupInfo(
                                 file.getAbsolutePath(),
                                 file.getName(),
@@ -133,99 +133,98 @@ public class BackupRestoreService {
                                 attrs.creationTime().toString()
                         );
                     } catch (Exception e) {
-                        log.error("Error reading file attributes: {}", file.getName(), e);
                         return null;
                     }
                 })
-                .filter(info -> info != null)
+                .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(BackupInfo::createdAt).reversed())
                 .collect(Collectors.toList());
     }
 
-    // API mới: Xóa file backup
     public boolean deleteBackup(String filePath) {
         try {
             Path path = Paths.get(filePath);
-            if (!path.toFile().getName().startsWith("backup_")) {
-                throw new RuntimeException("Chỉ có thể xóa file backup!");
+            if (!path.getFileName().toString().startsWith("backup_")) {
+                throw new RuntimeException("Chỉ được xóa file backup");
             }
             return Files.deleteIfExists(path);
         } catch (Exception e) {
-            log.error("Error deleting backup file: {}", filePath, e);
-            throw new RuntimeException("Không thể xóa file: " + e.getMessage());
+            throw new RuntimeException("Không thể xóa backup: " + e.getMessage(), e);
         }
     }
+
+    /* ===================== RESTORE ===================== */
 
     public String restoreDatabase(String backupFilePath) {
         Path filePath = Paths.get(backupFilePath);
         if (!Files.exists(filePath)) {
-            throw new RuntimeException("File backup không tồn tại: " + backupFilePath);
+            throw new RuntimeException("File backup không tồn tại");
         }
 
-        String dbName = extractDbName();
-        String mysql = findExecutable("mysql", "mysql.exe");
-
-        List<String> command = new ArrayList<>();
-        command.add(mysql);
-        command.add("--user=" + dbUser);
-        command.add("--password=" + dbPassword);
-        command.add("--host=localhost");
-        command.add("--port=3306");
-        command.add("--default-character-set=utf8mb4");
-        command.add("--force");
-        command.add(dbName);
-
-        return executeCommandWithInputFile(command, backupFilePath, "Restore");
-    }
-
-    private String executeCommand(List<String> command, String action, String filePath) {
         try {
-            log.info("{} database → {}", action, filePath);
+            log.info("🔄 Restore từ file {}", backupFilePath);
+
+            String mysql = findMysql();
+
+            List<String> command = new ArrayList<>();
+            command.add(mysql);
+            command.add("--user=" + dbUser);
+            command.add("--password=" + dbPassword);
+            command.add("--default-character-set=utf8mb4");
+
             ProcessBuilder pb = new ProcessBuilder(command);
+            pb.redirectInput(new File(backupFilePath));
             pb.redirectErrorStream(true);
+
             Process process = pb.start();
 
-            String output = new String(process.getInputStream().readAllBytes());
-            int exitCode = process.waitFor();
-
-            if (exitCode == 0) {
-                log.info("{} thành công: {}", action, filePath);
-                return filePath;
-            } else {
-                String err = output.isEmpty() ? "No output" : output.trim();
-                log.error("{} thất bại (code {}): {}", action, exitCode, err);
-                throw new RuntimeException(action + " thất bại: " + err);
+            StringBuilder output = new StringBuilder();
+            try (var reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info("MySQL: {}", line);
+                    output.append(line).append('\n');
+                }
             }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("Restore thất bại (exit " + exitCode + "):\n" + output);
+            }
+
+            log.info("✅ Restore thành công");
+            return backupFilePath;
+
         } catch (Exception e) {
-            log.error("{} lỗi: ", action, e);
-            throw new RuntimeException(action + " thất bại: " + e.getMessage());
+            log.error("❌ Restore lỗi", e);
+            throw new RuntimeException("Restore lỗi: " + e.getMessage(), e);
         }
     }
 
-    private String executeCommandWithInputFile(List<String> command, String inputFile, String action) {
+    /* ===================== EXEC ===================== */
+
+    private void executeCommand(List<String> command, String action, String filePath) {
         try {
-            log.info("{} database từ file: {}", action, inputFile);
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.redirectErrorStream(true);
-            pb.redirectInput(new File(inputFile));
-            Process process = pb.start();
+            Process process = new ProcessBuilder(command)
+                    .redirectErrorStream(true)
+                    .start();
 
             String output = new String(process.getInputStream().readAllBytes());
-            int exitCode = process.waitFor();
+            int exit = process.waitFor();
 
-            if (exitCode == 0) {
-                log.info("{} thành công từ file: {}", action, inputFile);
-                return inputFile;
-            } else {
-                String err = output.isEmpty() ? "Unknown error" : output.trim();
-                log.error("{} thất bại (code {}): {}", action, exitCode, err);
-                throw new RuntimeException(action + " thất bại: " + err);
+            if (exit != 0) {
+                throw new RuntimeException(action + " thất bại:\n" + output);
             }
+
+            log.info("✅ {} thành công → {}", action, filePath);
+
         } catch (Exception e) {
-            log.error("{} lỗi: ", action, e);
-            throw new RuntimeException(action + " thất bại: " + e.getMessage());
+            throw new RuntimeException(action + " lỗi: " + e.getMessage(), e);
         }
     }
+
+    /* ===================== DTO ===================== */
 
     public record BackupInfo(
             String absolutePath,

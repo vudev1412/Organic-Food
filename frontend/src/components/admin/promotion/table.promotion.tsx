@@ -78,6 +78,7 @@ const TablePromotion = () => {
     {
       title: "Trạng thái",
       dataIndex: "active",
+      hideInSearch: true,
       valueEnum: {
         true: { text: "Hoạt động", status: "Success" },
         false: { text: "Ngưng", status: "Error" },
