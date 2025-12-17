@@ -67,56 +67,23 @@ public class ReturnServiceImpl implements ReturnService {
 
 
     @Override
-    public ResultPaginationDTO getAllReturns(String keyword, Pageable pageable) {
-        // Tạo Specification dynamic
-        Specification<Return> spec = (root, query, cb) -> {
-            if (keyword == null || keyword.trim().isEmpty()) {
-                return cb.conjunction(); // không filter
-            }
+    public ResultPaginationDTO getAllReturns(  Specification<Return> spec,
+                                               Pageable pageable) {
+        Page<ResGetAllReturnDTO> pageReturn =
+                returnRepository
+                        .findAll(spec, pageable)
+                        .map(returnMapper::toResGetAllReturnDTO);
 
-            // Join tới order
-            Join<Return, Order> orderJoin = root.join("order", JoinType.LEFT);
-
-            // Join tới user nếu cần tìm theo tên khách hàng
-            Join<Order, User> userJoin = orderJoin.join("user", JoinType.LEFT);
-
-            // List các điều kiện
-            List<Predicate> predicates = new ArrayList<>();
-
-            // Tìm theo tên khách hàng
-            predicates.add(cb.like(cb.lower(userJoin.get("name")), "%" + keyword.toLowerCase() + "%"));
-
-            // Thử parse orderId nếu keyword là số
-            try {
-                Long orderId = Long.parseLong(keyword);
-                predicates.add(cb.equal(orderJoin.get("id"), orderId));
-            } catch (NumberFormatException e) {
-                // Nếu không phải số thì bỏ qua điều kiện orderId
-            }
-
-            // Kết hợp các điều kiện bằng OR
-            return cb.or(predicates.toArray(new Predicate[0]));
-        };
-
-        // Lấy dữ liệu
-        Page<Return> pageReturn = returnRepository.findAll(spec, pageable);
-
-        // Mapping sang DTO
-        List<ResReturnDTO> list = pageReturn.getContent()
-                .stream()
-                .map(returnMapper::toResReturnDTO)
-                .collect(Collectors.toList());
-
-        // Build result
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(pageReturn.getTotalPages());
         meta.setTotal(pageReturn.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(list);
+        rs.setResult(pageReturn.getContent());
 
         return rs;
     }

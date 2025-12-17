@@ -16,7 +16,12 @@ import {
   Tag,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, UserOutlined } from "@ant-design/icons";
-import { createOrder, getProductsAPI, getCustomersAPI } from "../../../service/api";
+import {
+  createOrder,
+  getProductsAPI,
+  getCustomersAPI,
+  getAddressesByUserIdAPI,
+} from "../../../service/api";
 
 const { Text } = Typography;
 
@@ -43,7 +48,9 @@ const getProductImageUrl = (image: string | undefined | null): string => {
 };
 
 const formatPrice = (price: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    price
+  );
 
 const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
   const [form] = Form.useForm();
@@ -53,6 +60,8 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -66,7 +75,10 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
       const res = await getProductsAPI("page=1&size=1000&active=true");
       setProducts(res.data?.data?.result || []);
     } catch {
-      notification.error({ message: "Lỗi", description: "Không tải được sản phẩm" });
+      notification.error({
+        message: "Lỗi",
+        description: "Không tải được sản phẩm",
+      });
     }
   };
 
@@ -83,35 +95,52 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
         setCustomers(list);
       }
     } catch {
-      notification.error({ message: "Lỗi", description: "Không tải được danh sách khách hàng" });
+      notification.error({
+        message: "Lỗi",
+        description: "Không tải được danh sách khách hàng",
+      });
     } finally {
       setLoadingCustomers(false);
     }
   };
 
-  const handleCustomerSelect = (customerId: number, option: any) => {
+  const handleCustomerSelect = async (customerId: number, option: any) => {
     const customer = option?.customer;
-    if (customer) {
-      setSelectedCustomer(customer);
-      // Lưu userId vào form (ẩn)
-      form.setFieldsValue({
-        userId: customer.user?.id,
-      });
-      // Auto-fill phone nếu có
-      if (customer.user?.phone) {
+    if (!customer?.user?.id) return;
+
+    setSelectedCustomer(customer);
+
+    form.setFieldsValue({
+      userId: customer.user.id,
+      phone: customer.user.phone || "",
+      address: undefined, // reset khi đổi khách
+    });
+
+    // 👉 LOAD ADDRESS
+    setLoadingAddresses(true);
+    try {
+      const res = await getAddressesByUserIdAPI(customer.user.id);
+      const list = res?.data?.data || res?.data || [];
+      setAddresses(list);
+
+      // auto chọn địa chỉ mặc định
+      const defaultAddr = list.find((a: any) => a.defaultAddress);
+      if (defaultAddr) {
         form.setFieldsValue({
-          phone: customer.user.phone,
+          address: formatAddress(defaultAddr),
         });
       }
+    } finally {
+      setLoadingAddresses(false);
     }
   };
 
   const onFinish = async (values: any) => {
     setIsSubmit(true);
-    
+
     // Lấy userId từ selectedCustomer
     const userId = selectedCustomer?.user?.id;
-    
+
     if (!userId) {
       notification.error({
         message: "Lỗi",
@@ -120,7 +149,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
       setIsSubmit(false);
       return;
     }
-    
+
     const payload = {
       userId: userId, // userId từ customer.user.id
       shipAddress: values.address,
@@ -150,10 +179,16 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
       setIsSubmit(false);
     }
   };
+  const formatAddress = (a: any) =>
+    `${a.street}, ${a.ward}, ${a.district}, ${a.province}`;
 
   return (
     <Modal
-      title={<span className="text-xl font-bold text-blue-600">Tạo đơn hàng mới</span>}
+      title={
+        <span className="text-xl font-bold text-blue-600">
+          Tạo đơn hàng mới
+        </span>
+      }
       open={open}
       onOk={() => form.submit()}
       onCancel={() => {
@@ -175,17 +210,17 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
             <UserOutlined className="mr-2" />
             Thông tin khách hàng
           </h3>
-          
+
           <div className="grid grid-cols-1 gap-5">
             {/* Hidden field để lưu userId */}
             <Form.Item name="userId" hidden>
               <Input />
             </Form.Item>
-            
+
             {/* Chọn khách hàng */}
-            <Form.Item 
-              name="customerId" 
-              label="Chọn khách hàng" 
+            <Form.Item
+              name="customerId"
+              label="Chọn khách hàng"
               rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
             >
               <Select
@@ -209,17 +244,27 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <Space direction="vertical" size="small" className="w-full">
                   <div>
-                    <Text type="secondary" className="text-xs">Họ tên:</Text>
-                    <Text strong className="block text-base">{selectedCustomer.user.name}</Text>
+                    <Text type="secondary" className="text-xs">
+                      Họ tên:
+                    </Text>
+                    <Text strong className="block text-base">
+                      {selectedCustomer.user.name}
+                    </Text>
                   </div>
                   <div>
-                    <Text type="secondary" className="text-xs">Email:</Text>
+                    <Text type="secondary" className="text-xs">
+                      Email:
+                    </Text>
                     <Text className="block">{selectedCustomer.user.email}</Text>
                   </div>
                   {selectedCustomer.user.phone && (
                     <div>
-                      <Text type="secondary" className="text-xs">Số điện thoại:</Text>
-                      <Text className="block">{selectedCustomer.user.phone}</Text>
+                      <Text type="secondary" className="text-xs">
+                        Số điện thoại:
+                      </Text>
+                      <Text className="block">
+                        {selectedCustomer.user.phone}
+                      </Text>
                     </div>
                   )}
                 </Space>
@@ -230,36 +275,40 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
             <Form.Item
               name="phone"
               label="Số điện thoại giao hàng (nếu khác)"
-              rules={[
-                { pattern: /^0\d{9}$/, message: "SĐT không hợp lệ" }
-              ]}
+              rules={[{ pattern: /^0\d{9}$/, message: "SĐT không hợp lệ" }]}
             >
-              <Input 
-                size="large" 
-                placeholder="0901234567" 
+              <Input
+                size="large"
+                placeholder="0901234567"
                 className="rounded-lg"
               />
             </Form.Item>
 
             {/* Địa chỉ giao hàng */}
-            <Form.Item 
-              name="address" 
-              label="Địa chỉ giao hàng" 
-              rules={[{ required: true, message: "Vui lòng nhập địa chỉ giao hàng" }]}
+            <Form.Item
+              name="address"
+              label="Địa chỉ giao hàng"
+              rules={[{ required: true, message: "Vui lòng chọn địa chỉ" }]}
             >
-              <Input.TextArea 
-                rows={3} 
-                size="large" 
-                placeholder="123 Đường Láng, Đống Đa, Hà Nội..." 
-                className="rounded-lg"
+              <Select
+                size="large"
+                placeholder="Chọn địa chỉ"
+                loading={loadingAddresses}
+                disabled={!addresses.length}
+                options={addresses.map((a: any) => ({
+                  label: `${formatAddress(a)}${
+                    a.defaultAddress ? " (Mặc định)" : ""
+                  }`,
+                  value: formatAddress(a),
+                }))}
               />
             </Form.Item>
 
             {/* Ghi chú */}
             <Form.Item name="note" label="Ghi chú (tùy chọn)">
-              <Input.TextArea 
-                rows={2} 
-                placeholder="Giao buổi chiều, gọi trước khi đến..." 
+              <Input.TextArea
+                rows={2}
+                placeholder="Giao buổi chiều, gọi trước khi đến..."
                 className="rounded-lg"
               />
             </Form.Item>
@@ -276,12 +325,15 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
             {(fields, { add, remove }) => (
               <>
                 {fields.map(({ key, name }) => (
-                  <div key={key} className="mb-6 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                  <div
+                    key={key}
+                    className="mb-6 p-5 bg-white border border-gray-200 rounded-xl shadow-sm"
+                  >
                     <div className="flex flex-wrap items-start gap-4">
                       {/* Chọn sản phẩm */}
-                      <Form.Item 
-                        name={[name, "productId"]} 
-                        rules={[{ required: true, message: "Chọn sản phẩm" }]} 
+                      <Form.Item
+                        name={[name, "productId"]}
+                        rules={[{ required: true, message: "Chọn sản phẩm" }]}
                         className="mb-0 flex-1 min-w-64"
                       >
                         <Select
@@ -316,10 +368,10 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
                       </Form.Item>
 
                       {/* Số lượng */}
-                      <Form.Item 
-                        name={[name, "quantity"]} 
-                        initialValue={1} 
-                        rules={[{ required: true, message: "Nhập số lượng" }]} 
+                      <Form.Item
+                        name={[name, "quantity"]}
+                        initialValue={1}
+                        rules={[{ required: true, message: "Nhập số lượng" }]}
                         className="mb-0"
                       >
                         <InputNumber min={1} size="large" className="w-32" />
@@ -327,11 +379,11 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
 
                       {/* Xóa */}
                       {fields.length > 1 && (
-                        <Button 
-                          danger 
-                          size="large" 
-                          icon={<DeleteOutlined />} 
-                          onClick={() => remove(name)} 
+                        <Button
+                          danger
+                          size="large"
+                          icon={<DeleteOutlined />}
+                          onClick={() => remove(name)}
                         />
                       )}
                     </div>
@@ -339,10 +391,20 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
                     {/* Preview sản phẩm đã chọn */}
                     <Form.Item shouldUpdate noStyle>
                       {() => {
-                        const preview = form.getFieldValue(["orderDetails", name, "preview"]);
+                        const preview = form.getFieldValue([
+                          "orderDetails",
+                          name,
+                          "preview",
+                        ]);
                         if (!preview) return null;
 
-                        const totalLine = (preview.price || 0) * (form.getFieldValue(["orderDetails", name, "quantity"]) || 1);
+                        const totalLine =
+                          (preview.price || 0) *
+                          (form.getFieldValue([
+                            "orderDetails",
+                            name,
+                            "quantity",
+                          ]) || 1);
 
                         return (
                           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -356,12 +418,20 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
                                 fallback="/default-product.png"
                               />
                               <div>
-                                <Text strong className="text-base block">{preview.name}</Text>
+                                <Text strong className="text-base block">
+                                  {preview.name}
+                                </Text>
                                 <Text type="secondary" className="text-sm">
-                                  Giá: <span className="font-medium">{formatPrice(preview.price)}</span>
+                                  Giá:{" "}
+                                  <span className="font-medium">
+                                    {formatPrice(preview.price)}
+                                  </span>
                                 </Text>
                                 <Text className="text-sm block mt-1">
-                                  Thành tiền: <span className="text-lg font-bold text-red-600">{formatPrice(totalLine)}</span>
+                                  Thành tiền:{" "}
+                                  <span className="text-lg font-bold text-red-600">
+                                    {formatPrice(totalLine)}
+                                  </span>
                                 </Text>
                               </div>
                             </Space>
@@ -392,7 +462,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
           {() => {
             const details = form.getFieldValue("orderDetails") || [];
             const total = details.reduce((sum: number, item: any) => {
-              const product = products.find(p => p.id === item.productId);
+              const product = products.find((p) => p.id === item.productId);
               const qty = item.quantity || 0;
               return sum + (product?.price || 0) * qty;
             }, 0);

@@ -47,10 +47,10 @@ const CreateVoucher = ({ open, onClose }: IProps) => {
       open={open}
       onCancel={onClose}
       onOk={handleSubmit}
-      title="Tạo Voucher"
+      title="Tạo mã khuyến mãi"
     >
       <Form layout="vertical" form={form}>
-        <Form.Item label="Mã voucher" name="code" rules={[{ required: true }]}>
+        <Form.Item label="Mã khuyến mãi" name="code" rules={[{ required: true }]}>
           <Input />
         </Form.Item>
 
@@ -58,11 +58,11 @@ const CreateVoucher = ({ open, onClose }: IProps) => {
           <Input.TextArea rows={3} />
         </Form.Item>
 
-        <Form.Item label="Loại voucher" name="typeVoucher" rules={[{ required: true }]}>
+        <Form.Item label="Loại khuyến mãi" name="typeVoucher" rules={[{ required: true }]}>
           <Select
             options={[
-              { label: "PERCENT", value: "PERCENT" },
-              { label: "AMOUNT", value: "AMOUNT" },
+              { label: "Phần trăm", value: "PERCENT" },
+              { label: "Giảm tiền", value: "AMOUNT" },
             ]}
           />
         </Form.Item>

@@ -63,7 +63,7 @@ const CreateReceipt = ({ open, setOpen, refreshTable }: IProps) => {
       const res = await createReceiptAPI(payload);
 
       if (res && res.data) {
-        message.success("Tạo receipt thành công");
+        message.success("Tạo phiếu nhập thành công");
         form.resetFields();
         setOpen(false);
         refreshTable();
@@ -78,7 +78,7 @@ const CreateReceipt = ({ open, setOpen, refreshTable }: IProps) => {
 
   return (
     <Modal
-      title="Tạo Receipt"
+      title="Tạo phiếu nhập"
       open={open}
       onOk={() => form.submit()}
       onCancel={() => {

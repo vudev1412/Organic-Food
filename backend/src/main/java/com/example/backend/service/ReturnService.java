@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface ReturnService {
-    ResultPaginationDTO getAllReturns(String keyword, Pageable pageable);
+    ResultPaginationDTO getAllReturns(  Specification<Return> spec,
+                                        Pageable pageable);
     ResReturnDTO getReturnById(Long id);
     ResReturnDTO createReturn(ReqReturnDTO dto);
     ResReturnDTO updateReturn(Long id, ReqReturnDTO dto);

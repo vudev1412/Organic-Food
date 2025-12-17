@@ -1,9 +1,13 @@
 package com.example.backend.service.impl;
 
 import com.example.backend.domain.*;
+import com.example.backend.domain.key.PromotionDetailKey;
+import com.example.backend.domain.request.PromotionProductDTO;
+import com.example.backend.domain.request.ReqCreatePromotionDTO;
 import com.example.backend.domain.request.ReqPromotionDTO;
 import com.example.backend.domain.response.*;
 import com.example.backend.mapper.PromotionMapper;
+import com.example.backend.repository.ProductRepository;
 import com.example.backend.repository.PromotionDetailRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.service.PromotionService;
@@ -22,6 +26,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
     private final PromotionMapper promotionMapper;
+    private final ProductRepository productRepository;
 
     private final PromotionDetailRepository promotionDetailRepository;
     @Override
@@ -87,9 +92,34 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public ResPromotionDTO create(ReqPromotionDTO dto) {
-        Promotion promotion = promotionMapper.toPromotion(dto);
+    public ResPromotionDTO create(ReqCreatePromotionDTO dto) {
+        Promotion promotion = promotionMapper.toPromotionCreate(dto);
+
+        // 2. Tạo PromotionDetail từ list product
+        if (dto.getProducts() != null) {
+            for (PromotionProductDTO p : dto.getProducts()) {
+
+                Product product = productRepository.findById(p.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found"));
+
+                PromotionDetail detail = new PromotionDetail();
+
+                // Embedded Key
+                PromotionDetailKey key = new PromotionDetailKey();
+                key.setPromotionId(promotion.getId()); // sẽ được set sau khi save
+                key.setProductId(product.getId());
+
+                detail.setId(key);
+                detail.setPromotion(promotion);
+                detail.setProduct(product);
+                detail.setStartDate(p.getStartDate());
+                detail.setEndDate(p.getEndDate());
+
+                promotion.getPromotionDetails().add(detail);
+            }
+    }
         Promotion saved = promotionRepository.save(promotion);
+
         return promotionMapper.toResPromotionDTO(saved);
     }
 

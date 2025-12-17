@@ -11,6 +11,7 @@ import com.example.backend.enums.StatusPayment;
 import com.example.backend.mapper.OrderMapper;
 import com.example.backend.repository.*;
 import com.example.backend.service.CustomerProfileService;
+import com.example.backend.service.MailService;
 import com.example.backend.service.OrderService;
 import com.example.backend.service.UserService;
 import com.example.backend.util.SecurityUtil;
@@ -44,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final InvoiceRepository invoiceRepository;
     private final UserService userService;
     private final VoucherRepository voucherRepository;
-
+    private final MailService emailService;
     @Transactional
     public ResOrderDTO handleCreateOrder(ReqCreateOrderDTO reqDTO) {
         User customer;
@@ -283,42 +284,79 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public ResOrderDTO handleUpdateOrder(Long orderId, ReqUpdateOrderDTO reqDTO) {
+
         Order existingOrder = orderRepository.findOrderWithDetailsAndProduct(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        // Bước 2: Cập nhật thông tin cơ bản
+        // ===============================
+        // LƯU TRẠNG THÁI CŨ (QUAN TRỌNG)
+        // ===============================
+        StatusOrder oldStatus = existingOrder.getStatusOrder();
+
+        // ===============================
+        // BƯỚC 2: CẬP NHẬT THÔNG TIN CƠ BẢN
+        // ===============================
         if (reqDTO.getShipAddress() != null) {
             existingOrder.setShipAddress(reqDTO.getShipAddress());
         }
+
         if (reqDTO.getNote() != null) {
             existingOrder.setNote(reqDTO.getNote());
         }
+
         if (reqDTO.getStatusOrder() != null) {
             existingOrder.setStatusOrder(reqDTO.getStatusOrder());
         }
+
         if (reqDTO.getEstimatedDate() != null) {
             existingOrder.setEstimatedDate(reqDTO.getEstimatedDate());
         }
+
         if (reqDTO.getActualDate() != null) {
             existingOrder.setActualDate(reqDTO.getActualDate());
         }
 
-        // Bước 3: Cập nhật OrderDetails (nếu có)
+        // ===============================
+        // BƯỚC 3: CẬP NHẬT ORDER DETAILS
+        // ===============================
         if (reqDTO.getOrderDetails() != null) {
             updateOrderDetails(existingOrder, reqDTO.getOrderDetails());
         }
 
-        // Bước 4: Lưu Order
+        // ===============================
+        // BƯỚC 4: LƯU ORDER
+        // ===============================
         Order updatedOrder = orderRepository.save(existingOrder);
 
-        // Bước 5: Fetch lại để đảm bảo có đầy đủ thông tin
-        Order orderWithDetails = orderRepository.findOrderWithDetailsAndProduct(updatedOrder.getId())
+        // ===============================
+        // BƯỚC 5: GỬI MAIL KHI ĐÃ DELIVERED
+        // ===============================
+        StatusOrder newStatus = updatedOrder.getStatusOrder();
+
+        if (oldStatus != StatusOrder.DELIVERED
+                && newStatus == StatusOrder.DELIVERED) {
+
+            User customer = updatedOrder.getUser();
+
+            if (customer != null && customer.getEmail() != null) {
+                emailService.sendOrderDeliveredEmail(
+                        customer.getEmail(),
+                        customer.getName(),
+                        updatedOrder.getId()
+                );
+            }
+        }
+
+        // ===============================
+        // BƯỚC 6: FETCH LẠI ĐỂ TRẢ DTO
+        // ===============================
+        Order orderWithDetails = orderRepository
+                .findOrderWithDetailsAndProduct(updatedOrder.getId())
                 .orElseThrow(() -> new RuntimeException("Order not found after update"));
-
-
 
         return convertToResOrderDTO(orderWithDetails);
     }
+
     private void updateOrderDetails(Order order, List<ReqUpdateOrderDTO.ReqOrderDetailItemDTO> newDetails) {
         // Lấy danh sách OrderDetail hiện tại
         Map<Long, OrderDetail> existingMap = order.getOrderDetails().stream()

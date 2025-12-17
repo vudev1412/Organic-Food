@@ -36,22 +36,24 @@ const TableVoucher = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteVoucher = async (id: number) => {
-    setIsDeleting(true);
-    try {
-      const res = await deleteVoucherAPI(id);
-      if (res?.data) {
-        message.success("Xóa voucher thành công");
-        actionRef.current?.reload();
-      }
-    } catch (err: any) {
-      notification.error({
-        message: "Xảy ra lỗi",
-        description: err.response?.data?.message || "Có lỗi khi xóa voucher",
-      });
-    } finally {
-      setIsDeleting(false);
+  setIsDeleting(true);
+  try {
+    const res = await deleteVoucherAPI(id);
+
+    if (res.status === 200 || res.status === 204) {
+      message.success("Xóa voucher thành công");
+      actionRef.current?.reload();
     }
-  };
+  } catch (err: any) {
+    notification.error({
+      message: "Xảy ra lỗi",
+      description: err.response?.data?.message || "Có lỗi khi xóa voucher",
+    });
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
 
   const columns: ProColumns<IResVoucherDTO>[] = [
     // ... giữ nguyên hết các cột như cũ
@@ -83,7 +85,15 @@ const TableVoucher = () => {
           FIXED_AMOUNT: "green",
           FREE_SHIPPING: "orange",
         };
-        return <Tag color={colorMap[record.typeVoucher] || "default"}>{record.typeVoucher === "PERCENTAGE" ? "Phần trăm" : record.typeVoucher === "FIXED_AMOUNT" ? "Số tiền" : "Miễn phí ship"}</Tag>;
+        return (
+          <Tag color={colorMap[record.typeVoucher] || "default"}>
+            {record.typeVoucher === "PERCENTAGE"
+              ? "Phần trăm"
+              : record.typeVoucher === "FIXED_AMOUNT"
+              ? "Số tiền"
+              : "Miễn phí ship"}
+          </Tag>
+        );
       },
     },
     {
@@ -143,8 +153,16 @@ const TableVoucher = () => {
             }}
           />
           <Popconfirm
-            title="Xóa voucher?" onConfirm={() => handleDeleteVoucher(record.id)} okText="Xóa" cancelText="Hủy" okButtonProps={{ loading: isDeleting }}>
-            <DeleteTwoTone twoToneColor="#ff4d4f" className="text-lg cursor-pointer" />
+            title="Xóa voucher?"
+            onConfirm={() => handleDeleteVoucher(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ loading: isDeleting }}
+          >
+            <DeleteTwoTone
+              twoToneColor="#ff4d4f"
+              className="text-lg cursor-pointer"
+            />
           </Popconfirm>
         </>
       ),
@@ -159,7 +177,7 @@ const TableVoucher = () => {
         rowKey="id"
         cardBordered
         scroll={{ x: 1300 }}
-        headerTitle="Quản lý Voucher"
+        headerTitle="Quản lý mã khuyến mãi"
         search={{
           labelWidth: "auto",
           searchText: "Tìm kiếm",
@@ -172,55 +190,66 @@ const TableVoucher = () => {
             icon={<PlusOutlined />}
             onClick={() => setOpenCreate(true)}
           >
-            Thêm Voucher
+            Thêm
           </Button>,
         ]}
-        request={async (params, sorter, filter) => {
-          // params.current bắt đầu từ 1 (UI), nhưng API dùng page từ 0
-          const currentPage = (params.current || 1) - 1;
+        request={async (params, sorter) => {
+          const currentPage = params.current || 1;
+
           const pageSize = params.pageSize || 10;
 
           let query = `page=${currentPage}&size=${pageSize}`;
 
-          if (params.code) query += `&filter=code~'${params.code}'`;
-          if (params.description) query += `&filter=description~'${params.description}'`;
-          if (params.typeVoucher) query += `&filter=typeVoucher:'${params.typeVoucher}'`;
-          if (params.active !== undefined && params.active !== null) {
-            query += `&filter=active:${params.active}`;
+          // ✅ FIX FILTER (QUAN TRỌNG)
+          const filters: string[] = [];
+
+          if (params.code) {
+            filters.push(`code~'*${params.code}*'`);
           }
 
-          // Sort
+          if (params.description) {
+            filters.push(`description~'*${params.description}*'`);
+          }
+
+          if (params.typeVoucher) {
+            filters.push(`typeVoucher=='${params.typeVoucher}'`);
+          }
+
+          if (params.active !== undefined && params.active !== null) {
+            filters.push(`active==${params.active}`);
+          }
+
+          if (filters.length > 0) {
+            query += `&filter=${filters.join(";")}`;
+          }
+
+          // ✅ SORT
           if (sorter && Object.keys(sorter).length > 0) {
             const field = Object.keys(sorter)[0];
             const order = sorter[field] === "ascend" ? "ASC" : "DESC";
             query += `&sort=${field},${order}`;
+          } else {
+            query += "&sort=id,DESC";
           }
 
           try {
             const res = await getVouchersAPI(query);
-
-            const result = res.data?.data?.result || [];
-            const total = res.data?.data?.meta?.total || 0;
-
             return {
-              data: result,
-              total,
+              data: res.data?.data?.result || [],
+              total: res.data?.data?.meta?.total || 0,
               success: true,
             };
-          } catch (error) {
-            notification.error({
-              message: "Lỗi tải dữ liệu",
-              description: "Không thể lấy danh sách voucher",
-            });
+          } catch {
             return { data: [], total: 0, success: false };
           }
         }}
         // BỎ meta thủ công → để ProTable tự quản lý phân trang
         pagination={{
-            defaultPageSize:5,
+          defaultPageSize: 5,
           showSizeChanger: true,
-          pageSizeOptions: [ "10", "20", "50","100"],
-          showTotal: (total, range) => `${range[0]}-${range[1]} trên ${total} voucher`,
+          pageSizeOptions: ["10", "20", "50", "100"],
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} trên ${total} voucher`,
         }}
       />
 

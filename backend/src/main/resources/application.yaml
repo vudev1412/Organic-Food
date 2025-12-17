@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/organic_store
     username: root
-    password: sang123A@
+    password: vu070504
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

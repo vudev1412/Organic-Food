@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -25,6 +26,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             @Param("start") Instant start,
             @Param("end") Instant end
     );
+
+    @Query("""
+        SELECT u FROM User u
+        WHERE u.role.name = 'CUSTOMER'
+          AND u.active = true
+         
+    """)
+    List<User> findAllActiveCustomers();
 
 
 
