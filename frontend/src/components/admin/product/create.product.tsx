@@ -152,7 +152,7 @@ const CreateProductCertificate = ({
       const productImagesUrls = await Promise.all(
         subImageFileList
           .filter((f) => f.originFileObj)
-          .map((f) => uploadFileToServer(f.originFileObj as RcFile, "products"))
+          .map((f) => uploadFileToServer(f.originFileObj as RcFile, "images/products"))
       );
 
       // Upload chứng chỉ

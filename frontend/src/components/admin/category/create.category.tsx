@@ -71,7 +71,7 @@ const CreateCategory = ({
       try {
         const res = await createCategoryAPI(payload);
         if (res.status === 201 || res.status === 200) {
-          message.success("Tạo mới category thành công");
+          message.success("Tạo mới loại sản phẩm thành công");
           handleClose();
           refreshTable();
         }
@@ -97,7 +97,7 @@ const CreateCategory = ({
 
   return (
     <Modal
-      title="Thêm mới category"
+      title="Thêm mới loại sản phẩm"
       open={openModelCreate}
       onOk={() => form.submit()}
       onCancel={handleClose}
@@ -110,7 +110,7 @@ const CreateCategory = ({
       <Divider />
       <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
         <Form.Item
-          label="Tên category"
+          label="Tên loại sản phẩm"
           name="name"
           rules={[
             { required: true, message: "Vui lòng nhập tên category" },
@@ -120,10 +120,10 @@ const CreateCategory = ({
             },
           ]}
         >
-          <Input placeholder="Nhập tên category" />
+          <Input placeholder="Nhập tên loại sản phẩm" />
         </Form.Item>
 
-        <Form.Item label="Parent Category" name="parentCategoryId">
+        <Form.Item label="Danh mục" name="parentCategoryId">
           <Select
             allowClear
             placeholder="Chọn parent category (tùy chọn)"

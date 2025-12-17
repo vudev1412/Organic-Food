@@ -7,6 +7,9 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -217,7 +220,7 @@ public class MailServiceImpl implements MailService {
                             %s
                             
                             <div class="button-container">
-                                <a href="%s/login" class="button">🚀 Đăng nhập ngay</a>
+                                <a href="%s/dang-nhap" class="button">🚀 Đăng nhập ngay</a>
                             </div>
                             
                             <div class="divider"></div>
@@ -337,18 +340,47 @@ public class MailServiceImpl implements MailService {
     }
 
     public void sendOrderDeliveredEmail(String toEmail, String customerName, Long orderId) {
-        SimpleMailMessage message = new SimpleMailMessage();
+        log.info("=== 📧 BẮT ĐẦU GỬI EMAIL ===");
+        log.info("Gửi đến: {}", toEmail);
+        log.info("Tên khách: {}", customerName);
+        log.info("Mã đơn: {}", orderId);
 
-        message.setTo(toEmail);
-        message.setSubject("🎉 Đơn hàng của bạn đã được giao thành công");
-        message.setText(
-                "Xin chào " + customerName + ",\n\n" +
-                        "Đơn hàng #" + orderId + " của bạn đã được giao thành công.\n\n" +
-                        "Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!\n\n" +
-                        "Trân trọng,\nOrganic food"
-        );
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
 
-        mailSender.send(message);
+            message.setTo(toEmail);
+            message.setSubject("🎉 Đơn hàng của bạn đã được giao thành công");
+            message.setText(
+                    "Xin chào " + customerName + ",\n\n" +
+                            "Đơn hàng #" + orderId + " của bạn đã được giao thành công.\n\n" +
+                            "Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!\n\n" +
+                            "Trân trọng,\nOrganic food"
+            );
+
+            log.info("📤 Đang gửi email qua mailSender...");
+            mailSender.send(message);
+            log.info("✅ GỬI EMAIL THÀNH CÔNG đến {}", toEmail);
+
+        } catch (MailAuthenticationException e) {
+            log.error("❌ LỖI XÁC THỰC EMAIL: Username hoặc password sai!", e);
+            log.error("Chi tiết: {}", e.getMessage());
+            throw new RuntimeException("Lỗi xác thực email: " + e.getMessage(), e);
+
+        } catch (MailSendException e) {
+            log.error("❌ LỖI GỬI EMAIL: Không thể kết nối SMTP server!", e);
+            log.error("Chi tiết: {}", e.getMessage());
+            throw new RuntimeException("Lỗi gửi email: " + e.getMessage(), e);
+
+        } catch (MailException e) {
+            log.error("❌ LỖI MAIL EXCEPTION: {}", e.getMessage(), e);
+            throw new RuntimeException("Lỗi email: " + e.getMessage(), e);
+
+        } catch (Exception e) {
+            log.error("❌ LỖI KHÔNG XÁC ĐỊNH: {}", e.getMessage(), e);
+            throw new RuntimeException("Lỗi không xác định khi gửi email: " + e.getMessage(), e);
+        }
+
+        log.info("=== 📧 KẾT THÚC GỬI EMAIL ===\n");
     }
 
     @Async

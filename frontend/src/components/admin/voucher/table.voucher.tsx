@@ -36,24 +36,23 @@ const TableVoucher = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteVoucher = async (id: number) => {
-  setIsDeleting(true);
-  try {
-    const res = await deleteVoucherAPI(id);
+    setIsDeleting(true);
+    try {
+      const res = await deleteVoucherAPI(id);
 
-    if (res.status === 200 || res.status === 204) {
-      message.success("Xóa voucher thành công");
-      actionRef.current?.reload();
+      if (res.status === 200 || res.status === 204) {
+        message.success("Xóa voucher thành công");
+        actionRef.current?.reload();
+      }
+    } catch (err: any) {
+      notification.error({
+        message: "Xảy ra lỗi",
+        description: err.response?.data?.message || "Có lỗi khi xóa voucher",
+      });
+    } finally {
+      setIsDeleting(false);
     }
-  } catch (err: any) {
-    notification.error({
-      message: "Xảy ra lỗi",
-      description: err.response?.data?.message || "Có lỗi khi xóa voucher",
-    });
-  } finally {
-    setIsDeleting(false);
-  }
-};
-
+  };
 
   const columns: ProColumns<IResVoucherDTO>[] = [
     // ... giữ nguyên hết các cột như cũ
@@ -61,17 +60,20 @@ const TableVoucher = () => {
       title: "Mã",
       dataIndex: "code",
       width: 140,
+      copyable:true,
       sorter: true,
     },
     {
       title: "Mô tả",
       dataIndex: "description",
       ellipsis: true,
+      hideInSearch: true,
       width: 280,
     },
     {
       title: "Loại",
       dataIndex: "typeVoucher",
+       hideInSearch: true,
       width: 120,
       valueType: "select",
       valueEnum: {
@@ -117,6 +119,7 @@ const TableVoucher = () => {
     },
     {
       title: "Trạng thái",
+       hideInSearch: true,
       dataIndex: "active",
       width: 120,
       valueType: "select",

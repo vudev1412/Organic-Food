@@ -30,11 +30,8 @@ public class VoucherServiceImpl implements VoucherService {
     private final MailService emailService;
     private ApplicationEventPublisher eventPublisher;
     @Override
-    @Transactional
     public Voucher handleCreateVoucher(Voucher voucher) {
         Voucher savedVoucher = voucherRepository.save(voucher);
-
-
 
         return savedVoucher;
     }

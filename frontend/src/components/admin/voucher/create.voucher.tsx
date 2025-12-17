@@ -62,7 +62,7 @@ const CreateVoucher = ({ open, onClose }: IProps) => {
           <Select
             options={[
               { label: "Phần trăm", value: "PERCENT" },
-              { label: "Giảm tiền", value: "AMOUNT" },
+              { label: "Giảm tiền", value: "FIXED_AMOUNT" },
             ]}
           />
         </Form.Item>

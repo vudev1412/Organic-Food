@@ -172,7 +172,7 @@ const TableReceipt = () => {
             }}
           />
 
-          <Popconfirm
+          {/* <Popconfirm
             title="Xóa phiếu nhập này?"
             description="Hành động này không thể hoàn tác"
             onConfirm={() => handleDelete(record.id)}
@@ -188,7 +188,7 @@ const TableReceipt = () => {
               title="Xóa"
               onClick={(e) => e.stopPropagation()}
             />
-          </Popconfirm>
+          </Popconfirm> */}
         </div>
       ),
     },
