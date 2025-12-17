@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { X, CheckCircle, Edit3, Plus } from "lucide-react";
-import { isValidVietnamPhone } from "../../../../utils/phone.helper";
-
+import {
+  isValidVietnamPhone,
+  normalizeVietnamPhone,
+} from "../../../../utils/phone.helper";
 interface AddressFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -111,14 +113,15 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
       setError("Vui lòng điền đầy đủ thông tin bắt buộc.");
       return;
     }
+
     if (!isValidVietnamPhone(phone)) {
-      setError("Số điện thoại không hợp lệ.");
+      setError("Số điện thoại không hợp lệ. VD: 0912345678 hoặc +84912345678");
       return;
     }
 
     const formData = {
       receiverName,
-      phone,
+      phone: normalizeVietnamPhone(phone), // ✅ chuẩn hoá trước khi gửi
       province,
       district,
       ward,
@@ -126,6 +129,7 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
       note,
       defaultAddress,
     };
+
     onSubmit(formData);
   };
 
@@ -179,9 +183,11 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
                 </label>
                 <input
                   className="w-full mt-1 px-3 py-2 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500 outline-none"
-                  placeholder="VD: 0912345678"
+                  placeholder="VD: 0912345678 hoặc +84912345678"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/[^0-9+]/g, ""))
+                  }
                 />
               </div>
             </div>

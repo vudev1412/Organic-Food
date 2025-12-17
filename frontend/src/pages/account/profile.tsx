@@ -622,12 +622,7 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-xs text-gray-400">Cập nhật lần cuối</p>
-                  <p className="text-sm text-gray-600 font-medium">
-                    {formatDate(updatedAt)}
-                  </p>
-                </div>
+               
               </div>
             </div>
 

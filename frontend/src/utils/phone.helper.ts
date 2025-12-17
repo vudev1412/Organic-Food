@@ -7,3 +7,16 @@ export const isValidVietnamPhone = (phone: string): boolean => {
 
   return regex.test(cleaned);
 };
+export const normalizeVietnamPhone = (phone: string) => {
+  const cleaned = phone.replace(/[\s-]/g, "");
+
+  if (cleaned.startsWith("+84")) {
+    return "0" + cleaned.slice(3);
+  }
+
+  if (cleaned.startsWith("84")) {
+    return "0" + cleaned.slice(2);
+  }
+
+  return cleaned;
+};
