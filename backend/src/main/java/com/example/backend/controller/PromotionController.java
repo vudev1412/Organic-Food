@@ -4,6 +4,7 @@ import com.example.backend.domain.ProductDTO;
 import com.example.backend.domain.ProductWithPromotionDTO;
 import com.example.backend.domain.Promotion;
 import com.example.backend.domain.PromotionDTO;
+import com.example.backend.domain.request.ReqCreatePromotionDTO;
 import com.example.backend.domain.request.ReqPromotionDTO;
 import com.example.backend.domain.response.ResPromotionDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
@@ -35,7 +36,7 @@ public class PromotionController {
     }
 
     @PostMapping
-    public ResponseEntity<ResPromotionDTO> create(@RequestBody ReqPromotionDTO dto) {
+    public ResponseEntity<ResPromotionDTO> create(@RequestBody ReqCreatePromotionDTO dto) {
         return ResponseEntity.ok(promotionService.create(dto));
     }
 

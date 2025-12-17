@@ -11,6 +11,7 @@ public interface ReturnItemMapper {
 
     @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "returns.id", target = "returnId")
+    @Mapping(source = "product.name", target = "productName")
     ResReturnItemDTO toResReturnItemDTO(ReturnItem entity);
 
     default ReturnItem toEntity(ReqReturnItemDTO dto) {

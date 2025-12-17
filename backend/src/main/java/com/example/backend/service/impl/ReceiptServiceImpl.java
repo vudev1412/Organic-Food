@@ -126,27 +126,35 @@ public class ReceiptServiceImpl implements ReceiptService {
                 detailDTOs
         );
     }
+
     @Override
     @Transactional(readOnly = true)
-    public ResultPaginationDTO handleGetAllReceipts(Specification<Receipt> spec, Pageable pageable) {
-        Page<Receipt> pageUser = this.receiptRepository.findAll(spec,pageable);
+    public ResultPaginationDTO handleGetAllReceipts(
+            Specification<Receipt> spec,
+            Pageable pageable
+    ) {
+        Page<Receipt> pageReceipt = receiptRepository.findAll(spec, pageable);
+
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
 
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
-
-        meta.setPages(pageUser.getTotalPages());
-        meta.setTotal(pageUser.getTotalElements());
+        meta.setPages(pageReceipt.getTotalPages());
+        meta.setTotal(pageReceipt.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(pageUser.getContent());
-        List<ResReceiptDTO> listUser = receiptRepository.findAllWithDetails().stream()
+
+        List<ResReceiptDTO> data = pageReceipt.getContent()
+                .stream()
                 .map(this::mapToDTO)
                 .toList();
-        rs.setResult(listUser);
+
+        rs.setResult(data);
+
         return rs;
     }
+
 
     @Transactional(readOnly = true)
     public ResReceiptDTO handleGetReceiptById(Long id) {

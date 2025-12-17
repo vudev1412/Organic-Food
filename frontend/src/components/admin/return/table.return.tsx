@@ -14,13 +14,25 @@ type TSearch = {
   keyword?: string;
 };
 
+export interface IReturnListItem {
+  id: number;
+  reason: string;
+  status: string;
+  returnType: string;
+  createdAt: string;
+  approvedAt: string | null;
+  processedBy: number;
+  processNote: string;
+  orderId: number;
+}
+
 const TableReturn = () => {
   const actionRef = useRef<ActionType>(null);
   const [openDetail, setOpenDetail] = useState(false);
-  const [dataDetail, setDataDetail] = useState<IReturn | null>(null);
+  const [dataDetail, setDataDetail] = useState<IReturnListItem | null>(null);
   const [openCreate, setOpenCreate] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
-  const [dataUpdate, setDataUpdate] = useState<IReturn | null>(null);
+  const [dataUpdate, setDataUpdate] = useState<IReturnListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { message, notification } = App.useApp();
 
@@ -41,16 +53,14 @@ const TableReturn = () => {
     }
     setIsDeleting(false);
   };
-  const formatReturnId = (id?: number | null) => {
-    if (id == null) return "-";
-    return `RT${id.toString().padStart(6, "0")}`;
-  };
-  const formatORId = (id?: number | null) => {
-    if (id == null) return "-";
-    return `DH${id.toString().padStart(6, "0")}`;
-  };
 
-  const columns: ProColumns<IReturn>[] = [
+  const formatReturnId = (id?: number | null) =>
+    id ? `RT${id.toString().padStart(6, "0")}` : "-";
+
+  const formatOrderId = (id?: number | null) =>
+    id ? `DH${id.toString().padStart(6, "0")}` : "-";
+
+  const columns: ProColumns<IReturnListItem>[] = [
     {
       title: "Mã hoàn trả",
       dataIndex: "id",
@@ -61,16 +71,19 @@ const TableReturn = () => {
       title: "Mã đơn hàng",
       dataIndex: "orderId",
       hideInSearch: true,
-      render: (_, entity) => <span>{formatORId(entity.orderId)}</span>,
+      render: (_, entity) => <span>{formatOrderId(entity.orderId)}</span>,
     },
-    { title: "Khách hàng", dataIndex: "customerName", hideInSearch: true },
-    { title: "Lý do", dataIndex: "reason", hideInSearch: true },
+    {
+      title: "Lý do",
+      dataIndex: "reason",
+      hideInSearch: true,
+    },
     {
       title: "Tìm kiếm",
       dataIndex: "keyword",
       hideInTable: true,
       fieldProps: {
-        placeholder: "Tìm theo mã đơn hàng hoặc tên khách hàng",
+        placeholder: "Tìm theo mã đơn hàng",
       },
     },
     {
@@ -132,8 +145,7 @@ const TableReturn = () => {
 
   return (
     <>
-      <h2>Tìm kiếm</h2>
-      <ProTable<IReturn, TSearch>
+      <ProTable<IReturnListItem, TSearch>
         columns={columns}
         actionRef={actionRef}
         rowKey="id"
@@ -151,7 +163,6 @@ const TableReturn = () => {
         search={{
           labelWidth: "auto",
           defaultCollapsed: false,
-          // Đã xóa optionRender: false để hiện nút tìm kiếm
         }}
         request={async (params) => {
           const queryParams = new URLSearchParams({
@@ -166,9 +177,8 @@ const TableReturn = () => {
           const res = await getReturnsAPI(queryParams.toString());
 
           return {
-            data: res.data?.data.result || [],
+            data: res.data?.data.result ?? [],
             success: true,
-            page: res.data?.data.meta.page,
             total: res.data?.data.meta.total,
           };
         }}

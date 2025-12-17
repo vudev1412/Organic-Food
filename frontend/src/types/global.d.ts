@@ -211,12 +211,20 @@ declare global {
     name: string;
     image: string;
   }
-  interface ICreatePromotionDTO{
-    name:string;
-    type:string;
-    value:number;
-    active:boolean;
+  export interface IPromotionProductDTO {
+    productId: number;
+    startDate: string;
+    endDate: string;
   }
+
+  export interface ICreatePromotionDTO {
+    name: string;
+    type: "PERCENT" | "FIXED_AMOUNT";
+    value: number;
+    active: boolean;
+    products: IPromotionProductDTO[];
+  }
+
   interface IProductTable {
     imageUrl: string;
     certNo: string;
@@ -431,18 +439,36 @@ declare global {
       name: string;
     };
   }
+  export interface IReturnItem {
+    id: number;
+    quantity: number;
+    amountRefund: number;
+    note: string;
+    createdAt: string;
+    productId: number;
+    productName: string;
+  }
+  export interface IReturnImage {
+    id: number;
+    imageUrl: string;
+    uploadedAt: string;
+  }
+
   export interface IReturn {
     id: number;
     reason: string;
-    status: string;
-    returnType: string;
+    status: "PENDING" | "APPROVED" | "REJECTED";
+    returnType: "REFUND" | "EXCHANGE";
     createdAt: string;
-    approvedAt: string;
-    processedBy: string;
+    approvedAt: string | null;
+    processedBy: number;
     processNote: string;
     orderId: number;
-    customerName: string;
+
+    returnItems: IReturnItem[];
+    returnImages: IReturnImage[];
   }
+
   export interface ICreateReturnDTO {
     reason: string;
     status: string;
@@ -941,9 +967,8 @@ declare global {
   export interface MonthlyRevenueDTO {
     month: number;
     revenue: number;
-
   }
-  interface IReqUpdateUserActive{
-    active:boolean;
+  interface IReqUpdateUserActive {
+    active: boolean;
   }
 }

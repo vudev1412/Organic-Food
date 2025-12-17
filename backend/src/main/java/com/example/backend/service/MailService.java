@@ -1,5 +1,7 @@
 package com.example.backend.service;
 
+import com.example.backend.domain.Voucher;
+
 import java.io.File;
 import java.util.Map;
 
@@ -39,4 +41,7 @@ public interface MailService {
      * Gửi email đặt lại mật khẩu
      */
     void sendResetPasswordEmail(String to, String name, String resetLink);
+
+    void sendOrderDeliveredEmail(String toEmail, String customerName, Long orderId);
+    public void sendVoucherEmail(String to, Voucher voucher);
 }

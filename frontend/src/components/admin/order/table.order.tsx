@@ -72,10 +72,18 @@ const TableOrder = () => {
       dataIndex: "id",
       width: 120,
       fixed: "left",
-      sorter: true,
-      defaultSortOrder: "descend",
       render: (_, record) => <span>{formatOrderId(record.id)}</span>,
     },
+
+    {
+      title: "Ngày đặt",
+      dataIndex: "orderAt",
+      width: 180,
+      sorter: true,
+      render: (_, record) =>
+        record.orderAt ? new Date(record.orderAt).toLocaleString("vi-VN") : "-",
+    },
+
     {
       title: "Khách hàng",
       dataIndex: "userName",
@@ -241,7 +249,9 @@ const TableOrder = () => {
           </Button>,
         ]}
         request={async (params, sort, filter) => {
-          let query = `page=${params.current || 1}&size=${params.pageSize || 10}`;
+          let query = `page=${params.current || 1}&size=${
+            params.pageSize || 10
+          }`;
 
           // 1. Filter theo ID đơn hàng
           if (params.id) {
@@ -262,10 +272,9 @@ const TableOrder = () => {
 
           // 4. Sort
           if (sort && Object.keys(sort).length > 0) {
-            const sortField = Object.keys(sort)[0];
-            const sortOrder =
-              sort[Object.keys(sort)[0]] === "ascend" ? "ASC" : "DESC";
-            query += `&sort=${sortField},${sortOrder}`;
+            const sortField = Object.keys(sort)[0]; // sẽ là "orderAt"
+            const sortOrder = sort[sortField] === "ascend" ? "ASC" : "DESC";
+            query += `&sort=${sortField},${sortOrder}`; // gửi đúng "orderAt"
           }
 
           try {
@@ -333,4 +342,4 @@ const TableOrder = () => {
   );
 };
 
-export default TableOrder
+export default TableOrder;

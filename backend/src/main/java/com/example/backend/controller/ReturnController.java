@@ -28,12 +28,11 @@ public class ReturnController {
 
     @GetMapping
     public ResponseEntity<ResultPaginationDTO> getAllReturns(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @Filter Specification<Return> spec,
+            Pageable pageable
     ) {
-        Pageable pageable = PageRequest.of(page - 1, size);
-        ResultPaginationDTO result = returnService.getAllReturns(keyword, pageable);
+
+        ResultPaginationDTO result = returnService.getAllReturns(spec, pageable);
         return ResponseEntity.ok(result);
     }
 

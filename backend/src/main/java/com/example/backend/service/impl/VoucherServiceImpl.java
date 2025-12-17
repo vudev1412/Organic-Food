@@ -5,13 +5,17 @@ import com.example.backend.domain.Voucher;
 import com.example.backend.domain.response.ResVoucherDTO;
 import com.example.backend.domain.response.ResultPaginationDTO;
 import com.example.backend.mapper.VoucherMapper;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.repository.VoucherRepository;
+import com.example.backend.service.MailService;
 import com.example.backend.service.VoucherService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,9 +26,17 @@ import java.util.stream.Collectors;
 public class VoucherServiceImpl implements VoucherService {
     private final VoucherRepository voucherRepository;
     private final VoucherMapper voucherMapper;
+    private final UserRepository userRepository;
+    private final MailService emailService;
+    private ApplicationEventPublisher eventPublisher;
     @Override
+    @Transactional
     public Voucher handleCreateVoucher(Voucher voucher) {
-        return voucherRepository.save(voucher);
+        Voucher savedVoucher = voucherRepository.save(voucher);
+
+
+
+        return savedVoucher;
     }
 
     @Override

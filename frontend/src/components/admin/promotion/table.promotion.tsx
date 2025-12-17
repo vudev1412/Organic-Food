@@ -1,5 +1,3 @@
-// /src/components/admin/promotion/table.promotion.tsx
-
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {
@@ -15,6 +13,12 @@ import DetailPromotion from "./detail.promotion";
 import CreatePromotion from "./create.promotion";
 import UpdatePromotion from "./update.promotion";
 
+/** ✅ TYPE SEARCH */
+type TSearch = {
+  name?: string;
+  type?: string;
+  active?: boolean;
+};
 
 const TablePromotion = () => {
   const actionRef = useRef<ActionType>(null);
@@ -44,12 +48,21 @@ const TablePromotion = () => {
     setIsDeleting(false);
   };
 
+  /** ✅ COLUMNS */
   const columns: ProColumns<IPromotion>[] = [
-    { title: "ID", dataIndex: "id", width: 80 },
-    { title: "Tên", dataIndex: "name", copyable: true },
+    {
+      title: "Tên",
+      dataIndex: "name",
+      copyable: true,
+    },
     {
       title: "Loại",
       dataIndex: "type",
+       hideInSearch: true,
+      valueEnum: {
+        PERCENT: { text: "%" },
+        AMOUNT: { text: "Giảm tiền" },
+      },
       render: (_, e) =>
         e.type === "PERCENT" ? (
           <Tag color="green">%</Tag>
@@ -57,10 +70,18 @@ const TablePromotion = () => {
           <Tag color="blue">Giảm tiền</Tag>
         ),
     },
-    { title: "Giá trị", dataIndex: "value" },
+    {
+      title: "Giá trị",
+      dataIndex: "value",
+      hideInSearch: true,
+    },
     {
       title: "Trạng thái",
       dataIndex: "active",
+      valueEnum: {
+        true: { text: "Hoạt động", status: "Success" },
+        false: { text: "Ngưng", status: "Error" },
+      },
       render: (_, e) =>
         e.active ? (
           <Tag color="green">Hoạt động</Tag>
@@ -107,14 +128,23 @@ const TablePromotion = () => {
 
   return (
     <>
-      <ProTable<IPromotion>
+      <ProTable<IPromotion, TSearch>
         actionRef={actionRef}
         columns={columns}
         rowKey="id"
-        headerTitle="Quản lý Promotion"
+        headerTitle="Quản lý chương trình khuyến mãi"
         request={async (params) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
-          if (params.name) query += `&name=${params.name}`;
+
+          /** ✅ FILTER ĐÚNG BACKEND */
+          if (params.name)
+            query += `&filter=name~'${params.name}'`;
+
+          if (params.type)
+            query += `&filter=type='${params.type}'`;
+
+          if (params.active !== undefined)
+            query += `&filter=active==${params.active}`;
 
           const res = await getPromotionAPI(query);
 
@@ -143,8 +173,7 @@ const TablePromotion = () => {
               <strong>
                 {range[0]}-{range[1]}
               </strong>{" "}
-              trong <strong style={{ color: "#1677ff" }}>{total}</strong> đơn
-              hàng
+              trong <strong style={{ color: "#1677ff" }}>{total}</strong> bản ghi
             </span>
           ),
         }}

@@ -1,5 +1,6 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.domain.Voucher;
 import com.example.backend.service.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -332,5 +334,40 @@ public class MailServiceImpl implements MailService {
             case "CUSTOMER" -> "Khách hàng";
             default -> role;
         };
+    }
+
+    public void sendOrderDeliveredEmail(String toEmail, String customerName, Long orderId) {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(toEmail);
+        message.setSubject("🎉 Đơn hàng của bạn đã được giao thành công");
+        message.setText(
+                "Xin chào " + customerName + ",\n\n" +
+                        "Đơn hàng #" + orderId + " của bạn đã được giao thành công.\n\n" +
+                        "Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!\n\n" +
+                        "Trân trọng,\nOrganic food"
+        );
+
+        mailSender.send(message);
+    }
+
+    @Async
+    public void sendVoucherEmail(String to, Voucher voucher) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("🎁 Voucher ưu đãi mới dành cho bạn!");
+
+        message.setText(
+                "Xin chào,\n\n" +
+                        "Chúng tôi vừa phát hành voucher mới dành cho bạn 🎉\n\n" +
+                        "🎫 Mã voucher: " + voucher.getCode() + "\n" +
+                        "💸 Giảm giá: " + voucher.getTypeVoucher() + "\n" +
+
+                        "Nhanh tay sử dụng trước khi hết hạn nhé!\n\n" +
+                        "Trân trọng,\n" +
+                        "Shop của bạn ❤️"
+        );
+
+        mailSender.send(message);
     }
 }
