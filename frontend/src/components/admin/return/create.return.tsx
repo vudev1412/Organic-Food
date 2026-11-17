@@ -43,7 +43,7 @@ const CreateReturn = ({ open, setOpen, refreshTable }: any) => {
 
   const fetchCustomers = async () => {
     const res = await getCustomersAPI("");
-    if (res?.data?.data.result) {
+    if (res?.data?.data?.result) {
       const list = res.data.data.result.map((c: any) => ({
         label: c.user?.name || `Customer #${c.id}`,
         value: c.id,

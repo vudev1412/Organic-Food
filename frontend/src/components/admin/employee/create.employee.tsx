@@ -1,8 +1,9 @@
 // src/components/admin/employee/create.employee.tsx
 
+import { getApiError } from "../../../utils/api.error.ts";
 import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, DatePicker, Select, App, Button } from "antd";
-import { User, Mail, Phone, Lock, MapPin, Calendar, Home } from "lucide-react";
+import { User, Mail, Phone, Lock, MapPin, Calendar } from "lucide-react";
 import {
   createUserAPI,
   createEmployeeProfileAPI,
@@ -169,15 +170,9 @@ const CreateEmployee: React.FC<IProps> = ({
       );
 
       // Kiểm tra lỗi từ backend (ưu tiên cao nhất)
-      if (
-        resUser?.status >= 400 ||
-        resUser?.data?.success === false ||
-        !resUser?.data?.data?.id
-      ) {
+      if (!resUser?.data?.data?.id) {
         const backendError =
-          resUser?.error ||
-          resUser?.message ||
-          resUser?.response?.data?.error ||
+          getApiError(resUser, { fields: ["error", "message"] }) ||
           "Tạo tài khoản thất bại";
 
         // Tự động focus + scroll đến field bị lỗi
@@ -217,7 +212,7 @@ const CreateEmployee: React.FC<IProps> = ({
       }
 
       // Lấy userId từ mọi kiểu response
-      const userId = resUser?.data?.data?.id || resUser?.data?.id;
+      const userId = resUser?.data?.data?.id;
       if (!userId) {
         notification.error({
           message: "Lỗi hệ thống",
@@ -489,7 +484,6 @@ const CreateEmployee: React.FC<IProps> = ({
             <Input.TextArea
               rows={2}
               placeholder="VD: 123 Đường Láng, Tòa A, Lầu 5"
-              prefix={<Home size={16} className="text-gray-400 mt-3" />}
             />
           </Form.Item>
         </div>

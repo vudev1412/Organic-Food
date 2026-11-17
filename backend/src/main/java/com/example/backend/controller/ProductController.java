@@ -83,6 +83,11 @@
             Specification<Product> finalSpec = spec != null ? spec.and(conditions) : conditions;
             return ResponseEntity.ok(this.productService.getAllProducts(finalSpec, pageable));
         }
+        @GetMapping("/products/slug/{slug}")
+        public ResponseEntity<ResGetAllProductDTO> getProductBySlug(@PathVariable String slug){
+            return ResponseEntity.ok().body(this.productService.handleGetProductBySlug(slug));
+        }
+
         @GetMapping("/products/{id}")
         public ResponseEntity<ResGetAllProductDTO> getProductById(@PathVariable Long id){
             return ResponseEntity.ok().body(this.productService.handleGetProductById(id));

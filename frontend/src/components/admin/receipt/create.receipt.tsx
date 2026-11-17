@@ -12,12 +12,7 @@ import {
 } from "antd";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
-import {
-  createReceiptAPI,
-  getEmployeesAPI,
-  getProductsAPI,
-  getSuppliersAPI,
-} from "../../../service/api";
+import { createReceiptAPI, getProductsAPI, getSuppliersAPI } from "../../../service/api";
 import { useCurrentApp } from "../../context/app.context";
 interface IProps {
   open: boolean;
@@ -35,7 +30,7 @@ const CreateReceipt = ({ open, setOpen, refreshTable }: IProps) => {
   const { user } = useCurrentApp();
   useEffect(() => {
     getProductsAPI("page=1&size=1000&active=true").then((res) =>
-      setProducts(res.data?.data?.result)
+      setProducts(res.data?.data?.result ?? [])
     );
     getSuppliersAPI("?size=1000").then((res) =>
       setSuppliers(res.data?.data?.result)
@@ -124,9 +119,17 @@ const CreateReceipt = ({ open, setOpen, refreshTable }: IProps) => {
 
         <Form.List
           name="receiptDetails"
-          rules={[{ required: true, message: "Cần ít nhất 1 sản phẩm" }]}
+          rules={[
+            {
+              // Form.List không hỗ trợ `required`, phải dùng validator
+              validator: async (_, items) => {
+                if (!items || items.length < 1)
+                  throw new Error("Cần ít nhất 1 sản phẩm");
+              },
+            },
+          ]}
         >
-          {(fields, { add, remove }) => (
+          {(fields, { add, remove }, { errors }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
                 <Space
@@ -177,6 +180,7 @@ const CreateReceipt = ({ open, setOpen, refreshTable }: IProps) => {
                   Thêm sản phẩm
                 </Button>
               </Form.Item>
+              <Form.ErrorList errors={errors} />
             </>
           )}
         </Form.List>

@@ -35,7 +35,9 @@ const TableCategory = () => {
     try {
       const res = await getParentCategoriesAPI();
       if (res.data && res.data.data) {
-        const map = new Map(res.data.data.map((c: any) => [c.id, c.name]));
+        const map = new Map<number, string>(
+          res.data.data.map((c) => [c.id, c.name])
+        );
         setParentMap(map);
       }
     } catch (error) {
@@ -182,7 +184,7 @@ const TableCategory = () => {
         search={{
           labelWidth: "auto",
           defaultCollapsed: false,
-          optionRender: (searchConfig, formProps, dom) => [...dom.reverse()],
+          optionRender: (_searchConfig, _formProps, dom) => [...dom.reverse()],
         }}
         toolBarRender={() => [
           <Button

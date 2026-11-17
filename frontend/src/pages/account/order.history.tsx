@@ -1,6 +1,6 @@
 // File path: /src/pages/account/order-history.tsx
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   CheckCircleOutlined,
@@ -11,15 +11,15 @@ import {
   RightOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import { Tag, Space, Typography, Button } from "antd";
+import { Tag, Space, Button } from "antd";
 
-const { Text } = Typography;
 
 // === ENUM & TYPES ===
-export enum StatusOrder {
-  DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED",
-}
+export const StatusOrder = {
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+} as const;
+export type StatusOrder = (typeof StatusOrder)[keyof typeof StatusOrder];
 
 interface IOrderItem {
   id: number;
@@ -116,7 +116,6 @@ const OrderDetailModal = ({ order, onClose }: { order: IOrder | null; onClose: (
   if (!order) return null;
 
   const total = calculateTotal(order.items);
-  const statusInfo = getStatusInfo(order.status);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

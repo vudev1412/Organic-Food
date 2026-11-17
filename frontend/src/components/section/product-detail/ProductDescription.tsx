@@ -107,7 +107,16 @@ const ProductDescription: React.FC<ProductDescriptionProps> = ({ content }) => {
     );
   }
 
-  // Case 2: Fallback Render HTML cũ
+  // Case 2: Không có mô tả
+  if (!parsedDescription.content || !String(parsedDescription.content).trim()) {
+    return (
+      <p className="text-gray-500 italic text-center py-8">
+        Chưa có mô tả cho sản phẩm này.
+      </p>
+    );
+  }
+
+  // Case 3: Fallback Render HTML cũ
   return (
     <div
       className="prose prose-green max-w-none text-gray-700 leading-relaxed"

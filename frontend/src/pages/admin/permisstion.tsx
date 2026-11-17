@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Shield,
   Users,
-  Lock,
   Edit,
   Trash2,
   Plus,

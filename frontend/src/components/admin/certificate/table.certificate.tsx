@@ -122,7 +122,7 @@ const TableCertificate = () => {
         rowKey="id"
         headerTitle="Quản lý chứng chỉ"
         cardBordered
-        request={async (params) => {
+        request={async () => {
           const res = await getCertificatesAPI();
           return {
             data: res.data?.data || [],

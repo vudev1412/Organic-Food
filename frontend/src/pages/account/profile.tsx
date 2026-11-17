@@ -183,14 +183,12 @@ const Profile = () => {
   const { user, showToast } = useCurrentApp();
   const navigate = useNavigate();
 
-  const [id, setId] = useState<number>(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [createdAt, setCreatedAt] = useState<string | null>(null);
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [customerData, setCustomerData] = useState<any | null>(null);
@@ -199,9 +197,7 @@ const Profile = () => {
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [userData, setUserData] = useState<IResUserById | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [loading, setLoading] = useState(false);
 
   // --- MỚI: State lỗi số điện thoại ---
   const [phoneError, setPhoneError] = useState("");
@@ -210,13 +206,11 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      setId(user.id || 0);
       setName(user.name || "");
       setEmail(user.email || "");
       setPhone(user.phone || "");
       setAvatar(user.image || null);
       setCreatedAt(user.createAt || null);
-      setUpdatedAt(user.updateAt || null);
     }
   }, [user]);
 
@@ -330,7 +324,6 @@ const Profile = () => {
       setIsEditing(false);
       setNewPassword("");
       setPhoneError(""); // Xóa lỗi sau khi lưu thành công
-      setUpdatedAt(new Date().toISOString());
 
       // Cập nhật lại state phone hiển thị bằng số đã chuẩn hóa
       setPhone(formattedPhone);
@@ -361,16 +354,13 @@ const Profile = () => {
     if (!userID) return;
 
     const fetchUserProfile = async () => {
-      setLoading(true);
       try {
         // Lấy user info
         const res = await getUserById(userID);
         if (res?.data?.data) {
           console.log("profile checking");
           const fetchedUser = res.data.data;
-          setUserData(fetchedUser);
           setCreatedAt(fetchedUser.createAt || null);
-          setUpdatedAt(fetchedUser.updateAt || null);
 
           // Nếu là CUSTOMER thì lấy thêm customer profile
           if (res.data.data.role.name === "CUSTOMER") {
@@ -384,7 +374,6 @@ const Profile = () => {
       } catch (error) {
         console.error("Lỗi khi gọi API:", error);
       } finally {
-        setLoading(false);
       }
     };
 

@@ -29,7 +29,7 @@ const DetailEmployee = (props: IProps) => {
   return `NV${id.toString().padStart(6, "0")}`;
 };
 
-  const formatDate = (dateStr?: string) => {
+  const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return "-";
     return dayjs(dateStr).format("DD/MM/YYYY");
   };

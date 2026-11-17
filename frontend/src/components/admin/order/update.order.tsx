@@ -1,6 +1,6 @@
 // src/components/admin/order/update.order.tsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   Form,
@@ -12,7 +12,6 @@ import {
   Space,
   message,
   Card,
-  Image,
   InputNumber,
   Divider,
   Avatar,

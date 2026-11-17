@@ -9,10 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     List<Product> getProductByCategory_Id(Long categoryId);
+    boolean existsBySlugAndIdNot(String slug, Long id);
+    Optional<Product> findBySlug(String slug);
     Page<Product> findAllByCategoryIdIn(List<Long> categoryId, Pageable pageable);
     @Query("""
     SELECT DISTINCT p

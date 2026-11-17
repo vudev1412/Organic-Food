@@ -1,6 +1,6 @@
 // File path: /src/pages/account/order.tsx
 
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   CarOutlined,
@@ -10,7 +10,6 @@ import {
   InboxOutlined,
   FileTextOutlined,
   RightOutlined,
-  CloseOutlined,
   EyeOutlined,
   ShoppingCartOutlined,
 } from "@ant-design/icons";
@@ -26,13 +25,14 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 const { Text } = Typography;
 
 // === ENUM & TYPES ===
-export enum StatusOrder {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  SHIPPING = "SHIPPING",
-  DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED",
-}
+export const StatusOrder = {
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  SHIPPING: "SHIPPING",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+} as const;
+export type StatusOrder = (typeof StatusOrder)[keyof typeof StatusOrder];
 const generateSlug = (text: string) => {
   return text
     .toString()
@@ -79,16 +79,6 @@ const formatDate = (dateString: string) =>
     month: "2-digit",
     year: "numeric",
   });
-
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(price);
-};
-
-const calculateOrderTotal = (items: IOrderDetail[]) =>
-  items.reduce((sum, item) => sum + item.price, 0);
 
 const getStatusLabel = (status: string) => {
   const map: Record<string, string> = {
@@ -307,9 +297,8 @@ const OrderTrackingPage = () => {
     setIsRepurchaseModalOpen(false);
     setPendingRepurchaseOrder(null);
 
-    let addedCount = 0;
 
-    for (const item of order.orderDetails) {
+    for (const item of order.orderDetails ?? []) {
       const productPayload = {
         id: item.productId,
         name: item.productName,

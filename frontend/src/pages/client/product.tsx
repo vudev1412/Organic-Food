@@ -1,9 +1,9 @@
 // File path: /src/pages/client/product.tsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ProductLeft from "../../components/section/product/product.left";
 import ProductRight from "../../components/section/product/product.right";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { getAllCategoriesAPI } from "../../service/api"; // Import API
 
 interface ICategory {

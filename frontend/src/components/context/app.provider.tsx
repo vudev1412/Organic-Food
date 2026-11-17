@@ -1,5 +1,6 @@
 // File path: /src/components/context/app.provider.tsx
 
+import { getApiError } from "../../utils/api.error.ts";
 import React, { useState, useEffect, useCallback } from "react";
 import { CurrentAppContext, type ToastMessage } from "./app.context";
 import {
@@ -255,11 +256,8 @@ export const AppProvider = ({ children }: Tprops) => {
         const response = await addToCartAPI(product.id, quantity);
 
         // Kiểm tra lỗi từ API
-        if (response.data?.error || response.error) {
-          const errorField = response.data?.error || response.error;
-          const errorMsg = Array.isArray(errorField)
-            ? errorField.join(", ")
-            : errorField;
+        const errorMsg = getApiError(response, { fields: ["error"], join: true });
+        if (errorMsg) {
           showToast(errorMsg, "error");
           return false;
         }
@@ -335,11 +333,8 @@ export const AppProvider = ({ children }: Tprops) => {
       try {
         const response = await updateCartAPI(productId, 0);
 
-        if (response.data?.error || response.error) {
-          const errorField = response.data?.error || response.error;
-          const errorMsg = Array.isArray(errorField)
-            ? errorField.join(", ")
-            : errorField;
+        const errorMsg = getApiError(response, { fields: ["error"], join: true });
+        if (errorMsg) {
 
           showToast(errorMsg, "error");
           throw new Error(errorMsg);
@@ -380,11 +375,8 @@ export const AppProvider = ({ children }: Tprops) => {
         console.log("Update API Response:", response);
 
         // Kiểm tra lỗi từ API
-        if (response.data?.error || response.error) {
-          const errorField = response.data?.error || response.error;
-          const errorMsg = Array.isArray(errorField)
-            ? errorField.join(", ")
-            : errorField;
+        const errorMsg = getApiError(response, { fields: ["error"], join: true });
+        if (errorMsg) {
 
           showToast(errorMsg, "error");
           return;

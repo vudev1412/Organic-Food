@@ -227,7 +227,10 @@ const MembershipRegistrationPage: React.FC = () => {
                       background: `linear-gradient(135deg, ${plan.color}, ${plan.color}cc)`,
                     }}
                   >
-                    {React.cloneElement(plan.icon as React.ReactElement, {
+                    {React.cloneElement(plan.icon as React.ReactElement<{
+                      className?: string;
+                      style?: React.CSSProperties;
+                    }>, {
                       className: "text-5xl text-white",
                     })}
                   </div>
@@ -294,7 +297,10 @@ const MembershipRegistrationPage: React.FC = () => {
           {selectedPlan && (
             <div className="text-center py-12">
               <div className="mb-8">
-                {React.cloneElement(selectedPlan.icon as React.ReactElement, {
+                {React.cloneElement(selectedPlan.icon as React.ReactElement<{
+                      className?: string;
+                      style?: React.CSSProperties;
+                    }>, {
                   className: "text-9xl",
                   style: { color: selectedPlan.color },
                 })}

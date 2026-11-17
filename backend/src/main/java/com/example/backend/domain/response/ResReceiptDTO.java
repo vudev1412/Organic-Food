@@ -22,4 +22,5 @@ public class ResReceiptDTO {
     private SupplierDTO supplier;
     private UserDTO user;
     private List<ReceiptDetailDTO> receiptDetails;
+    private Instant createdAt;
 }

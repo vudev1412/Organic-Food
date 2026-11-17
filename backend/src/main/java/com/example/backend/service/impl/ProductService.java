@@ -1,5 +1,6 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.util.SlugUtil;
 import com.example.backend.domain.*;
 import com.example.backend.domain.key.ProductCertificateKey;
 import com.example.backend.domain.request.ReqProductCertificateDTO;
@@ -51,6 +52,12 @@ public class ProductService {
         return this.productMapper.toResProductDto(product);
     }
 
+    public ResGetAllProductDTO handleGetProductBySlug(String slug) {
+        Product product = this.productRepository.findBySlug(slug)
+                .orElseThrow(() -> new RuntimeException("Product not found with slug: " + slug));
+        return this.productMapper.toResProductDto(product);
+    }
+
     @Transactional
     public ResGetAllProductDTO createProduct(ReqProductDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
@@ -68,6 +75,7 @@ public class ProductService {
         product.setExpDate(dto.getExpDate());
 
         productRepository.save(product);
+        assignSlugIfMissing(product);
 
         // --- tạo product images ---
         if (dto.getProductImages() != null) {
@@ -223,6 +231,7 @@ public class ProductService {
         oldCertMap.values().forEach(productCertificateRepository::delete);
 
         // Lưu sản phẩm
+        assignSlugIfMissing(product);
         Product saved = productRepository.save(product);
         return productMapper.toBaseResProductDTO(saved);
     }
@@ -528,9 +537,22 @@ public class ProductService {
 
         return response;
     }
+
+    /**
+     * Tạo slug từ tên sản phẩm nếu chưa có. Gọi sau khi product đã có id.
+     * Trùng slug với sản phẩm khác thì thêm hậu tố "-{id}".
+     */
+    private void assignSlugIfMissing(Product product) {
+        if (product.getSlug() != null && !product.getSlug().isBlank()) {
+            return;
+        }
+        String base = SlugUtil.toSlug(product.getName());
+        if (base.isEmpty()) {
+            base = "san-pham";
+        }
+        String slug = productRepository.existsBySlugAndIdNot(base, product.getId())
+                ? base + "-" + product.getId()
+                : base;
+        product.setSlug(slug);
+    }
 }
-
-
-
-
-

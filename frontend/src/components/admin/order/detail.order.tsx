@@ -2,7 +2,6 @@
 
 import {
   Drawer,
-  Descriptions,
   Table,
   Image,
   Tag,

@@ -1,5 +1,6 @@
 // File path: /src/components/admin/customer/update.customer.tsx
 
+import { getApiError } from "../../../utils/api.error.ts";
 import { App, Divider, Form, Input, Modal, Switch, type FormProps } from "antd";
 import { useEffect, useState } from "react";
 import { updateUserAPI } from "../../../service/api";
@@ -71,10 +72,7 @@ const UpdateUser = (props: IProps) => {
     } else {
       notification.error({
         message: "Xảy ra lỗi",
-        description:
-          res.message && Array.isArray(res.message)
-            ? res.message[0]
-            : res.message,
+        description: getApiError(res),
         duration: 5,
       });
     }

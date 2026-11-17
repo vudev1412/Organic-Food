@@ -1,22 +1,20 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {
-  DeleteOutlined,
   EditOutlined,
   EyeOutlined,
   PlusOutlined,
   PrinterOutlined,
-  FileExcelOutlined,
 } from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Typography } from "antd";
+import { Button, Typography } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import DetailReceipt from "./detail.receipt";
 import CreateReceipt from "./create.receipt";
 import UpdateReceipt from "./update.receipt";
-import { deleteReceiptAPI, getReceiptsAPI } from "../../../service/api";
+import { getReceiptsAPI } from "../../../service/api";
 
 dayjs.extend(customParseFormat);
 
@@ -37,28 +35,8 @@ const TableReceipt = () => {
   const [openUpdate, setOpenUpdate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<ResReceiptDTO | null>(null);
 
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { message, notification } = App.useApp();
 
   const refreshTable = () => actionRef.current?.reload();
-
-  const handleDelete = async (id: number) => {
-    setIsDeleting(true);
-    try {
-      const res = await deleteReceiptAPI(id);
-      if (res?.status === 204 || res?.status === 200) {
-        message.success("Xóa phiếu nhập thành công!");
-        refreshTable();
-      }
-    } catch (error: any) {
-      notification.error({
-        message: "Xóa thất bại",
-        description: error?.response?.data?.error || "Có lỗi xảy ra khi xóa",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   const formatReceiptId = (id: number) => {
     return `PN${id.toString().padStart(6, "0")}`;
@@ -200,7 +178,7 @@ const TableReceipt = () => {
         columns={columns}
         actionRef={actionRef}
         cardBordered={{ table: true }}
-        request={async (params, sort, filter) => {
+        request={async (params, sort) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
 
           // 1. Filter theo ID phiếu nhập

@@ -40,8 +40,21 @@ export const parseProductDescription = (
     }
     // ======================================================
 
-    if (Array.isArray(jsonData) && jsonData.length > 0) {
-      return { type: "json", content: jsonData as DescriptionSection[] };
+    if (Array.isArray(jsonData)) {
+      // Bỏ các section/item rỗng (heading, subtitle, text đều trống)
+      const sections = (jsonData as DescriptionSection[])
+        .map((section) => ({
+          heading: section?.heading?.trim() ?? "",
+          items: (section?.items ?? []).filter(
+            (item) => item?.subtitle?.trim() || item?.text?.trim()
+          ),
+        }))
+        .filter((section) => section.heading || section.items.length > 0);
+
+      if (sections.length === 0) {
+        return { type: "html", content: "" };
+      }
+      return { type: "json", content: sections };
     }
 
     throw new Error("Invalid structure");

@@ -1,6 +1,6 @@
 // File path: /src/components/common/product.card.with.promotion.tsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
 // Import ProductCard gốc
 import ProductCard from "./product.card";
@@ -57,7 +57,7 @@ const ProductCardWithPromotion = ({
   }, [product.id]);
 
   // 3. CHUYỂN ĐỔI DỮ LIỆU TỪ IBestPromotion SANG IDiscount (Dạng ProductCard cần)
-  const discountProps: IDiscount = bestPromotion
+  const discountProps: IDiscount | undefined = bestPromotion
     ? {
         id: bestPromotion.id,
         type: bestPromotion.type,

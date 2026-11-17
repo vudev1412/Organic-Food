@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
+import { getApiError, isApiFailure } from "../../../utils/api.error.ts";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   createReturnRequestAPI,
   uploadReturnFileAPI,
 } from "../../../service/api";
-import { CurrentAppContext } from "../../context/app.context"; // ⚠️ Hãy kiểm tra lại đường dẫn import này cho đúng project của bạn
+import { useCurrentApp } from "../../context/app.context";
 import { formatOrderCode } from "../../../utils/format";
 
 // --- INTERFACES ---
@@ -41,7 +42,7 @@ const ReturnRequestModal = ({
   onSuccess,
 }: IReturnModalProps) => {
   // ✅ 1. LẤY showToast TỪ CONTEXT
-  const { showToast } = useContext(CurrentAppContext);
+  const { showToast } = useCurrentApp();
   const BASE_URL = import.meta.env.VITE_BACKEND_RETURNS_IMAGE_URL;
 
   const [returnItems, setReturnItems] = useState<ISelectedItemState[]>([]);
@@ -138,8 +139,8 @@ const ReturnRequestModal = ({
       setIsUploading(true);
       const res = await uploadReturnFileAPI(file, "images/returns");
 
-      const fileName =
-        typeof res.data === "string" ? res.data : res.data?.url || res.data;
+      // Backend trả về tên file dạng chuỗi (FormatRestResponse không bọc String)
+      const fileName = res.data;
 
       if (fileName) {
         setImageUrls((prev) => [...prev, fileName]);
@@ -193,8 +194,8 @@ const ReturnRequestModal = ({
         imageUrls,
       });
 
-      if (res && (res.status >= 400 || res.error)) {
-        const msg = res.message || res.data?.message || "Có lỗi xảy ra";
+      if (isApiFailure(res)) {
+        const msg = getApiError(res) || "Có lỗi xảy ra";
         showToast(msg, "error");
         return;
       }

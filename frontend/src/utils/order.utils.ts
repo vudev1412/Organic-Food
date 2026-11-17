@@ -1,11 +1,12 @@
 // === ENUM ===
-export enum StatusOrder {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  SHIPPING = "SHIPPING",
-  DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED",
-}
+export const StatusOrder = {
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  SHIPPING: "SHIPPING",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+} as const;
+export type StatusOrder = (typeof StatusOrder)[keyof typeof StatusOrder];
 
 // === HELPER ===
 export const isWithinReturnPeriod = (order: IOrder): boolean => {

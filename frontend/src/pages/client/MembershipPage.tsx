@@ -35,7 +35,7 @@ const MembershipPage = () => {
   // ✅ Fetch lại user để chắc chắn member state chính xác khi mở trang
   useEffect(() => {
     const fetchCustomerInfo = async () => {
-      if (user?.role === "CUSTOMER") {
+      if (user?.role?.name === "CUSTOMER") {
         try {
           const customerRes = await getCustomerInfoAPI(user.id);
           if (customerRes?.data?.data) {
@@ -48,7 +48,7 @@ const MembershipPage = () => {
     };
 
     fetchCustomerInfo();
-  }, [user?.id, user?.role, setUser]);
+  }, [user?.id, user?.role?.name, setUser]);
 
   const handleRegister = async () => {
     if (!user) {

@@ -12,40 +12,13 @@ import {
   HomeOutlined,
   CreditCardOutlined, // Giữ lại CreditCardOutlined để dùng cho Payment Status
 } from "@ant-design/icons";
-import { Spin, Button, Tag, Divider } from "antd"; // Thêm Divider
+import { Spin, Button, Tag } from "antd";// Thêm Divider
 import { getOrderByIdV2API } from "../../../service/api";
 import { formatCurrency, formatOrderCode } from "../../../utils/format";
 
 // Interface
-interface OrderDetail {
-  productId: number;
-  productName: string;
-  productImage: string;
-  productSlug: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: number;
-  orderAt: string;
-  note: string;
-  statusOrder: string;
-  estimatedDate: string;
-  actualDate: string | null;
-  shipAddress: string;
-  receiverName: string;
-  receiverPhone: string;
-  paymentMethod: string;
-  paymentStatus: string;
-  totalPrice: number;
-  subtotal: number;
-  shippingFee: number;
-  taxAmount: number;
-  discountAmount: number;
-  orderDetails: OrderDetail[];
-  userId: number | null;
-}
+// Dùng chung kiểu với API getOrderByIdV2API (ResOrderDTO ở backend)
+type Order = IResOrderDTO;
 
 // --- HELPER FUNCTIONS ---
 

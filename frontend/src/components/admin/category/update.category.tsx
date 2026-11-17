@@ -7,6 +7,12 @@ import {
   getParentCategoriesAPI,
 } from "../../../service/api";
 
+type ICategoryForm = {
+  name: string;
+  slug: string;
+  parentId?: number | null;
+};
+
 interface IProps {
   openModelUpdate: boolean;
   setOpenModalUpdate: (v: boolean) => void;
@@ -60,14 +66,13 @@ const UpdateCategory = ({
       form.setFieldsValue({
         name: dataUpdate.name,
         slug: dataUpdate.slug,
-        parentId:
-          dataUpdate.parentCategoryId ?? dataUpdate.parentCategory?.id ?? null,
+        parentId: dataUpdate.parentCategoryId ?? null,
       });
     }
   }, [dataUpdate, openModelUpdate]);
 
   /** SUBMIT */
-  const onFinish: FormProps<ICategoryTable>["onFinish"] = async (values) => {
+  const onFinish: FormProps<ICategoryForm>["onFinish"] = async (values) => {
     if (!dataUpdate) return;
 
     const payload = {

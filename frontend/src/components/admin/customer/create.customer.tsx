@@ -1,5 +1,6 @@
 // File path: /src/components/admin/customer/create.customer.tsx
 
+import { getApiError } from "../../../utils/api.error.ts";
 import { App, Divider, Form, Input, Modal, type FormProps } from "antd";
 import { useState } from "react";
 import { createCustomerProfileAPI, createUserAPI } from "../../../service/api";
@@ -25,17 +26,16 @@ const CreateUser = (props: IProps) => {
   const [form] = Form.useForm();
 
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    const { name, password, email, phone } = values;
+    const { name, email, phone } = values;
     setIsSubmit(true);
 
     try {
       // 1️⃣ Tạo user trước
       const resUser = await createUserAPI(name, email, phone);
 
-      if (resUser?.data?.success === false || !resUser?.data?.data?.id) {
+      if (!resUser?.data?.data?.id) {
         const backendError =
-          resUser?.error ||
-          resUser?.data?.message ||
+          getApiError(resUser, { fields: ["error", "message"] }) ||
           "Tạo user thất bại từ backend";
 
         // Focus vào field theo keyword trong thông báo

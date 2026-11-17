@@ -13,7 +13,6 @@ import {
   Image,
   Typography,
   App,
-  Tag,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, UserOutlined } from "@ant-design/icons";
 import {
@@ -29,16 +28,6 @@ interface IProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   refreshTable: () => void;
-}
-
-interface ICustomer {
-  id: number;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    phone?: string;
-  };
 }
 
 const getProductImageUrl = (image: string | undefined | null): string => {
@@ -104,7 +93,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
     }
   };
 
-  const handleCustomerSelect = async (customerId: number, option: any) => {
+  const handleCustomerSelect = async (_customerId: number, option: any) => {
     const customer = option?.customer;
     if (!customer?.user?.id) return;
 
@@ -120,7 +109,7 @@ const CreateOrder = ({ open, setOpen, refreshTable }: IProps) => {
     setLoadingAddresses(true);
     try {
       const res = await getAddressesByUserIdAPI(customer.user.id);
-      const list = res?.data?.data || res?.data || [];
+      const list = res?.data?.data ?? [];
       setAddresses(list);
 
       // auto chọn địa chỉ mặc định

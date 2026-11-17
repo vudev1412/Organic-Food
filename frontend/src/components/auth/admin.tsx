@@ -22,7 +22,7 @@ const ProtectedRouter = ({ children }: { children: React.ReactNode }) => {
     const fetchAccount = async () => {
       try {
         const res = await fetchAccountAPI();
-        if (res.data) {
+        if (res.data?.data) {
           setUser(res.data.data.user);
           setIsAuthenticated(true);
         } else {

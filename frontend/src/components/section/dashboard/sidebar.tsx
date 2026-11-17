@@ -16,7 +16,6 @@ import {
   Receipt,
   Award,
 } from "lucide-react";
-import { Tag } from "antd";
 
 // Đổi từ React.ReactElement → React.ComponentType (đúng kiểu cho icon component)
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;

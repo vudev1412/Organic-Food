@@ -1,5 +1,5 @@
 // src/components/admin/certificate/update.certificate.tsx
-import { App, Divider, Form, Input, Modal, Upload, Button, message } from "antd";
+import { App, Divider, Form, Input, Modal, Upload, Button } from "antd";
 import { useEffect, useState } from "react";
 import { updateCertificateAPI, uploadFileCertsAPI } from "../../../service/api";
 import { UploadOutlined } from "@ant-design/icons";

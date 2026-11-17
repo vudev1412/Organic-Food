@@ -248,7 +248,7 @@ const TableOrder = () => {
             Tạo đơn mới
           </Button>,
         ]}
-        request={async (params, sort, filter) => {
+        request={async (params, sort) => {
           let query = `page=${params.current || 1}&size=${
             params.pageSize || 10
           }`;

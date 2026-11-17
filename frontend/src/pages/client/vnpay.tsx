@@ -60,7 +60,7 @@ const CheckoutPage: React.FC = () => {
   // BẢO VỆ DỮ LIỆU GIỎ HÀNG
   const cartItems: CartItem[] = Array.isArray(rawCartItems)
     ? rawCartItems.filter(
-        (item): item is CartItem =>
+        (item) =>
           item != null &&
           typeof item === "object" &&
           typeof item.id === "number" &&

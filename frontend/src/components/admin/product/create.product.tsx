@@ -441,9 +441,15 @@ const CreateProductCertificate = ({
                   extra={
                     <Button
                       type="link"
-                      onClick={() =>
-                        add({ subtitle: "", text: "" }, `${name}.items`)
-                      }
+                      onClick={() => {
+                        // Thêm mục con vào cuối danh sách items của phần này
+                        const path = ["descriptionSections", name, "items"];
+                        const items = form.getFieldValue(path) ?? [];
+                        form.setFieldValue(path, [
+                          ...items,
+                          { subtitle: "", text: "" },
+                        ]);
+                      }}
                       style={{ color: "#1677ff" }}
                     >
                       + Thêm mục con

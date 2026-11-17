@@ -83,7 +83,7 @@ const DetailReceipt = ({ open, setOpen, data, setData }: IProps) => {
     <Drawer
       title={
         <div className="flex items-center gap-3">
-          <Tag color="blue" size="large" className="text-lg font-bold">
+          <Tag color="blue" className="text-lg font-bold">
             {formatReceiptId(data.id)}
           </Tag>
           <span className="text-xl font-bold text-gray-800">
@@ -133,7 +133,7 @@ const DetailReceipt = ({ open, setOpen, data, setData }: IProps) => {
             }}
           >
             <Descriptions.Item label="Mã phiếu nhập" span={2}>
-              <Tag color="blue" size="large" className="text-lg font-bold">
+              <Tag color="blue" className="text-lg font-bold">
                 {formatReceiptId(data.id)}
               </Tag>
             </Descriptions.Item>
@@ -231,7 +231,9 @@ const DetailReceipt = ({ open, setOpen, data, setData }: IProps) => {
           <Text type="secondary">
             {" "}
             Phiếu nhập được tạo vào{" "}
-            {dayjs(data.createdAt).format("DD/MM/YYYY HH:mm")}{" "}
+            {data.createdAt
+              ? dayjs(data.createdAt).format("DD/MM/YYYY HH:mm")
+              : "-"}{" "}
           </Text>{" "}
         </div>
       </div>

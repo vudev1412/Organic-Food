@@ -2,21 +2,14 @@
 
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
+import { getCustomersAPI, updateActiveUser } from "../../../service/api";
 import {
-  deleteUserAPI,
-  deleteUserProfileAPI,
-  getCustomersAPI,
-  updateActiveUser,
-} from "../../../service/api";
-import {
-  DeleteTwoTone,
   EditTwoTone,
   EyeOutlined,
-  EyeTwoTone,
   PlusOutlined,
 } from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Space, Switch, Tag, Tooltip } from "antd";
+import { App, Button, Space, Switch, Tag, Tooltip } from "antd";
 import DetailUser from "./user.detail";
 import CreateUser from "./create.customer";
 import UpdateUser from "./update.customer";
@@ -46,8 +39,7 @@ const MyTable = () => {
   const [dataUpdate, setDataUpdate] = useState<ICustomerTable | null>(null);
   const [loadingActiveId, setLoadingActiveId] = useState<number | null>(null);
 
-  const [isDeleteUser, setIsDeleteUser] = useState(false);
-  const { message, notification } = App.useApp();
+  const { message } = App.useApp();
   const formatUserId = (id: number) => {
     return `KH${id.toString().padStart(6, "0")}`;
   };
@@ -79,48 +71,6 @@ const MyTable = () => {
   };
 
   // ========================= DELETE =========================
-
-  const handleDeleteUser = async (id: number, userId: number) => {
-    setIsDeleteUser(true);
-    try {
-      // 1. Xóa CustomerProfile trước (nếu có)
-      const resProfile: any = await deleteUserProfileAPI(id);
-
-      if (resProfile.status === 204 || resProfile.status === 200) {
-        // 2. Sau đó xóa User
-        const resUser: any = await deleteUserAPI(userId);
-
-        if (resUser.status === 204 || resUser.status === 200) {
-          message.success("Xóa user thành công");
-          refreshTable();
-        } else {
-          notification.error({
-            message: "Xảy ra lỗi",
-            description: "Không thể xóa user",
-            duration: 5,
-          });
-        }
-      } else {
-        notification.error({
-          message: "Xảy ra lỗi",
-          description: "Không thể xóa CustomerProfile",
-          duration: 5,
-        });
-      }
-    } catch (error: any) {
-      notification.error({
-        message: "Xảy ra lỗi",
-        description:
-          error.response?.data?.message &&
-          Array.isArray(error.response.data.message)
-            ? error.response.data.message[0]
-            : error.response?.data?.message || error.message,
-        duration: 5,
-      });
-    } finally {
-      setIsDeleteUser(false);
-    }
-  };
 
   // ========================= COLUMNS =========================
   const columns: ProColumns<ICustomerTable>[] = [
@@ -169,9 +119,9 @@ const MyTable = () => {
         <Switch
           checked={entity.user.active}
           loading={loadingActiveId === entity.user.id}
-          onClick={(checked, e) => {
+          onClick={(_checked, e) => {
             e.stopPropagation();
-            handleToggleActive(entity.user.id, entity.user.active);
+            handleToggleActive(entity.user.id, entity.user.active ?? false);
           }}
           checkedChildren="Bật"
           unCheckedChildren="Tắt"
@@ -272,7 +222,7 @@ const MyTable = () => {
             Thêm mới
           </Button>,
         ]}
-        request={async (params, sort, filter) => {
+        request={async (params, sort) => {
           console.log("Request called with sort:", sort);
           let query = `page=${params.current}&size=${params.pageSize}`;
           if (params.id) {
@@ -299,13 +249,14 @@ const MyTable = () => {
 
           const res = await getCustomersAPI(query);
           console.log(res);
-          if (res.data) setMeta(res.data.data.meta);
+          const pageData = res.data?.data;
+          if (pageData) setMeta(pageData.meta);
 
           return {
-            data: res.data?.data.result,
+            data: pageData?.result,
             success: true,
-            total: res.data?.data.meta.total,
-            page: res.data?.data.meta.page,
+            total: pageData?.meta.total,
+            page: pageData?.meta.page,
           };
         }}
         pagination={{

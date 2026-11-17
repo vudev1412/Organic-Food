@@ -11,7 +11,7 @@ import {
 import { getAddressesByUserIdAPI } from "../../../service/api"; // Đảm bảo đường dẫn import đúng
 
 interface IAddressSectionProps {
-  user: IUser;
+  user: IUser | null;
   onSelectAddress: (address: ICustomerAddress | null) => void;
 }
 

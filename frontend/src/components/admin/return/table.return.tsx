@@ -1,5 +1,6 @@
 // File path: /src/components/admin/return/table.return.tsx
 
+import { getApiError } from "../../../utils/api.error.ts";
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
@@ -14,17 +15,8 @@ type TSearch = {
   keyword?: string;
 };
 
-export interface IReturnListItem {
-  id: number;
-  reason: string;
-  status: string;
-  returnType: string;
-  createdAt: string;
-  approvedAt: string | null;
-  processedBy: number;
-  processNote: string;
-  orderId: number;
-}
+/** Danh sách đổi trả dùng chung kiểu IReturn (ResReturnDTO ở backend) */
+export type IReturnListItem = IReturn;
 
 const TableReturn = () => {
   const actionRef = useRef<ActionType>(null);
@@ -48,7 +40,7 @@ const TableReturn = () => {
     } else {
       notification.error({
         message: "Lỗi",
-        description: res?.message ?? "Có lỗi xảy ra",
+        description: getApiError(res) ?? "Có lỗi xảy ra",
       });
     }
     setIsDeleting(false);
@@ -177,9 +169,9 @@ const TableReturn = () => {
           const res = await getReturnsAPI(queryParams.toString());
 
           return {
-            data: res.data?.data.result ?? [],
+            data: res.data?.data?.result ?? [],
             success: true,
-            total: res.data?.data.meta.total,
+            total: res.data?.data?.meta.total,
           };
         }}
         onRow={(record) => ({

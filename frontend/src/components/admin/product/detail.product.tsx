@@ -7,7 +7,6 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { parseProductDescription } from "../../../utils/productHelper";
-import { data } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
@@ -365,7 +364,10 @@ const DetailProduct = ({
                       whiteSpace: "pre-wrap",
                     }}
                     dangerouslySetInnerHTML={{
-                      __html: result.content.replace(/\n/g, "<br/>"),
+                      __html:
+                        result.type === "html"
+                          ? result.content.replace(/\n/g, "<br/>")
+                          : "",
                     }}
                   />
                 </Card>

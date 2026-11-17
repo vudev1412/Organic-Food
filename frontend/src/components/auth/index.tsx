@@ -30,7 +30,7 @@ const ProtectedRoute = (props: IProps) => {
       setIsAppLoading(true);
       try {
         const res = await fetchAccountAPI();
-        if (res.data) {
+        if (res.data?.data) {
           setUser(res.data.data.user);
           setIsAuthenticated(true);
         }

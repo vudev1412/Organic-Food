@@ -6,7 +6,6 @@ import {
   Typography,
   message,
   Alert,
-  Divider,
   Popconfirm,
   Table,
   Tag,
@@ -19,7 +18,6 @@ import {
   UploadOutlined,
   DeleteOutlined,
   ReloadOutlined,
-  CloudDownloadOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
@@ -188,49 +186,6 @@ const BackupRestorePage: React.FC = () => {
       });
     }
     setLoadingRestore(false);
-  };
-
-  // Download file backup
-  const handleDownload = async (backup: IBackupInfo) => {
-    const hideLoading = message.loading("Đang chuẩn bị tải xuống...", 0);
-    
-    try {
-      // Sử dụng endpoint riêng không bị wrap
-      const res = await axios.get(
-        `http://localhost:8080/api/v1/files/backup/download?path=${encodeURIComponent(
-          backup.absolutePath
-        )}`,
-        { responseType: "blob" }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", backup.fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      hideLoading();
-      
-      notification.success({
-        message: "✅ Tải xuống thành công",
-        description: `File ${backup.fileName} đã được tải về máy`,
-        placement: "topRight",
-        duration: 3,
-      });
-    } catch (err: any) {
-      hideLoading();
-      console.error("Download error:", err);
-      
-      notification.error({
-        message: "❌ Tải xuống thất bại",
-        description: err.response?.data?.message || "Không thể tải file backup",
-        placement: "topRight",
-        duration: 3,
-      });
-    }
   };
 
   // Xóa backup

@@ -66,7 +66,7 @@ export const createUserAPI = (
   password?: string
 ) => {
   const urlBackend = `/api/v1/users`;
-  return axios.post<IBackendRes<IRegister>>(urlBackend, {
+  return axios.post<IBackendRes<IResCreateUser>>(urlBackend, {
     name,
     email,
     phone,
@@ -100,22 +100,31 @@ export const getOrderAPI = (query: string) => {
 };
 export const getOrderAPIByUserId = (id: number) => {
   const urlBackend = `/api/v1/orders/user-order/${id}`;
-  return axios.get<IBackendRes<IOrder>>(urlBackend);
+  return axios.get<IBackendRes<IOrder[]>>(urlBackend);
 };
 
+/** Khớp với ReqProductCertificateDTO ở backend */
+export interface IReqProductCertificate {
+  certificateId: number;
+  certNo?: string;
+  date?: string | null;
+  imageUrl?: string | null;
+}
+/** Khớp với ReqProductDTO ở backend (dùng cho cả tạo và cập nhật) */
 export interface ICreateProductDTO {
   name: string;
-  unit?: string;
   price: number;
-  origin_address?: string;
-  description?: string;
-  rating_avg?: number;
+  origin_address?: string | null;
+  description?: string | null;
   quantity?: number;
-  image?: string;
   active?: boolean;
-  mfgDate?: string;
-  expDate?: string;
   categoryId?: number;
+  unitId?: number;
+  image?: string | null;
+  mfgDate?: string | null;
+  expDate?: string | null;
+  productImages?: string[];
+  certificates?: IReqProductCertificate[];
 }
 export const getProductsAPI = (query: string) =>
   axios.get<IBackendRes<IModelPaginate<IProduct>>>(`/api/v1/products?${query}`);
@@ -123,7 +132,7 @@ export const getProductsAPI = (query: string) =>
 export const createProductAPI = (product: ICreateProductDTO) =>
   axios.post(`/api/v1/products`, product);
 
-export const updateProductAPI = (id: number, product: IProduct) =>
+export const updateProductAPI = (id: number, product: ICreateProductDTO) =>
   axios.patch(`/api/v1/products/${id}`, product);
 
 export const deleteProductAPI = (id: number) =>
@@ -209,7 +218,7 @@ export const getAllCategoriesAPI = () => {
 
 export const getParentCategoriesAPI = () => {
   const urlBackend = "/api/v1/categories/parents";
-  return axios.get<IBackendRes<IParentCategory>>(urlBackend);
+  return axios.get<IBackendRes<IParentCategory[]>>(urlBackend);
 };
 
 export const getProductCardListAPI = (
@@ -243,10 +252,19 @@ export const getProductsByCategoryAPI = (
 
   return axios.get<IBackendRes<IModelPaginate<IProductCard>>>(urlBackend);
 };
+export interface IActiveProductParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  certificateIds?: number[];
+}
+
 /**
  * Gọi API lấy TẤT CẢ sản phẩm đang Active
  */
-export const fetchAllActiveProducts = (params = {}) => {
+export const fetchAllActiveProducts = (params: IActiveProductParams = {}) => {
   const { page, size, sort, minPrice, maxPrice, certificateIds } = params;
 
   // 1. Xử lý Filter (Turkraft)
@@ -262,8 +280,8 @@ export const fetchAllActiveProducts = (params = {}) => {
   // 2. Tạo Query String
   const queryParams = new URLSearchParams();
 
-  if (page) queryParams.append("page", page);
-  if (size) queryParams.append("size", size);
+  if (page) queryParams.append("page", String(page));
+  if (size) queryParams.append("size", String(size));
   if (sort) queryParams.append("sort", sort);
   if (filterString) queryParams.append("filter", filterString);
 
@@ -278,7 +296,10 @@ export const fetchAllActiveProducts = (params = {}) => {
 /**
  * Gọi API lấy sản phẩm Active theo Category
  */
-export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
+export const fetchActiveProductsByCategory = (
+  categoryId: number,
+  params: IActiveProductParams = {}
+) => {
   const { page, size, sort, minPrice, maxPrice, certificateIds } = params;
 
   // 1. Xử lý Filter
@@ -294,8 +315,8 @@ export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
   // 2. Tạo Query String
   const queryParams = new URLSearchParams();
 
-  if (page) queryParams.append("page", page);
-  if (size) queryParams.append("size", size);
+  if (page) queryParams.append("page", String(page));
+  if (size) queryParams.append("size", String(size));
   if (sort) queryParams.append("sort", sort);
   if (filterString) queryParams.append("filter", filterString);
 
@@ -307,6 +328,11 @@ export const fetchActiveProductsByCategory = (categoryId, params = {}) => {
   return axios.get(
     `/api/v1/product/category/${categoryId}/active?${queryParams.toString()}`
   );
+};
+
+export const getProductDetailBySlug = (slug: string) => {
+  const urlBackend = `/api/v1/products/slug/${encodeURIComponent(slug)}`;
+  return axios.get<IBackendRes<IProductDetail>>(urlBackend);
 };
 
 export const getProductDetailById = (id: number) => {
@@ -385,11 +411,11 @@ export const clearCartAPI = (userId: number) => {
 
 export const getCertificate = () => {
   const urlBackend = `/api/v1/certificates`;
-  return axios.get<IBackendRes<ICertificate>>(urlBackend);
+  return axios.get<IBackendRes<ICertificate[]>>(urlBackend);
 };
 export const getUnits = () => {
   const urlBackend = `/api/v1/units`;
-  return axios.get<IBackendRes<IUnit>>(urlBackend);
+  return axios.get<IBackendRes<IUnit[]>>(urlBackend);
 };
 
 export const getOrderDetailsFullAPI = (query: string) => {
@@ -685,7 +711,7 @@ export const deleteReviewAPI = (id: number) => {
 };
 export const createOrder = (data: IReqCreateOrder) => {
   const urlBackend = `/api/v1/orders`;
-  return axios.post<IBackendRes<void>>(urlBackend, data);
+  return axios.post<IBackendRes<IResOrderDTO>>(urlBackend, data);
 };
 export const updateOrder = (orderId: number, data: IUpdateOrderDTO) => {
   const urlBackend = `/api/v1/orders/${orderId}`;
@@ -697,7 +723,7 @@ export const deleteOrder = (orderId: number, hardDelete = false) => {
 };
 export const getOrderByUserId = (userId: number) => {
   const urlBackend = `/api/v1/orders/user-order/${userId}`;
-  return axios.get<IBackendRes<IOrder>>(urlBackend);
+  return axios.get<IBackendRes<IOrder[]>>(urlBackend);
 };
 /**
  * Lấy danh sách sản phẩm có khuyến mãi tốt nhất.
@@ -950,25 +976,13 @@ export const checkReturnByOrderIdAPI = (orderId: number) => {
   return axios.get(URL);
 };
 
-export const callFetchActivePromotions = async (): Promise<
-  IBackendRes<IPromotion[]>
-> => {
-  // SỬ DỤNG instance.get THAY VÌ axios.get
-  const response = await instance.get<IBackendRes<IPromotion[]>>(
-    `/api/v1/promotions/active`
-  );
-  return response as any;
-};
+export const callFetchActivePromotions = () =>
+  instance.get<IBackendRes<IPromotion[]>>(`/api/v1/promotions/active`);
 
-export const callFetchProductsByPromotionId = async (
-  id: number
-): Promise<IBackendRes<IPromotionProduct[]>> => {
-  // SỬ DỤNG instance.get THAY VÌ axios.get
-  const response = await instance.get<IBackendRes<IPromotionProduct[]>>(
+export const callFetchProductsByPromotionId = (id: number) =>
+  instance.get<IBackendRes<IPromotionProduct[]>>(
     `/api/v1/promotions/${id}/products`
   );
-  return response as any;
-};
 
 export const getAllRolesAPI = () => {
   return axios.get<IBackendRes<IRole[]>>("/api/v1/roles");
@@ -1019,16 +1033,27 @@ export const getTopSellingProductsAPI = (
 };
 
 export const getMonthlyRevenueAPI = (year: number) => {
-  return axios.get<IBackendRes<MonthlyRevenueDTO[]>>(
+  // Backend trả về List<Long>: doanh thu của 12 tháng, index 0 = tháng 1
+  return axios.get<IBackendRes<number[]>>(
     `/api/v1/dashboard/monthly-revenue?year=${year}`
   );
 };
-export const createReceiptAPI = (payload: IReceipt) => {
+/** Khớp với ReqCreateReceiptDTO ở backend (dùng cho cả tạo và cập nhật) */
+export interface IReqReceipt {
+  deliverName: string;
+  supplierId: number;
+  userId?: number;
+  shipDate: string | null;
+  discount: number;
+  details: { productId: number; quantity: number; importPrice: number }[];
+}
+
+export const createReceiptAPI = (payload: IReqReceipt) => {
   const url = `/api/v1/receipts`;
   return axios.post(url, payload);
 };
 
-export const updateReceiptAPI = (id: number, payload: IReceipt) => {
+export const updateReceiptAPI = (id: number, payload: IReqReceipt) => {
   const url = `/api/v1/receipts/${id}`;
   return axios.patch(url, payload);
 };

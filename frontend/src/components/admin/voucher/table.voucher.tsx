@@ -23,7 +23,7 @@ type TSearch = {
 };
 
 const TableVoucher = () => {
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
   const { message, notification } = App.useApp();
 
   // BỎ HOÀN TOÀN state meta thủ công → để ProTable tự quản lý
@@ -77,19 +77,20 @@ const TableVoucher = () => {
       width: 120,
       valueType: "select",
       valueEnum: {
-        PERCENTAGE: { text: "Phần trăm" },
+        // Khớp enum TypeVoucher ở backend: PERCENT, FIXED_AMOUNT, FREESHIP
+        PERCENT: { text: "Phần trăm" },
         FIXED_AMOUNT: { text: "Số tiền cố định" },
-        FREE_SHIPPING: { text: "Miễn phí vận chuyển" },
+        FREESHIP: { text: "Miễn phí vận chuyển" },
       },
       render: (_, record) => {
         const colorMap: Record<string, string> = {
-          PERCENTAGE: "blue",
+          PERCENT: "blue",
           FIXED_AMOUNT: "green",
-          FREE_SHIPPING: "orange",
+          FREESHIP: "orange",
         };
         return (
           <Tag color={colorMap[record.typeVoucher] || "default"}>
-            {record.typeVoucher === "PERCENTAGE"
+            {record.typeVoucher === "PERCENT"
               ? "Phần trăm"
               : record.typeVoucher === "FIXED_AMOUNT"
               ? "Số tiền"
@@ -103,7 +104,12 @@ const TableVoucher = () => {
       dataIndex: "value",
       width: 120,
       hideInSearch: true,
-      render: (v) => (v != null ? `${v.toLocaleString("vi-VN")} ₫` : "—"),
+      render: (_, record) => {
+        if (record.value == null) return "—";
+        return record.typeVoucher === "PERCENT"
+          ? `${record.value}%`
+          : `${record.value.toLocaleString("vi-VN")} ₫`;
+      },
     },
     {
       title: "Số lượng",

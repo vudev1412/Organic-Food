@@ -1,3 +1,4 @@
+import type { RcFile } from "antd/es/upload";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -37,7 +38,7 @@ import {
 import { parseProductDescription } from "../../../utils/productHelper";
 
 const { TextArea } = Input;
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface IProps {
   openModelUpdate: boolean;
@@ -148,8 +149,8 @@ const UpdateProduct: React.FC<IProps> = ({
     setCertList(
       dataUpdate.certificates?.length
         ? dataUpdate.certificates.map((c, i) => {
-            let certId = c.certificateId || c.certificate?.id;
-            if (certId !== undefined && certId !== null) certId = Number(certId);
+            // API trả về certificates: [{ id, name, certNo, imageUrl, date }]
+            const certId = c.id;
             return {
               key: Date.now() + i,
               certificateId: certId,
@@ -247,7 +248,7 @@ const UpdateProduct: React.FC<IProps> = ({
         name: values.name,
         price: Number(values.price),
         quantity: Number(values.quantity),
-        unit: Number(values.unitId),
+        unitId: Number(values.unitId),
         categoryId: Number(values.categoryId),
         origin_address: values.origin_address || null,
         description: descriptionJSON,

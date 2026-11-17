@@ -1,5 +1,6 @@
 // File path: /src/pages/auth/signin.tsx
 
+import { getApiError } from "../../utils/api.error.ts";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -39,11 +40,6 @@ const SignIn = () => {
 
   // State lỗi hiển thị tại Input
   const [usernameError, setUsernameError] = useState("");
-
-  // --- EMAIL VALIDATE FUNCTION ---
-  const isValidEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
 
   // Slider Auto-play
   useEffect(() => {
@@ -100,18 +96,16 @@ const SignIn = () => {
     try {
       const res = await loginAPI(submitUsername, password);
 
-      if (res?.data) {
+      const login = res?.data?.data;
+      if (login) {
         setIsAuthenticated(true);
-        setUser(res.data.data.userLogin);
-        localStorage.setItem("access_token", res.data.data.access_token);
+        const { avatar, ...loginUser } = login.userLogin;
+        setUser({ ...loginUser, image: avatar ?? "" });
+        localStorage.setItem("access_token", login.access_token);
         showToast("Đăng nhập tài khoản thành công", "success");
         navigate("/");
       } else {
-        const errorMsg =
-          res.message && Array.isArray(res.message)
-            ? res.message[0]
-            : res.message;
-        showToast(errorMsg || "Xảy ra lỗi", "error");
+        showToast(getApiError(res) || "Xảy ra lỗi", "error");
       }
     } catch (error: any) {
       showToast(error.message || "Có lỗi xảy ra", "error");

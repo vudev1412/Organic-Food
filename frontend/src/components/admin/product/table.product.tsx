@@ -3,7 +3,6 @@
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {
-  DeleteTwoTone,
   EditTwoTone,
   EyeOutlined,
   PlusOutlined,
@@ -12,16 +11,14 @@ import {
 } from "@ant-design/icons";
 import { useRef, useState } from "react";
 import {
-  App,
   Button,
   Tag,
   Tooltip,
   Avatar,
   Space,
   Typography,
-  Popconfirm,
 } from "antd";
-import { getProductsAPI, deleteProductAPI } from "../../../service/api";
+import { getProductsAPI } from "../../../service/api";
 import DetailProduct from "./detail.product";
 import CreateProductCertificate from "./create.product";
 import UpdateProduct from "./update.product";
@@ -43,7 +40,6 @@ const TableProduct = () => {
   const [openModalCreate, setOpenModalCreate] = useState(false);
   const [openModelUpdate, setOpenModelUpdate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<IProduct | null>(null);
-  const { message, notification } = App.useApp();
 
   const formatProductId = (id: number) => {
     return `SP${id.toString().padStart(6, "0")}`;
@@ -53,21 +49,6 @@ const TableProduct = () => {
     if (!code.startsWith("SP")) return NaN;
     const numPart = code.slice(2);
     return parseInt(numPart, 10);
-  };
-
-  const handleDelete = async (productId: number) => {
-    try {
-      const res: any = await deleteProductAPI(productId);
-      if (res.status === 200 || res.status === 204) {
-        message.success("Xóa sản phẩm thành công!");
-        actionRef.current?.reload();
-      }
-    } catch (error: any) {
-      notification.error({
-        message: "Xóa thất bại",
-        description: error.response?.data?.message || "Có lỗi xảy ra",
-      });
-    }
   };
 
   const columns: ProColumns<IProduct>[] = [
@@ -296,7 +277,7 @@ const TableProduct = () => {
 
           const res = await getProductsAPI(query);
 
-          const rawData = res.data?.data.result || [];
+          const rawData = res.data?.data?.result || [];
           const mapProduct: Record<number, IProduct> = {};
 
           rawData.forEach((item) => {
@@ -317,7 +298,7 @@ const TableProduct = () => {
           return {
             data: Object.values(mapProduct),
             success: true,
-            total: res.data?.data.meta.total || 0,
+            total: res.data?.data?.meta.total || 0,
           };
         }}
         pagination={{

@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   getBestPromotionByProductId,
   getProductDetailById,
+  getProductDetailBySlug,
   getSubImgByProductId,
   getProductCertificateByIdProduct,
   getReviewsByProductIdAPI,
@@ -38,8 +39,30 @@ const ProductDetail: React.FC = () => {
   const REVIEW_PAGE_SIZE = 1;
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams();
-  const productId = id ? parseInt(id) : (location.state?.productId as number);
+  const { slug } = useParams();
+  // Có state (bấm link trong app) thì dùng luôn id, không thì tra id theo slug trên URL
+  const stateProductId = location.state?.productId as number | undefined;
+  // undefined = đang tra cứu, null = không tìm thấy
+  const [slugProductId, setSlugProductId] = useState<number | null | undefined>(
+    undefined
+  );
+  const productId = stateProductId ?? slugProductId ?? undefined;
+
+  useEffect(() => {
+    if (stateProductId || !slug) return;
+    let cancelled = false;
+    setSlugProductId(undefined);
+    getProductDetailBySlug(slug)
+      .then((res) => {
+        if (!cancelled) setSlugProductId(res.data.data?.id ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setSlugProductId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, stateProductId]);
 
   // State Product
   const [product, setProduct] = useState<IProductDetail | null>(null);
@@ -145,7 +168,10 @@ const ProductDetail: React.FC = () => {
   useEffect(() => {
     const fetchProductData = async () => {
       if (!productId) {
-        setIsLoading(false);
+        // Chỉ báo "không tìm thấy" khi đã tra slug xong
+        if (stateProductId || !slug || slugProductId === null) {
+          setIsLoading(false);
+        }
         return;
       }
       setIsLoading(true);
@@ -158,9 +184,8 @@ const ProductDetail: React.FC = () => {
         let mainImageUrl = "";
         let bestPromotionData: IBestPromotion | null = null;
         let certificationsData: ICertification[] = [];
-        let allRequests = [];
-
-        allRequests.push(
+        // 4 request chạy song song, kết quả sản phẩm/khuyến mãi/chứng chỉ được gán qua closure
+        const requests = [
           getProductDetailById(productId).then((response) => {
             if (response.data.data) {
               productData = response.data.data;
@@ -168,19 +193,12 @@ const ProductDetail: React.FC = () => {
               return response.data.data;
             }
             return null;
-          })
-        );
-
-        allRequests.push(getSubImgByProductId(productId));
-
-        allRequests.push(
+          }),
+          getSubImgByProductId(productId),
           getBestPromotionByProductId(productId).then((response) => {
             if (response.data.data) bestPromotionData = response.data.data;
             return response;
-          })
-        );
-
-        allRequests.push(
+          }),
           getProductCertificateByIdProduct(productId)
             .then((response) => {
               if (response.data.data && Array.isArray(response.data.data)) {
@@ -193,37 +211,26 @@ const ProductDetail: React.FC = () => {
                     description: `Chứng nhận số: ${cert.certNo}.`,
                   })
                 );
-                return { data: certificationsData };
               }
-              return { data: [] };
             })
-            .catch(() => ({ data: [] }))
-        );
+            .catch(() => undefined),
+        ] as const;
 
         try {
-          const [resProd, resSub, resPromo, resCerts] =
-            await Promise.allSettled(allRequests);
+          const [, resSub] = await Promise.allSettled(requests);
 
           if (productData) {
             setProduct(productData);
             setSelectedImage(mainImageUrl);
           }
-          if (
-            resCerts.status === "fulfilled" &&
-            Array.isArray(resCerts.value.data)
-          ) {
-            setCertifications(resCerts.value.data);
-          }
+          setCertifications(certificationsData);
           if (bestPromotionData) setBestPromotion(bestPromotionData);
 
           if (resSub.status === "fulfilled" && productData) {
-            const imgRes = resSub.value as any;
-            let subImageUrls: string[] = [];
-            if (imgRes.data.data && Array.isArray(imgRes.data.data)) {
-              subImageUrls = imgRes.data.data.map(
-                (img: any) => `${PRODUCT_IMAGE_BASE_URL}${img.imgUrl}`
-              );
-            }
+            const subImages = resSub.value.data?.data ?? [];
+            const subImageUrls = subImages.map(
+              (img) => `${PRODUCT_IMAGE_BASE_URL}${img.imgUrl}`
+            );
             setGalleryImages([mainImageUrl, ...subImageUrls]);
           } else {
             setGalleryImages(mainImageUrl ? [mainImageUrl] : []);
@@ -238,7 +245,7 @@ const ProductDetail: React.FC = () => {
     };
 
     fetchProductData();
-  }, [productId, fetchReviews]);
+  }, [productId, fetchReviews, stateProductId, slug, slugProductId]);
 
   // === HANDLERS REVIEW ===
 
@@ -262,6 +269,8 @@ const ProductDetail: React.FC = () => {
       showToast("Vui lòng nhập nội dung đánh giá", "warning");
       return;
     }
+
+    if (!productId) return;
 
     try {
       setIsReviewLoading(true);
@@ -316,7 +325,7 @@ const ProductDetail: React.FC = () => {
       showToast("Đã xóa đánh giá", "success");
 
       // Refresh lại trang hiện tại
-      await fetchReviews(productId, reviewMeta.page);
+      if (productId) await fetchReviews(productId, reviewMeta.page);
       await refreshProductRating();
     } catch (error: any) {
       console.error("Error deleting review:", error);
@@ -337,7 +346,7 @@ const ProductDetail: React.FC = () => {
       showToast("Cập nhật đánh giá thành công", "success");
 
       // Refresh lại trang hiện tại
-      await fetchReviews(productId, reviewMeta.page);
+      if (productId) await fetchReviews(productId, reviewMeta.page);
       await refreshProductRating();
     } catch (error: any) {
       console.error("Error updating review:", error);
@@ -371,7 +380,7 @@ const ProductDetail: React.FC = () => {
   // 4. Chuyển trang
   const handlePageChange = (newPage: number) => {
     console.log("Changing to page:", newPage);
-    fetchReviews(productId, newPage);
+    if (productId) fetchReviews(productId, newPage);
   };
 
   // Logic UI

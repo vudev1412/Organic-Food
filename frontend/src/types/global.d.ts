@@ -16,27 +16,27 @@ declare global {
     data?: T;
   }
   interface IModelPaginate<T> {
-    data: {
-      meta: {
-        page: number;
-        size: number;
-        pages: number;
-        total: number;
-      };
-      result: T[];
+    meta: {
+      page: number;
+      size: number;
+      pages: number;
+      total: number;
     };
+    result: T[];
   }
 
+  /** Khớp với RestLoginDTO.UserLogin ở backend (ảnh nằm ở `avatar`) */
+  interface ILoginUser {
+    id: number;
+    email: string;
+    name: string;
+    role: IRole;
+    phone: string;
+    avatar?: string | null;
+  }
   interface ILogin {
-    data: {
-      access_token: string;
-      userLogin: {
-        id: number;
-        email: string;
-        name: string;
-        role: string;
-      };
-    };
+    access_token: string;
+    userLogin: ILoginUser;
   }
   interface IUser {
     id: number;
@@ -44,16 +44,17 @@ declare global {
     name: string;
     phone: string;
     image: string;
-    role: string;
+    /** Entity Role ở backend được trả nguyên object (có name), không phải chuỗi */
+    role: IRole;
+    /** Có khi đã ghép thêm thông tin từ getCustomerInfoAPI */
+    member?: boolean;
     createAt?: string;
     updateAt?: string;
     customerProfile?: ICustomerProfile | null;
   }
 
   interface IFetchAccount {
-    data: {
-      user: IUser;
-    };
+    user: IUser;
   }
 
   interface IDiscount {
@@ -76,6 +77,15 @@ declare global {
     email: string;
     phone: string;
     image?: string | null;
+    active?: boolean;
+  }
+  /** Response của POST /api/v1/users (ResCreateUserDTO) */
+  interface IResCreateUser {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    image?: string | null;
   }
   interface ICustomerTable {
     id: number;
@@ -86,8 +96,9 @@ declare global {
     id: number;
     employeeCode: string;
     address: string;
-    hireDate: string;
-    birth: string;
+    hireDate: string | null;
+    birth: string | null;
+    salary?: number;
     user: ICustomer;
   }
   interface IRegister {
@@ -241,7 +252,7 @@ declare global {
   interface IUpdateCategoryDTO {
     name: string;
     slug: string;
-    parentId?: number;
+    parentId?: number | null;
   }
   export interface ISupplier {
     id: number;
@@ -279,13 +290,19 @@ declare global {
     id: number;
     name: string;
     slug: string;
-    parentCategory: ICategory | null;
+    /** ResCategoryDTO ở backend chỉ trả về parentCategoryId */
+    parentCategoryId: number | null;
+    /** Do frontend tự ghép từ parentCategoryId (table.category.tsx) */
+    parentCategory?: { id: number; name: string } | null;
   }
   interface IParentCategory {
     id: number;
     name: string;
     slug: string;
-    parentCategory: ICategory | null;
+    /** ResCategoryDTO ở backend chỉ trả về parentCategoryId */
+    parentCategoryId: number | null;
+    /** Do frontend tự ghép từ parentCategoryId (table.category.tsx) */
+    parentCategory?: { id: number; name: string } | null;
   }
 
   interface ICartItem {
@@ -344,14 +361,12 @@ declare global {
     specificImageUrl: string;
   }
   interface IEmployeeProfile {
-    data: {
-      id: number;
-      employeeCode: string;
-      address: string;
-      hireDate: string;
-      salary: number;
-      userId: id;
-    };
+    id: number;
+    employeeCode: string;
+    address: string;
+    hireDate: string;
+    salary: number;
+    userId: number;
   }
   interface ICustomerProfile {
     id: number;
@@ -457,16 +472,17 @@ declare global {
   export interface IReturn {
     id: number;
     reason: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
+    status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELED";
     returnType: "REFUND" | "EXCHANGE";
     createdAt: string;
     approvedAt: string | null;
     processedBy: number;
     processNote: string;
     orderId: number;
+    customerName?: string;
 
-    returnItems: IReturnItem[];
-    returnImages: IReturnImage[];
+    returnItems?: IReturnItem[];
+    returnImages?: IReturnImage[];
   }
 
   export interface ICreateReturnDTO {
@@ -540,16 +556,19 @@ declare global {
 
   // 2. Kiểu dữ liệu cho API Hành chính (Tỉnh/Huyện/Xã)
   export interface IWard {
+    Id?: string;
     Name: string;
     Code?: string;
   }
 
   export interface IDistrict {
+    Id?: string;
     Name: string;
     Wards: IWard[];
   }
 
   export interface IProvince {
+    Id?: string;
     Name: string;
     Districts: IDistrict[];
   }
@@ -654,6 +673,7 @@ declare global {
   export interface IReqUpdateUserDTO {
     name: string;
     email: string;
+    phone: string;
     password: string;
     image: string;
   }
@@ -852,6 +872,7 @@ declare global {
 
     // Chi tiết sản phẩm
     orderDetails: IResOrderDetailItem[];
+    userId?: number | null;
   }
   // Kiểu dữ liệu trả về từ API lấy thông tin khách hàng
   interface IResCustomerInfo {
@@ -924,7 +945,7 @@ declare global {
 
   export interface IUserReceipt {
     id: number;
-    username: string;
+    name: string;
     email?: string;
   }
 
@@ -953,6 +974,7 @@ declare global {
     shipDate: string;
     supplier: ISupplier;
     user: IUserReceipt;
+    createdAt?: string | null;
     receiptDetails: {
       quantity: number;
       importPrice: number;

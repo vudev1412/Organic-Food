@@ -123,7 +123,8 @@ public class ReceiptServiceImpl implements ReceiptService {
                 receipt.getShipDate(),
                 supplierDTO,
                 userDTO,
-                detailDTOs
+                detailDTOs,
+                receipt.getCreatedAt()
         );
     }
 

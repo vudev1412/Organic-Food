@@ -1,9 +1,9 @@
 // src/components/admin/certificate/create.certificate.tsx
-import { App, Button, Divider, Form, Input, Modal, Upload, message } from "antd";
+import { App, Button, Divider, Form, Input, Modal, Upload } from "antd";
 
 import { useState } from "react";
 import { createCertificateAPI, uploadFileCertsAPI } from "../../../service/api";
-import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import type { UploadFile } from "antd/lib";
 import type { RcFile } from "antd/es/upload";
 

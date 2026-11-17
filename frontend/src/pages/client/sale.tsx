@@ -281,7 +281,7 @@ const SalePage: React.FC = () => {
       try {
         // GỌI HÀM IMPORT TỪ SERVICE
         const res = await callFetchActivePromotions();
-        const data = res.data?.data || res.data || [];
+        const data = res.data?.data ?? [];
         setPromotions(Array.isArray(data) ? data : []);
       } catch (error) {
         setPromotions([]);
@@ -310,7 +310,7 @@ const SalePage: React.FC = () => {
             try {
               // GỌI HÀM IMPORT TỪ SERVICE
               const res = await callFetchProductsByPromotionId(promo.id);
-              const data = res.data?.data || res.data || [];
+              const data = res.data?.data ?? [];
               productMap.set(promo.id, Array.isArray(data) ? data : []);
             } catch (error) {
               productMap.set(promo.id, []);

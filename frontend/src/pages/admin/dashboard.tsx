@@ -29,15 +29,20 @@ export interface TopProductDTO {
   quantitySold: number;
 }
 
+/** Khớp với DashboardController.OrderDTO ở backend */
 export interface RecentOrderDTO {
-  id: string;
+  id: number;
   customer: string;
-  total: string;
+  total: number;
   status: string;
 }
 
 const Dashboard: React.FC = () => {
-  const [dashboardStats, setDashboardStats] = useState({
+  const [dashboardStats, setDashboardStats] = useState<{
+    newCustomers: number | string;
+    monthlyRevenue: number | string;
+    monthlyOrders: number | string;
+  }>({
     newCustomers: "--",
     monthlyRevenue: "--",
     monthlyOrders: "--",
@@ -82,14 +87,14 @@ const Dashboard: React.FC = () => {
         const resRevenue = await getMonthlyRevenueAPI(year);
         const chartData = Array.from({ length: 12 }, (_, i) => ({
           name: `T${i + 1}`,
-          DoanhThu: resRevenue.data?.data[i] ?? 0,
+          DoanhThu: resRevenue.data?.data?.[i] ?? 0,
         }));
         setRevenueChartData(chartData);
 
         // --- Doanh thu tháng hiện tại ---
         setDashboardStats((prev) => ({
           ...prev,
-          monthlyRevenue: resRevenue.data?.data[month - 1] ?? 0,
+          monthlyRevenue: resRevenue.data?.data?.[month - 1] ?? 0,
         }));
 
         // --- 10 đơn hàng gần đây ---

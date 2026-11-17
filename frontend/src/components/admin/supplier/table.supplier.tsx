@@ -1,5 +1,6 @@
 // File path: /src/components/admin/supplier/table.supplier.tsx
 
+import { getApiError } from "../../../utils/api.error.ts";
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import {
@@ -45,7 +46,7 @@ const TableSupplier = () => {
     } else {
       notification.error({
         message: "Lỗi",
-        description: res?.message ?? "Có lỗi xảy ra",
+        description: getApiError(res) ?? "Có lỗi xảy ra",
       });
     }
 
@@ -123,7 +124,7 @@ const TableSupplier = () => {
         columns={columns}
         actionRef={actionRef}
         cardBordered
-        request={async (params, sort, filter) => {
+        request={async (params) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
 
           // Tìm theo ID

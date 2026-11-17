@@ -11,10 +11,11 @@ export interface IAppContext {
   isAppLoading: boolean;
   setIsAppLoading: (v: boolean) => void;
   cartItems: ICartItem[];
-  addToCart: (product: IProductCard, quantity: number) => boolean;
+  addToCart: (product: IProductCard, quantity: number) => Promise<boolean>;
   removeFromCart: (productId: number) => void;
   updateCartQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
+  handleLogout: () => void;
 
   // ✅ THÊM TOAST VÀO CONTEXT
   showToast: (

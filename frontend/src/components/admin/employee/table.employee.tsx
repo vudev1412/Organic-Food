@@ -2,19 +2,14 @@
 
 import { ProTable } from "@ant-design/pro-components";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
+import { getEmployeesAPI, updateActiveUser } from "../../../service/api";
 import {
-  deleteUserAPI,
-  getEmployeesAPI,
-  updateActiveUser,
-} from "../../../service/api";
-import {
-  DeleteTwoTone,
   EditTwoTone,
   EyeOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import { useRef, useState } from "react";
-import { App, Button, Popconfirm, Space, Switch, Tag, Tooltip } from "antd";
+import { App, Button, Space, Switch, Tooltip } from "antd";
 import DetailEmployee from "./employee.detail";
 import CreateEmployee from "./create.employee";
 import UpdateEmployee from "./update.employee";
@@ -34,9 +29,8 @@ const TableEmployee = () => {
   const [openModalCreate, setOpenModalCreate] = useState(false);
   const [dataUpdate, setDataUpdate] = useState<IEmployee | null>(null);
   const [openModalUpdate, setOpenModalUpdate] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [loadingActiveId, setLoadingActiveId] = useState<number | null>(null);
-  const { message, notification } = App.useApp();
+  const { message } = App.useApp();
 
   const refreshTable = () => {
     actionRef.current?.reload();
@@ -44,11 +38,6 @@ const TableEmployee = () => {
   const formatUserId = (id?: number | null) => {
     if (id == null) return "-";
     return `NV${id.toString().padStart(6, "0")}`;
-  };
-  const parseUsertId = (code: string) => {
-    if (!code.startsWith("NV")) return NaN;
-    const numPart = code.slice(2);
-    return parseInt(numPart, 10);
   };
   const handleToggleActive = async (userId: number, current: boolean) => {
     setLoadingActiveId(userId);
@@ -67,27 +56,6 @@ const TableEmployee = () => {
       );
     } finally {
       setLoadingActiveId(null);
-    }
-  };
-
-  // Xóa user
-  const handleDeleteUser = async (id: number) => {
-    setIsDeleting(true);
-    try {
-      const res = await deleteUserAPI(id);
-      if (res?.data) {
-        message.success("Xóa user thành công");
-        actionRef.current?.reload();
-      } else {
-        throw new Error(res?.message || "Xóa thất bại");
-      }
-    } catch (err: any) {
-      notification.error({
-        message: "Xảy ra lỗi",
-        description: err.message || "Có lỗi xảy ra",
-      });
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -134,13 +102,13 @@ const TableEmployee = () => {
       dataIndex: ["user", "active"],
       key: "active",
       hideInSearch: true,
-      render: (_, entity: ICustomerTable) => (
+      render: (_, entity: IEmployee) => (
         <Switch
           checked={entity.user.active}
           loading={loadingActiveId === entity.user.id}
-          onClick={(checked, e) => {
+          onClick={(_checked, e) => {
             e.stopPropagation();
-            handleToggleActive(entity.user.id, entity.user.active);
+            handleToggleActive(entity.user.id, entity.user.active ?? false);
           }}
           checkedChildren="Bật"
           unCheckedChildren="Tắt"
@@ -210,10 +178,7 @@ const TableEmployee = () => {
         request={async (params, sort) => {
           let query = `page=${params.current}&size=${params.pageSize}`;
           if (params.id) {
-            const idNum =
-              typeof params.id === "string"
-                ? parseInt(params.id.replace(/^NV/, ""), 10)
-                : params.id;
+            const idNum = parseInt(String(params.id).replace(/^NV/, ""), 10);
             if (!isNaN(idNum)) {
               query += `&filter=id=${idNum}`;
             }

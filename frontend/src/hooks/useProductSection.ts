@@ -62,7 +62,6 @@ const useProductSection = ({
           response.statusCode === 200 &&
           response.data.result
         ) {
-          const paginatedData = response.data.meta;
           const productList = response.data.result || [];
           setProducts(productList);
         } else {
